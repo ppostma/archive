@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.10 2003-07-09 02:48:02 peter Exp $
+# $Id: qstat.tcl,v 1.11 2003-07-09 02:57:19 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 09/07/2003 
 # 
@@ -130,7 +130,7 @@ proc qstat:pub {nick host hand chan arg} {
   set arg [lindex $arg 0]
 
   # check for input.
-  if {![regexp {\[\[:alnum:\]\.\:\-\].*?} $arg]} {
+  if {[regexp \[^\[:alnum:\]\.\:\-\] $arg]} {
     putserv "NOTICE $nick :Syntax: $lastbind <ip/host>"
     return 0
   }
