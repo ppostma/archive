@@ -1,11 +1,12 @@
-# $Id: gamer.tcl,v 1.11 2003-06-20 18:09:02 peter Exp $
+# $Id: gamer.tcl,v 1.12 2003-06-22 12:07:45 peter Exp $
 
-# gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
-# version 1.9 / 20/06/2003 / door Peter Postma <peter@webdeveloping.nl>
+# Gamer.nl Nieuws script voor een eggdrop
+# version 1.9, 22/06/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.9: (??/??/????)
-#  - style changes
+#  - url's voor laatste versie & licensie toegevoegd.
+#  - style changes.
 # 1.8: (26/05/03) [bugfix]
 #  - 3de poging om de bug met & teken te fixen.
 # 1.7: (20/05/03) [changes]
@@ -54,8 +55,15 @@
 # Het gamer.tcl script werkt het best met TCL versies vanaf 8.2.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
-# 
+#
+# Script Licensie:
+#   http://www.pointless.nl/copyright
+#
+# De laatste versie van dit script kan je hier vinden:
+#   http://www.pointless.nl/?page=eggdrop
+#
 # Pas aub. de configuratie hieronder aan:
+#
 
 ### Configuratie instellingen ###
 

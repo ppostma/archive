@@ -1,11 +1,12 @@
-# $Id: slashdot.tcl,v 1.12 2003-06-20 18:09:02 peter Exp $
+# $Id: slashdot.tcl,v 1.13 2003-06-22 12:07:45 peter Exp $
 
-# slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
-# version 1.9 / 20/06/2003 / by Peter Postma <peter@webdeveloping.nl>
+# Slashdot.org News Announce Script for an eggdrop
+# version 1.9, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.9: (??/??/????)
-#  - trivial style changes
+#  - added url's for latest version & license.
+#  - trivial style changes.
 # 1.8: (26/05/2003) [bugfix]
 #  - third attempt to get rid of the bug with the & character.
 # 1.7: (20/05/2003) [changes]
@@ -25,7 +26,14 @@
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
+# Script License:
+#   http://www.pointless.nl/copyright
+#
+# You can always find the latest version of this script on this page:
+#   http://www.pointless.nl/?page=eggdrop
+#
 # Please change the configuration setting below:
+#
 
 ### Configuration settings ###
 

@@ -1,11 +1,12 @@
-# $Id: clanbase.tcl,v 1.9 2003-06-20 18:09:02 peter Exp $
+# $Id: clanbase.tcl,v 1.10 2003-06-22 12:07:45 peter Exp $
 
-# cb.tcl / Clanbase.com News Announce Script for an eggdrop
-# version 1.3 / 20/06/2003 / by Peter Postma <peter@webdeveloping.nl>
+# Clanbase.com News Announce Script for an eggdrop
+# version 1.3, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.3: (??/??/????)
-#  - trivial style changes
+#  - added url's for latest version & license.
+#  - trivial style changes.
 # 1.2: (26/05/2003) [bugfix]
 #  - third attempt to get rid of the bug with the & character.
 # 1.1: (20/05/2003) [changes]
@@ -25,7 +26,14 @@
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
+# Script License:
+#   http://www.pointless.nl/copyright
+#
+# You can always find the latest version of this script on this page:
+#   http://www.pointless.nl/?page=eggdrop
+#
 # Please change the configuration setting below:
+#
 
 ### Configuration settings ###
 

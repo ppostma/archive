@@ -1,9 +1,11 @@
-# $Id: bsdforums.tcl,v 1.1 2003-06-20 18:11:44 peter Exp $
+# $Id: bsdforums.tcl,v 1.2 2003-06-22 12:07:45 peter Exp $
 
-# bsdforums.tcl / BSDForums.org News Announce Script for an eggdrop
-# version 1.0 / 20/06/2003 / by Peter Postma <peter@webdeveloping.nl>
+# BSDForums.org News Announce Script for an eggdrop
+# version 1.1, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.1: (??/??/????)
+#  - added url's for latest version & license.
 # 1.0: (20/06/2003) [first version]
 #  - wrote the script, based on osnews.tcl version 1.3 (beta)
 #
@@ -18,7 +20,14 @@
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
+# Script License:
+#   http://www.pointless.nl/copyright
+#
+# You can always find the latest version of this script on this page:
+#   http://www.pointless.nl/?page=eggdrop
+#
 # Please change the configuration setting below:
+#
 
 ### Configuration settings ###
 
@@ -80,7 +89,7 @@ set bsdforums(log) 1
 
 ### Begin TCL code ###
 
-set bsdforums(version) "1.0"
+set bsdforums(version) "1.1"
 
 package require Tcl 8.2
 package require http
