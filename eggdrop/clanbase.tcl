@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.13 2003-07-01 02:41:58 peter Exp $
+# $Id: clanbase.tcl,v 1.14 2003-07-03 14:36:15 peter Exp $
 
 # Clanbase.com News Announce Script for an eggdrop
 # version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -133,7 +133,7 @@ proc cb:getdata {} {
   set url "http://www.clanbase.com/rss.php"
   set page [::http::config -useragent "Mozilla"]
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch {set page [::http::geturl $url -timeout 30000]} msg]} {
     putlog "\[Clanbase\] Problem: $msg"
     return -1
   }
