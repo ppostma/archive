@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.47 2004-03-06 12:58:05 peter Exp $
+ * $Id: ess.c,v 1.48 2004-03-06 19:59:33 peter Exp $
  */
 
 #include <sys/types.h>
@@ -32,9 +32,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BANNER_SIZE	2048	/* max receive size for banner */
+#define BANNER_SIZE	2048	/* max receive size for banner         */
 #define BANNER_TIMEOUT	1000	/* milliseconds after last banner recv */
-#define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts */
+#define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts  */
+
+/*
+ * This setting will be used if the reverse name of this machine
+ * cannot be determined.
+ */
+#define DOMAIN_NAME	"example.com"
 
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define VERSION		"0.4.0-beta"
@@ -46,13 +52,15 @@ static int	   readcode(int);
 static const char *get_af(int);
 static const char *get_addr(struct sockaddr *, socklen_t, int);
 static const char *get_serv(const char *, int);
-static void	   banner_scan(int, u_short, long);
-static int	   ident_scan(const char *, int, u_short, u_short,
+static const char *get_myaddr(int, int);
+static void	   banner_scan(int, uint16_t, long);
+static int	   ident_scan(const char *, int, uint16_t, uint16_t,
 			char *, size_t, long);
 static int	   ftp_scan(int, const char *);
-static int	   relay_scan(int, const char *, const char *, int);
-static int	   http_proxy_scan(int);
-static int	   socks_proxy_scan(int);
+static int	   relay_scan(int, const char *, const char *,
+			const char *, int);
+static int	   http_proxy_scan(int, const char *, uint16_t);
+static int	   socks_proxy_scan(int, const char *, uint16_t);
 static void	   usage(const char *);
 static void	   fatal(int);
 
@@ -87,7 +95,7 @@ main(int argc, char *argv[])
 	int			 quiet_flag = 0;
 	int			 relay_flag = 0;
 	int			 banner_flag = 0;
-	u_short			 remoteport, localport;
+	uint16_t		 remoteport, localport;
 	long			 timeout = 0;
 	socklen_t		 len;
 
@@ -126,7 +134,8 @@ main(int argc, char *argv[])
 			else if (strcmp(proxy_type, "socks") == 0)
 				port = "1080";
 			else
-				errx(65, "Unknown proxy type '%s'", optarg);
+				errx(64, "Unknown proxy type '%s'\n%s", optarg,
+					 "Valid types are: 'http', 'socks'.");
 			break;
 		case 'q':
 			if (verbose_flag)
@@ -141,7 +150,7 @@ main(int argc, char *argv[])
 		case 't':
 			timeout = strtol(optarg, &p, 10);
 			if (optarg[0] == '\0' || *p == '\0')
-				errx(65, "Invalid timeout value '%s'", optarg);
+				errx(64, "Invalid timeout value '%s'", optarg);
 			break;
 		case 'v':
 			if (quiet_flag)
@@ -267,6 +276,12 @@ main(int argc, char *argv[])
 			if (verbose_flag)
 				printf("\n");
 		} else if (relay_flag) {
+			char myip[NI_MAXHOST], myhost[NI_MAXHOST];
+
+			strncpy(myip, get_myaddr(ssock, 0), sizeof(myip));
+			strncpy(myhost, get_myaddr(ssock, 1), sizeof(myhost));
+			if (strcmp(myip, myhost) == 0)
+				strncpy(myhost, DOMAIN_NAME, sizeof(myhost));
 			if (relay_flag > 1) {
 				strncpy(ip, get_addr(ai->ai_addr,
 				    ai->ai_addrlen, 0), sizeof(ip));
@@ -275,10 +290,12 @@ main(int argc, char *argv[])
 					    ai->ai_addrlen, 1), sizeof(name));
 				else
 					strncpy(name, host, sizeof(name));
-				ret = relay_scan(ssock, name, ip, relay_flag);
-			} else
-				ret = relay_scan(ssock, NULL, NULL, relay_flag);
-
+				ret = relay_scan(ssock, name, ip, myhost,
+				    relay_flag);
+			} else {
+				ret = relay_scan(ssock, NULL, NULL, myhost,
+				    relay_flag);
+			}
 			switch (ret) {
 			case 0:
 				strcpy(result, "relay access allowed!");
@@ -293,11 +310,13 @@ main(int argc, char *argv[])
 			if (verbose_flag)
 				printf("\n");
 		} else if (proxy_flag) {
-			if (strcmp(proxy_type, "http") == 0)
-				ret = http_proxy_scan(ssock);
-			else if (strcmp(proxy_type, "socks") == 0)
-				ret = socks_proxy_scan(ssock);
-
+			if (strcmp(proxy_type, "http") == 0) {
+				ret = http_proxy_scan(ssock,
+				    get_myaddr(ssock, 1), 25);
+			} else if (strcmp(proxy_type, "socks") == 0) {
+				ret = socks_proxy_scan(ssock,
+				    get_myaddr(ssock, 0), 25);
+			}
 			switch (ret) {
 			case 0:
 				strcpy(result, "proxy connection allowed!");
@@ -400,7 +419,8 @@ tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 static size_t
 readln(int fd, char *line, size_t len)
 {
-	ssize_t	b, i = 0;
+	ssize_t b;
+	size_t	i = 0;
 	char	temp;
 
 	do {
@@ -484,7 +504,6 @@ get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 	if (getnameinfo((struct sockaddr *)&ss, len, host,
 	    sizeof(host), NULL, 0, resolve ? 0 : NI_NUMERICHOST) == 0)
 		return host;
-
 	return "?";
 }
 
@@ -507,12 +526,23 @@ get_serv(const char *port, int resolve)
 		else
 			snprintf(buf, sizeof(buf), "%s", port);
 	}
-
 	return buf;
 }
 
+static const char *
+get_myaddr(int sock, int resolve)
+{
+	struct sockaddr_storage	ss;
+	socklen_t		len;
+
+	len = sizeof(ss);
+	if (getsockname(sock, (struct sockaddr *)&ss, &len) < 0)
+		err(255, "getsockname");
+	return get_addr((struct sockaddr *)&ss, len, resolve);
+}
+
 static void
-banner_scan(int sock, u_short port, long timeout)
+banner_scan(int sock, uint16_t port, long timeout)
 {
 	struct timeval	 tv;
 	fd_set		 read_fds;
@@ -562,8 +592,8 @@ banner_scan(int sock, u_short port, long timeout)
 }
 
 static int
-ident_scan(const char *ip, int ai_family, u_short remoteport, u_short localport,
-    char *owner, size_t len, long timeout)
+ident_scan(const char *ip, int ai_family, uint16_t remoteport,
+    uint16_t localport, char *owner, size_t len, long timeout)
 {
 	struct addrinfo	 hints, *ai;
 	char		*temp, *p;
@@ -637,7 +667,7 @@ ftp_scan(int sock, const char *name)
 		return 1;
 
 	/* Send PASS command */
-	strcpy(request, "PASS anonymous@pointless.nl\r\n");
+	sprintf(request, "PASS anonymous@%s\r\n", get_myaddr(sock, 1));
 	send(sock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
@@ -656,7 +686,8 @@ ftp_scan(int sock, const char *name)
 }
 
 static int
-relay_scan(int sock, const char *host, const char *ip, int flag)
+relay_scan(int sock, const char *host, const char *ip, const char *from,
+    int flag)
 {
 	typedef struct {
 	    char from[128];
@@ -672,57 +703,55 @@ relay_scan(int sock, const char *host, const char *ip, int flag)
 	/*
 	 * Setup info for the relay scan. The tests are from
 	 * http://www.reedmedia.net/misc/mail/open-relay.html
-	 *
-	 * XXX - pointless.nl should be replaced with something else
 	 */
-	strcpy (s[0].from,  "<test@pointless.nl>");
-	strcpy (s[0].rcpt,  "<test@pointless.nl>");
+	sprintf(s[0].from,  "<test@%s>", from);
+	sprintf(s[0].rcpt,  "<test@%s>", from);
 	strcpy (s[1].from,  "<test@localhost>");
-	strcpy (s[1].rcpt,  "<test@pointless.nl>");
+	sprintf(s[1].rcpt,  "<test@%s>", from);
 	strcpy (s[2].from,  "<test>");
-	strcpy (s[2].rcpt,  "<test@pointless.nl>");
+	sprintf(s[2].rcpt,  "<test@%s>", from);
 	strcpy (s[3].from,  "<>");
-	strcpy (s[3].rcpt,  "<test@pointless.nl>");
+	sprintf(s[3].rcpt,  "<test@%s>", from);
 	sprintf(s[4].from,  "<test@%s>", host);
-	strcpy (s[4].rcpt,  "<test@pointless.nl>");
+	sprintf(s[4].rcpt,  "<test@%s>", from);
 	sprintf(s[5].from,  "<test@[%s]>", ip);
-	strcpy (s[5].rcpt,  "<test@pointless.nl>");
+	sprintf(s[5].rcpt,  "<test@%s>", from);
 	sprintf(s[6].from,  "<test@%s>", host);
-	sprintf(s[6].rcpt,  "<test%%pointless.nl@%s>", host);
+	sprintf(s[6].rcpt,  "<test%%%s@%s>", from, host);
 	sprintf(s[7].from,  "<test@%s>", host);
-	sprintf(s[7].rcpt,  "<test%%pointless.nl@[%s]>", ip);
+	sprintf(s[7].rcpt,  "<test%%%s@[%s]>", from, ip);
 	sprintf(s[8].from,  "<test@%s>", host);
-	strcpy (s[8].rcpt,  "<\"test@pointless.nl\">");
+	sprintf(s[8].rcpt,  "<\"test@%s\">", from);
 	sprintf(s[9].from,  "<test@%s>", host);
-	strcpy (s[9].rcpt,  "<\"test%pointless.nl\">");
+	sprintf(s[9].rcpt,  "<\"test%%%s\">", from);
 	sprintf(s[10].from, "<test@%s>", host);
-	sprintf(s[10].rcpt, "<test@pointless.nl@%s>", host);
+	sprintf(s[10].rcpt, "<test@%s@%s>", from, host);
 	sprintf(s[11].from, "<test@%s>", host);
-	sprintf(s[11].rcpt, "<\"test@pointless.nl\"@%s>", host);
+	sprintf(s[11].rcpt, "<\"test@%s\"@%s>", from, host);
 	sprintf(s[12].from, "<test@%s>", host);
-	sprintf(s[12].rcpt, "<test@pointless.nl@[%s]>", ip);
+	sprintf(s[12].rcpt, "<test@%s@[%s]>", from, ip);
 	sprintf(s[13].from, "<test@%s>", host);
-	sprintf(s[13].rcpt, "<\"test@pointless.nl\"@[%s]>", ip);
+	sprintf(s[13].rcpt, "<\"test@%s\"@[%s]>", from, ip);
 	sprintf(s[13].from, "<test@%s>", host);
-	sprintf(s[13].rcpt, "<@%s:test@pointless.nl>", host);
+	sprintf(s[13].rcpt, "<@%s:test@%s>", from, host);
 	sprintf(s[14].from, "<test@%s>", host);
-	sprintf(s[14].rcpt, "<@[%s]:test@pointless.nl>", ip);
+	sprintf(s[14].rcpt, "<@[%s]:test@%s>", from, ip);
 	sprintf(s[15].from, "<test@%s>", host);
-	strcpy (s[15].rcpt, "<pointless.nl!test>");
+	sprintf(s[15].rcpt, "<%s!test>", from);
 	sprintf(s[16].from, "<test@[%s]>", ip);
-	strcpy (s[16].rcpt, "<pointless.nl!test>");
+	sprintf(s[16].rcpt, "<%s!test>", from);
 	sprintf(s[17].from, "<test@%s>", host);
-	sprintf(s[17].rcpt, "<pointless.nl!test@%s>", host);
+	sprintf(s[17].rcpt, "<%s!test@%s>", from, host);
 	sprintf(s[18].from, "<test@%s>", host);
-	sprintf(s[18].rcpt, "<pointless.nl!test@[%s]>", ip);
+	sprintf(s[18].rcpt, "<%s!test@[%s]>", from, ip);
 	sprintf(s[19].from, "<postmaster@%s>", host);
-	strcpy (s[19].rcpt, "<test@pointless.nl>");
+	sprintf(s[19].rcpt, "<test@%s>", from);
 
 	/* Read banner */
 	(void)readall(sock);
 
 	/* Send HELO, quit if return code is not 250 */
-	strcpy(buf, "HELO www.pointless.nl\r\n");
+	sprintf(buf, "HELO %s\r\n", from);
 	send(sock, buf, strlen(buf), 0);
 	if (verbose_flag)
 		printf(">>> %s", buf);
@@ -766,13 +795,13 @@ relay_scan(int sock, const char *host, const char *ip, int flag)
 }
 
 static int
-http_proxy_scan(int sock)
+http_proxy_scan(int sock, const char *host, uint16_t port)
 {
 	char	buf[1024];
 	int	code;
 
 	/* Send the connect request */
-	strcpy(buf, "CONNECT www.pointless.nl:25 HTTP/1.0\r\n");
+	sprintf(buf, "CONNECT %s:%u HTTP/1.0\r\n", host, port);
 	send(sock, buf, strlen(buf), 0);
 	if (verbose_flag)
 		printf(">>> %s", buf);
@@ -798,7 +827,7 @@ http_proxy_scan(int sock)
 }
 
 static int
-socks_proxy_scan(int sock)
+socks_proxy_scan(int sock, const char *ip, uint16_t port)
 {
 	typedef struct {
 	    int		code;
@@ -818,12 +847,11 @@ socks_proxy_scan(int sock)
 	};
 	unsigned char	buf[32];
 	struct in_addr	daddr;
-	uint16_t	port;
+	uint16_t	dport;
 	int		len, i;
 
-	/* XXX - this is my server */
-	daddr.s_addr = inet_addr("62.194.156.128");
-	port = htons(25);
+	daddr.s_addr = inet_addr(ip);
+	dport = htons(port);
 
 	memset(&buf, 0, sizeof(buf));
 
@@ -838,12 +866,16 @@ socks_proxy_scan(int sock)
 		printf(">>> 0x05 0x01 0x00\n");
 
 	/* Read reply */
-	if ((i = recv(sock, buf, sizeof(buf) - 1, 0)) < 0)
+	if ((len = recv(sock, buf, sizeof(buf) - 1, 0)) < 0)
 		err(1, "recv");
-	else if (i == 0)
+	else if (len == 0)
 		return 2;
-	if (verbose_flag)
-		printf("<<< 0x0%d 0x0%d\n", buf[0], buf[1]);
+	if (verbose_flag) {
+		printf("<<<");
+		for (i = 0; i < len; i++)
+			printf(" 0x%02X", buf[i]);
+		printf("\n");
+	}
 
 	/* Authentication method not accepted */
 	if (buf[1] == 0xff)
@@ -859,27 +891,34 @@ socks_proxy_scan(int sock)
 		buf[3] = 0x01;	/* Address type: IPv4 */
 
 		len = 4;
-		/* Destionation address */
+		/* Destination address */
 		memcpy(buf + len, &daddr.s_addr, sizeof(daddr));
 		len += sizeof(daddr);
 		/* Destination port */
-		memcpy(buf + len, &port, sizeof(port));
-		len += sizeof(port);
+		memcpy(buf + len, &dport, sizeof(dport));
+		len += sizeof(dport);
 
 		/* Request connection */
 		if (send(sock, buf, len, 0) < 0)
 			err(1, "send");
-		if (verbose_flag)
-			printf(">>> 0x05 0x01 0x00 0x01 ...\n");
+		if (verbose_flag) {
+			printf(">>>");
+			for (i = 0; i < len; i++)
+				printf(" 0x%02X", buf[i]);
+			printf("\n");
+		}
 
 		/* Read reply */
-		if ((i = recv(sock, buf, sizeof(buf), 0)) < 0)
+		if ((len = recv(sock, buf, sizeof(buf) - 1, 0)) < 0)
 			err(1, "recv");
-		else if (i == 0)
+		else if (len == 0)
 			return 2;
 
 		if (verbose_flag) {
-			printf("<<< 0x0%d 0x0%d\n", buf[0], buf[1]);
+			printf("<<<");
+			for (i = 0; i < len; i++)
+				printf(" 0x%02X", buf[i]);
+			printf("\n");
 			for (i = 0; replies[i].code != 0xff; i++) {
 				if (replies[i].code == buf[1]) {
 					printf("socks: %s\n", replies[i].name);
