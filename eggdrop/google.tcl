@@ -1,26 +1,73 @@
-# $Id: google.tcl,v 1.3 2003-07-04 13:49:09 peter Exp $
+# $Id: google.tcl,v 1.4 2003-07-08 16:41:39 peter Exp $
 
 # Google script for the eggdrop
-# version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.3, 08/07/2003, by Peter Postma <peter@webdeveloping.nl>
+#
+# Changelog:
+# 0.3: (??/??/????)
+#  - added several configuration options
+#
 
-set google(version) 0.2
+### Configuration settings ###
+
+# flags needed to use the trigger [default=everyone]
+set google(flags) "-|-"
+
+# channels where the bot doesn't respond to triggers [seperate with spaces]
+set google(nopub) "" 
+
+# the triggers: [seperate with spaces]
+set google(triggers) "!google"
+
+# flood protection: seconds between use of the triggers
+# to disable: set it to 0
+set google(antiflood) 5
+
+# method to send the messages:
+# 0 = Private message
+# 1 = Public message 
+# 2 = Private notice 
+# 3 = Public notice
+set google(method) 1
+
+### End Configuration settings ###
+
+
+### Begin TCL code ###
+
+set google(version) 0.3
+
+package require http
 
 if {[info tclversion] < 8.1} {
   putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
   return 1
 }
 
-package require http
-
-bind pub -|- "!google" pub:google
+for {set i 0} {$i < [llength $google(triggers)]} {incr i} {
+  bind pub $google(flags) [lindex $google(triggers) $i] pub:google
+}
+catch { unset i }
 
 proc pub:google {nick uhost hand chan text} {
-  global lastbind
+  global lastbind google
+
+  if {[lsearch -exact $google(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {[string length [string trim [lindex $text 0]]] == 0} {
     putquick "NOTICE $nick :Usage: $lastbind <keywords>"
     return 0
   }
+
+  if {[info exists google(floodprot)]} {
+    set diff [expr [clock seconds] - $google(floodprot)]
+    if {$diff < $google(antiflood)} {
+      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $google(antiflood) - $diff] seconds..."
+      return 0
+    }
+    catch { unset diff }
+  }
+  set google(floodprot) [clock seconds]
 
   regsub -all { } [join $text] {+} search
   set google(url) "http://www.google.nl/search?q=$search"
@@ -48,8 +95,16 @@ proc pub:google {nick uhost hand chan text} {
   regsub -all {%26} $output {\&} output
   regsub -all {%3F} $output {?} output
   regsub -all {%3D} $output {=} output 
-  putquick "PRIVMSG $chan :$output"
 
+  switch -- $google(method) {
+    0 { putquick "PRIVMSG $nick :$output" }
+    1 { putquick "PRIVMSG $chan :$output" }
+    2 { putquick "NOTICE $nick :$output" }
+    3 { putquick "NOTICE $chan :$output" }
+    default { putquick "PRIVMSG $chan :$output" }
+  }
+
+  catch { unset output link1 link2 link3 }
   catch { http::cleanup $google(page) }
   return 0
 }
