@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.6 2003-08-06 17:38:00 peter Exp $
+ * $Id: ess.c,v 1.7 2003-08-06 17:38:51 peter Exp $
  */
 
 #include <sys/types.h>
@@ -505,7 +505,7 @@ usage(void)
 "          identity of the service we're connecting to.\n"
 "  -n      Don't try to resolve addresses.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
-"  -v      Be verbose. It's use is recommended.\n",
+"  -v      Be verbose. It's use is recommended.\n\n",
 	progname);
 
 	exit(1);
