@@ -1,39 +1,75 @@
-# $Id: fok.tcl,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $
+# $Id: fok.tcl,v 1.2 2003-05-17 15:43:00 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
-# version 1.5 / 12/10/2002 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
-# Changelog: zelfde als tweakers.tcl
+# Changelog:
+# 1.6: (17/05/03) [bugfixes]
+#  - fix memory leak!!! (ongebruikte variabelen unsetten en 
+#    de belangrijkste: de ::http::cleanup functie!
+#  - veel kleine TCL changes/fixes
+# 1.5: (12/10/02) [features/changes]
+#  - extra check in de getdata procedure (voor HTTP errors zoals 404, etc..)
+#  - triggers/functie toegevoegd om de aankondiger aan en uit te zetten.
+#  - stukjes code netter en beter geschreven.
+#  - meer gebruiksvriendelijke error en log berichten.
+# 1.4a: (09/10/02) [bugfixes]
+#  - bugje gefixed met het & teken. regsub zet &amp; om naar %titamp; 
+#    ik heb geen idee waarom, maar de output is iig gefixed :-)  
+#  - wat fouten gefixed in de getdata procedure. checks werken nu helemaal ok.
+#  - timer opnieuw instellen wanneer er een http error is, is gefixed.
+# 1.4: (08/10/02) [features/changes]
+#  - methode om berichten te sturen is nu in te stellen.
+#  - check op timestamp ipv. id ! (dit had ik eerder moeten bedenken >:) 
+#  - extra layout opties toegevoegd.
+#  - updates minimaal 300 seconden!
+#  - checkt of fok.nl down is. als dit niet wordt gecheckt dan
+#    blijft het script hangen en moet de bot opnieuw gestart worden.
+# 1.3: (06/10/02) [features/changes]
+#  - triggers in te stellen.
+#  - kanalen in te stellen waar de triggers gebruikt mogen worden.
+#  - layout in te stellen.
+#  - automatisch nieuws naar het kanaal sturen (kanalen in te stellen).
+#  - automatische updates in te stellen (om de hoeveel seconden).
+# 1.2: (03/10/02) [rewrote 1.1]
+#  - helemaal opnieuw geschreven.
+#  - betere code (regexp, regsub, http)
+# 1.1: (21/08/02) [first version]
+#  - eerste (goed werkende) versie. 
+#  - script had alleen triggers, verder nog helemaal niets :-)
 #
-# Dit script heeft alltools.tcl nodig! Zorg dat deze is geladen in het
-# eggdrop configuratie bestand. Dit script gebruikt ook http.tcl.
-# Oudere TCL versies kunnen deze nog niet (goed) gebruiken.
-# U heeft dus minimaal TCL versie 8.2 ? nodig.
+# Dit script maakt gebruik van een functie uit alltools.tcl.
+# Zorg ervoor dat alltools.tcl geladen wordt in je eggdrop configuratie!
+#
+# Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
+# Zet http.tcl *niet* in je eggdrop configuratie!
+#
+# Het fok.tcl script werkt het best met TCL versies vanaf 8.2.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
-#
+# 
 # Pas aub. de configuratie hieronder aan:
 
 ### Configuratie instellingen ###
 
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
-set fok_flag "-|-"
+set fok(flags) "-|-"
 
 # kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
-set fok_nopub "" 
+set fok(nopub) "" 
 
 # de triggers: [scheiden met een spatie]
-set fok_triggers "!fok fok!"
+set fok(triggers) "!fok fok!"
 
-# stuur berichten public of private wanneer er een trigger wordt gebruikt?
+# stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
-# 1 = Public message
-# 2 = Private notice
+# 1 = Public message 
+# 2 = Private notice 
 # 3 = Public notice
-set fok_method 1
+set fok(method) 1
 
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
-set fok_headlines 2
+set fok(headlines) 2
 
 # hieronder kun je de layout aanpassen:
 # %tyd = tijd
@@ -42,34 +78,34 @@ set fok_headlines 2
 # %rea = aantal reacties
 # %b   = bold (dikgedrukte) tekst
 # %u   = underlined (onderstreepte) tekst
-set fok_layout "\[%bFok!%b\] %tit - http://fok.nl/?id=%id"
+set fok(layout) "\[%bFok!%b\] %tit - http://fok.nl/?id=%id"
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set fok_autonews 1
+set fok(autonews) 1
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
-set fok_autonews_chan "#kanaal1 #kanaal2"
+set fok(autonewschan) "#kanaal1 #kanaal2"
 
-# om de hoeveel seconden checken of er nieuws is? (zet dit niet te laag, 
-# het zal load/verkeer op de servers vergroten, 300 is wel ok).
-set fok_updates 600
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# zet dit niet te laag, het zal load/verkeer op de servers vergroten.
+set fok(updates) 5
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
 # updates hoog hebt staan (bv. langer dan een uur).
-set fok_automax 3
+set fok(automax) 3
 
 # trigger om het autonews aan te zetten. [string]
-set fok_auton_trig "!fokon"
+set fok(autontrigger) "!fokon"
 
 # trigger om het autonews uit te zetten. [string]
-set fok_autoff_trig "!fokoff"
+set fok(autofftrigger) "!fokoff"
 
 # benodigde flags om de autonews[on/off] triggers te gebruiken [default=master]
-set fok_auto_trig_flag "m|m"
+set fok(autotriggerflag) "m|m"
 
 # log extra informatie (debug) naar de partyline? [0=nee / 1=ja]
-set fok_log 1
+set fok(log) 1
 
 ### Eind configuratie instellingen ###
 
@@ -77,33 +113,35 @@ set fok_log 1
 
 ### Begin TCL code ###
 
-set fok_version "1.5"
+set fok(version) "1.6"
 
 package require http
 
-for {set i 0} {$i < [llength $fok_triggers]} {incr i} {
-  bind pub $fok_flag [lindex $fok_triggers $i] fok:pub
-  if {$fok_log} { putlog "\[Fok!\] Trigger [lindex $fok_triggers $i] added." }
+for {set i 0} {$i < [llength $fok(triggers)]} {incr i} {
+  bind pub $fok(flags) [lindex $fok(triggers) $i] fok:pub
+  if {$fok(log)} { putlog "\[Fok!\] Trigger [lindex $fok(triggers) $i] added." }
 }
+unset i
 
-bind pub $fok_auto_trig_flag $fok_autoff_trig fok:autoff
-bind pub $fok_auto_trig_flag $fok_auton_trig fok:auton
+bind pub $fok(autotriggerflag) $fok(autofftrigger) fok:autoff
+bind pub $fok(autotriggerflag) $fok(autontrigger) fok:auton
 
 proc fok:getdata {} {
-  global fok_id fok_titel fok_tijd fok_reac fok_log fok_ts
+  global fok fokdata
 
-  if {$fok_log} { putlog "\[Fok!\] Updating data..." }
+  if {$fok(log)} { putlog "\[Fok!\] Updating data..." }
+  if {[info exists fokdata]} { unset fokdata }
 
   set url "http://www.athena.fokzine.net/~danny/remote.xml"
   set page [::http::config -useragent "Mozilla"]
-  
+
   # check of connecten goed gaat
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
-    putlog "\[Fok!\] Problem! Error: $msg"
+    putlog "\[Fok!\] Problem: $msg"
     return -1
   }
-
-  # dit is voor errors zoals 'timeout'..
+  
+  # dit is voor errors zoals 'timeout'.. 
   if {[::http::status $page] != "ok"} {
     putlog "\[Fok!\] Problem: [::http::status $page]"
     return -1
@@ -114,122 +152,144 @@ proc fok:getdata {} {
     putlog "\[Fok!\] Problem: [::http::code $page]"
     return -1
   }
- 
+
   set lines [split [::http::data $page] \n]
   set count 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
-    regexp "<id>(.*?)</id>" $line trash fok_id($count)
-    regexp "<titel>(.*?)</titel>" $line trash fok_titel($count)
-    regexp "<time>(.*?)</time>" $line trash fok_tijd($count)
-    regexp "<timestamp>(.*?)</timestamp>" $line trash fok_ts($count)
-    if {[regexp "<reacties>(.*?)</reacties>" $line trash fok_reac($count)]} { incr count }
+    regexp "<id>(.*?)</id>" $line trash fokdata(id,$count)
+    regexp "<titel>(.*?)</titel>" $line trash fokdata(titel,$count)
+    regexp "<time>(.*?)</time>" $line trash fokdata(tijd,$count)
+    regexp "<timestamp>(.*?)</timestamp>" $line trash fokdata(ts,$count)
+    if {[regexp "<reacties>(.*?)</reacties>" $line trash fokdata(reac,$count)]} { incr count }
   }
+  ::http::cleanup $page
+
+  unset url page msg count lines
+  if {[info exists line]} { unset line }
+  if {[info exists trash]} { unset trash }
+
   return 0
 }
 
 proc fok:pub {nick uhost hand chan text} {
-  global lastbind fok_log fok_nopub fok_headlines fok_method
-  if {[lsearch -exact $fok_nopub [string tolower $chan]] >= 0} { return 0 }  
+  global lastbind fok fokdata
+  if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {$fok_log} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
+  if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
   if {[fok:getdata] != -1} {
-    for {set i 0} {$i < $fok_headlines} {incr i} { fok:put $chan $nick $i $fok_method }
+    for {set i 0} {$i < $fok(headlines)} {incr i} { fok:put $chan $nick $i $fok(method) }
+    unset i
   } else {
     putserv "NOTICE $nick :\[Fok!\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
+  if {[info exists fokdata]} { unset fokdata }
 }
 
 proc fok:put {chan nick which method} {
-  global fok_id fok_titel fok_reac fok_tijd fok_layout
-  set outchan $fok_layout
-  regsub -all "%tyd" $outchan $fok_tijd($which) outchan
-  regsub -all "%id"  $outchan $fok_id($which) outchan
-  regsub -all "%rea" $outchan $fok_reac($which) outchan
-  regsub -all "%tit" $outchan $fok_titel($which) outchan
+  global fok fokdata
+
+  set outchan $fok(layout)
+  regsub -all "%tyd" $outchan $fokdata(tijd,$which) outchan
+  regsub -all "%id"  $outchan $fokdata(id,$which) outchan
+  regsub -all "%rea" $outchan $fokdata(reac,$which) outchan
+  regsub -all "%tit" $outchan $fokdata(titel,$which) outchan
   # waarom TCL er %titamp; van maakt weet ik niet, maar zo los ik het iig op:
   regsub -all "%titamp;" $outchan "\\\&" outchan
   regsub -all "&amp;" $outchan "\\\&" outchan
   regsub -all "%b"   $outchan "\002" outchan
   regsub -all "%u"   $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" }
+    0 { putserv "PRIVMSG $nick :$outchan" } 
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
+  unset outchan
 }
 
 proc fok:update {} {
-  global fok_ts fok_updates fok_lastitem fok_log fok_autonews_chan fok_automax
+  global fok fokdata fok_lastitem
 
   if {[fok:getdata] != -1} {
 
-    if {![info exists fok_lastitem]} { 
-      set fok_lastitem $fok_ts(0) 
-      if {$fok_log} { putlog "\[Fok!\] Last news item timestamp set to $fok_ts(0)" }
-    } else {
-      if {$fok_log} { putlog "\[Fok!\] Last news item timestamp is $fok_ts(0)" }
+    if {![info exists fokdata(ts,0)]} {
+      putlog "\[Fok!\] Er iets iets fout gegaan tijdens het updaten..."
+      return -1
     }
 
-    if {$fok_ts(0) > $fok_lastitem} {
-      if {$fok_log} { putlog "\[Fok!\] There's news!" }
-      for {set i 0} {$i < $fok_automax} {incr i} {
-        if {$fok_ts($i) == $fok_lastitem} { break }
-        foreach chan [split $fok_autonews_chan] { fok:put $chan $chan $i 1 }
+    if {![info exists fok_lastitem]} {
+      set fok_lastitem $fokdata(ts,0)
+      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp set to $fokdata(ts,0)" }
+    } else {
+      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp is $fokdata(ts,0)" }
+    }
+
+    if {$fokdata(ts,0) > $fok_lastitem} {
+      if {$fok(log)} { putlog "\[Fok!\] There's news!" }
+      for {set i 0} {$i < $fok(automax)} {incr i} {
+        if {$fokdata(ts,0) == $fok_lastitem} { break }
+        foreach chan [split $fok(autonewschan)] { fok:put $chan $chan $i 1 }
+        unset chan
       }
+      unset i
     } else {
-      if {$fok_log} { putlog "\[Fok!\] No news." } 
+      if {$fok(log)} { putlog "\[Fok!\] No news." } 
     }
 
-    set fok_lastitem $fok_ts(0)
+    set fok_lastitem $fokdata(ts,0)
   }
 
-  if {$fok_updates < 300} {
-    utimer 300 fok:update
+  if {$fok(updates) < 5} { 
+    timer 5 fok:update
   } else {
-    utimer $fok_updates fok:update
+    timer $fok(updates) fok:update
   }
+  if {[info exists fokdata]} { unset fokdata }
+
+  return 0
 }
 
 proc fok:autoff {nick uhost hand chan text} {
-  global lastbind fok_log fok_nopub fok_autonews fok_lastitem
-  if {[lsearch -exact $fok_nopub [string tolower $chan]] >= 0} { return 0 }
+  global lastbind fok fok_lastitem
+  if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$fok_log} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
+  if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$fok_autonews == 1} {
-    set fok_autonews 0;  unset fok_lastitem
-    set killtimer [utimerexists "fok:update"]
-    if {$killtimer != ""} { killutimer $killtimer }
+  if {$fok(autonews) == 1} {
+    set fok(autonews) 0;  unset fok_lastitem
+    set whichtimer [timerexists "fok:update"]
+    if {$whichtimer != ""} { killtimer $whichtimer }
+    unset whichtimer
     putlog "\[Fok!\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn fok.nl nieuws aankondiger uitgezet.\001"
   } else {
-    putserv "NOTICE $nick :Mijn fok.nl nieuws aankondiger staat al uit!"
+    putserv "NOTICE $nick :Mijn fok.nl nieuws aankondiger staat al uit."
   }
 }
 
 proc fok:auton {nick uhost hand chan text} {
-  global lastbind fok_log fok_nopub fok_autonews fok_lastitem
-  if {[lsearch -exact $fok_nopub [string tolower $chan]] >= 0} { return 0 }
+  global lastbind fok
+  if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$fok_log} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
+  if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$fok_autonews == 0} {
-    set fok_autonews 1;  fok:update
+  if {$fok(autonews) == 0} {
+    set fok(autonews) 1;  fok:update
     putlog "\[Fok!\] Autonews turned on."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn fok.nl nieuws aankondiger aangezet.\001"
   } else {
-    putserv "NOTICE $nick :Mijn fok.nl nieuws aankondiger staat al aan!"
+    putserv "NOTICE $nick :Mijn fok.nl nieuws aankondiger staat al aan."
   }
 }
 
-set killtimer [utimerexists "fok:update"]
-if {$killtimer != ""} { killutimer $killtimer }
+set whichtimer [timerexists "fok:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+unset whichtimer
 
-if {$fok_autonews == 1} { fok:update }
+if {$fok(autonews) == 1} { fok:update }
 
-putlog "\[Fok!\] Nieuws script versie $fok_version: Loaded!"
+putlog "\[Fok!\] Nieuws script versie $fok(version): Loaded!"
