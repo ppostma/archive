@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2003-08-16 14:19:00 peter Exp $
+# $Id: Makefile,v 1.6 2003-08-22 01:07:21 peter Exp $
 
 CC	= gcc
 CFLAGS	= -DRESOLVE -Wall -O
@@ -6,6 +6,7 @@ CFLAGS	= -DRESOLVE -Wall -O
 
 # For Solaris:
 #LIBS	= -lsocket -lnsl
+
 SRC	= ess.c
 EXEC	= ess
 
