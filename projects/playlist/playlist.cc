@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: playlist.cc,v 1.2 2003-05-10 23:40:41 peter Exp $
+ * $Id: playlist.cc,v 1.3 2003-05-11 14:39:58 peter Exp $
  */
 
 #include <stdlib.h>
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
 	getline(input, temp);
 	if (temp != "#EXTM3U") {
-		cerr << "Not an m3u playlist file." << endl;
+		cerr << "Not a m3u playlist file." << endl;
 		input.close();
 		exit(1);
 	}
