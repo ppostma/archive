@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.2 2003-08-03 15:01:22 peter Exp $
+ * $Id: ess.c,v 1.3 2003-08-03 15:30:04 peter Exp $
  */
 
 #include <sys/types.h>
@@ -463,7 +463,7 @@ usage(void)
 "  -a      When resolved to multiple addresses, scan them all.\n"
 "  -b      Grab the banner from an open port.\n"
 "  -f      Anonymous FTP scan, tries to login with the anonymous ftp\n"
-"          account ans returns the result.\n"
+"          account and returns the result.\n"
 "  -i      Ident scan, queries ident/auth (port 113) and asks about the\n"
 "          identity of the service we're connecting to.\n"
 "  -n      Don't try to resolve addresses.\n"
