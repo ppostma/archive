@@ -1,4 +1,4 @@
-Easy Service Scanner v0.3.4-beta by Peter Postma <peter@webdeveloping.nl>
+Easy Service Scanner v0.3.4 by Peter Postma <peter@webdeveloping.nl>
 
 This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
