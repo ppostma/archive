@@ -1,6 +1,6 @@
-# $Id: qstat.tcl,v 1.9 2003-07-09 02:28:29 peter Exp $
+# $Id: qstat.tcl,v 1.10 2003-07-09 02:48:02 peter Exp $
 
-# Qstat script for the eggdrop, version 2.3, 04/07/2003 
+# Qstat script for the eggdrop, version 2.3, 09/07/2003 
 # 
 # This script will query gameservers using the qstat program to
 # display server status and players using public commands. 
@@ -27,7 +27,7 @@
 #    - added BF, Gamespy, QW and UT2003.
 #    - added '-timeout 5' option in qstat exec
 #  2.3 by Peter Postma <peter@webdeveloping.nl>
-#    - trivial changes, make the script more logical & consistent.
+#    - trivial changes, make the script more logical, consistent and shorter.
 #    - added flood protection
 #    - added configurable method to send messages
 #
@@ -40,11 +40,13 @@
 # 3) Change the option "set qstat(path) "/home/ai/scripts/my/qstat" and
 #    set it to the path where the Qstat related files are installed. 
 # 4) Optionally change some other configuration settings below.
-# 5) Edit your eggdrop's configuration file and add the qstat.tcl script. 
+# 5) You can change the layout of the output in the server.qstat and
+#    players.qstat files. See the Qstat documentation for more information.
+# 6) Edit your eggdrop's configuration file and add the qstat.tcl script. 
 #    If you don't how to do this, please RTFM :)
-# 6) Rehash
-# 7) Typ !qstat in a channel for a command list.
-# 8) Have fun :)
+# 7) Rehash the bot
+# 8) Typ !qstat in a channel for a command list.
+# 9) Have fun :)
 #
 
 ### Configuration settings ###
@@ -113,6 +115,7 @@ proc qstat:help {nick host hand chan arg} {
   putserv "NOTICE $nick :Qstat commands:"
   putserv "NOTICE $nick :\002!qw / !q1 / !q2 / !q3 / !rcw <ip/host>\002 - Displays status of queried Quake World, 1, 2, 3 or RTCW servers"
   putserv "NOTICE $nick :\002!ut / !ut2003 / !hl / !bf / !gs <ip/host>\002 - Displays status of queried UT(2003), Half-life, BF1942 and GameSpy servers"
+  putserv "NOTICE $nick :Add 'p' behind the command to display the players on the server."
 
   return 0
 }
@@ -127,7 +130,7 @@ proc qstat:pub {nick host hand chan arg} {
   set arg [lindex $arg 0]
 
   # check for input.
-  if {[string length [string trim $arg]] == 0 || [qstat:input_check $arg]} {
+  if {![regexp {\[\[:alnum:\]\.\:\-\].*?} $arg]} {
     putserv "NOTICE $nick :Syntax: $lastbind <ip/host>"
     return 0
   }
@@ -180,14 +183,6 @@ proc qstat:pub {nick host hand chan arg} {
     catch { exec $qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat } lines
   }
 
-  # output the result.
-  qstat:results $lines $chan $nick $qstat(method)
-
-  return 0
-}
-
-# show results.
-proc qstat:results {lines chan nick method} {
   foreach line [split $lines \n] {
     if {[string match "DOWN*" $line]} {
       putquick "NOTICE $nick :Connection refused while querying server."
@@ -199,7 +194,7 @@ proc qstat:results {lines chan nick method} {
       putquick "NOTICE $nick :Timeout while querying server."
       break
     }
-    switch -- $method {
+    switch -- $qstat(method) {
       0 { putserv "PRIVMSG $nick :$line" }
       1 { putserv "PRIVMSG $chan :$line" }
       2 { putserv "NOTICE $nick :$line" }
@@ -207,11 +202,7 @@ proc qstat:results {lines chan nick method} {
       default { putserv "PRIVMSG $chan :$line" }
     }
   }
-}
 
-# check for valid characters
-proc qstat:input_check {text} {
-  if {[regexp \[^\[:alnum:\]_\.\:\-\] $text]} { return 1 }
   return 0
 }
 
