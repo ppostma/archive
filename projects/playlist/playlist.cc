@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: playlist.cc,v 1.3 2003-05-11 14:39:58 peter Exp $
+ * $Id: playlist.cc,v 1.4 2003-05-11 15:32:11 peter Exp $
  */
 
 #include <stdlib.h>
@@ -205,9 +205,12 @@ int main(int argc, char *argv[])
 		} else {
 			time.erase();
 
-			pos1 = temp.find_last_of("/");
-			if (pos1 == string::npos)
-				continue;
+			pos1 = temp.find_last_of("/");		// Unix
+			if (pos1 == string::npos) {
+				pos1 = temp.find_last_of("\\");	// Windows
+				if (pos1 == string::npos)
+					continue;
+			}
 
 			pos2 = temp.find(".mp3");
 			if (pos2 == string::npos)
