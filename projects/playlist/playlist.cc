@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.12 2003-10-12 17:54:18 peter Exp $
+ * $Id: playlist.cc,v 1.13 2003-10-12 23:34:02 peter Exp $
  */
 
 #include <stdlib.h>
@@ -227,7 +227,6 @@ int main(int argc, char *argv[])
 	long			totaltime = 0;
 	long			totaltracks = 0;
 	long			unknownlength = 0;
-	bool			extinfo = false;
 	Playlist		List;
 
 	if (argc != 2) {
@@ -252,17 +251,6 @@ int main(int argc, char *argv[])
 		if (temp.empty())
 			continue;
 
-		if (extinfo == true) {
-			extinfo = false;
-			continue;
-		}
-
-		// extended info?
-		if (temp.find("#EXTINF") == string::npos)
-			extinfo = false;
-		else
-			extinfo = true;
-
 		// remove \r and \n from the string
 		pos1 = temp.find("\r");
 		if (pos1 != string::npos)
@@ -271,7 +259,8 @@ int main(int argc, char *argv[])
 		if (pos1 != string::npos)
 			temp.erase(pos1);
 
-		if (extinfo == true) {
+		// extended info?
+		if (temp.find("#EXTINF") != string::npos) {
 			pos1 = temp.find_first_of(":");
 			if (pos1 == string::npos)
 				continue;
@@ -285,6 +274,10 @@ int main(int argc, char *argv[])
 				time.erase();
 
 			track = temp.substr(pos2+1, temp.length());
+
+			// skip next line, we don't need the path info here
+			getline(input, temp);
+
 		} else {
 			time.erase();
 
