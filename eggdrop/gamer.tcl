@@ -1,7 +1,7 @@
-# $Id: gamer.tcl,v 1.22 2003-07-09 17:19:34 peter Exp $
+# $Id: gamer.tcl,v 1.23 2003-07-10 08:16:54 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -10,6 +10,7 @@
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
 #  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
+#  - script werkt nu ook met TCL 8.0.
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -60,7 +61,7 @@
 # Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
 # Zet http.tcl *niet* in je eggdrop configuratie!
 #
-# Het gamer.tcl script werkt het best met TCL versies vanaf 8.1.
+# Het gamer.tcl script werkt het best met TCL versies vanaf 8.0.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 #
@@ -146,8 +147,8 @@ package require http
 
 set gamer(version) "2.0"
 
-if {[info tclversion] < 8.1} {
-  putlog "\[Gamer.nl\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
+if {[info tclversion] < 8.0} {
+  putlog "\[Gamer.nl\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.0 nodig en u heeft TCL versie [info tclversion]."
   return 1
 }
 
@@ -160,11 +161,11 @@ set whichtimer [timerexists "gamer:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
 catch { unset whichtimer }
 
-for {set i 0} {$i < [llength $gamer(triggers)]} {incr i} {
-  bind pub $gamer(flags) [lindex $gamer(triggers) $i] gamer:pub
-  if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger [lindex $gamer(triggers) $i] added." }
+foreach trigger [split $gamer(triggers)] {
+  bind pub $gamer(flags) $trigger gamer:pub
+  if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger $trigger added." }
 }
-catch { unset i }
+catch { unset trigger }
 
 bind pub $gamer(autotriggerflag) $gamer(autofftrigger) gamer:autoff
 bind pub $gamer(autotriggerflag) $gamer(autontrigger) gamer:auton
@@ -178,7 +179,7 @@ proc gamer:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$gamer(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*?)} $gamer(proxy) t proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9].*)} $gamer(proxy) trash proxyhost proxyport]} {
       putlog "\[Gamer.nl\] Wrong proxy configuration ($gamer(proxy))"
       return -1
     }
@@ -193,34 +194,33 @@ proc gamer:getdata {} {
   
   if {[::http::status $page] != "ok"} {
     putlog "\[Gamer.nl\] Problem: [::http::status $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[Gamer.nl\] Problem: [::http::code $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {[info exists gamerdata]} { unset gamerdata }
 
-  set lines [split [::http::data $page] \n]
   set count 0
-
-  for {set i 0} {$i < [llength $lines]} {incr i} {
-    set line [lindex $lines $i]
+  foreach line [split [::http::data $page] \n] {
     regsub -all "\\&" $line "\\\\&" line
-    regexp "<id>(.*?)</id>" $line trash gamerdata(id,$count)
-    regexp "<title>(.*?)</title>" $line trash gamerdata(titel,$count)
-    regexp "<author>(.*?)</author>" $line trash gamerdata(auteur,$count)
-    regexp "<time>(.*?)</time>" $line trash gamerdata(tijd,$count)
-    regexp "<unix_timestamp>(.*?)</unix_timestamp>" $line trash gamerdata(ts,$count)
-    if {[regexp "<comments>(.*?)</comments>" $line trash gamerdata(reac,$count)]} { incr count }
+    regexp "<id>(.*)</id>" $line trash gamerdata(id,$count)
+    regexp "<title>(.*)</title>" $line trash gamerdata(titel,$count)
+    regexp "<author>(.*)</author>" $line trash gamerdata(auteur,$count)
+    regexp "<time>(.*)</time>" $line trash gamerdata(tijd,$count)
+    regexp "<unix_timestamp>(.*)</unix_timestamp>" $line trash gamerdata(ts,$count)
+    if {[regexp "<comments>(.*)</comments>" $line trash gamerdata(reac,$count)]} { incr count }
   }
 
   set gamer(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg lines count line trash }
+  catch { unset url page msg count line trash }
 
   return 0
 }
@@ -273,7 +273,7 @@ proc gamer:put {chan nick which method} {
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
   regsub -all "%u" $outchan "\037" outchan
-  switch -- $method {
+  switch $method {
     0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }

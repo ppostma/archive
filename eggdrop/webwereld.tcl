@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.9 2003-07-09 17:19:34 peter Exp $
+# $Id: webwereld.tcl,v 1.10 2003-07-10 08:16:54 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -10,6 +10,7 @@
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
 #  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
+#  - script werkt nu ook met TCL 8.0.
 # 1.0: (04/07/2003)
 #  - eerste versie, gebaseerd op tweakers.tcl v1.9
 #
@@ -19,7 +20,7 @@
 # Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
 # Zet http.tcl *niet* in je eggdrop configuratie!
 #
-# Het webwereld.tcl script werkt het best met TCL versies vanaf 8.1.
+# Het webwereld.tcl script werkt het best met TCL versies vanaf 8.0.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
@@ -103,8 +104,8 @@ package require http
 
 set webw(version) "1.1"
 
-if {[info tclversion] < 8.1} {
-  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
+if {[info tclversion] < 8.0} {
+  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.0 nodig en u heeft TCL versie [info tclversion]."
   return 1
 }
 
@@ -117,11 +118,11 @@ set whichtimer [timerexists "webw:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
 catch { unset whichtimer }
 
-for {set i 0} {$i < [llength $webw(triggers)]} {incr i} {
-  bind pub $webw(flags) [lindex $webw(triggers) $i] webw:pub
-  if {$webw(log)} { putlog "\[WebWereld\] Trigger [lindex $webw(triggers) $i] added." }
+foreach trigger [split $webw(triggers)] {
+  bind pub $webw(flags) $trigger webw:pub
+  if {$webw(log)} { putlog "\[WebWereld\] Trigger $trigger added." }
 }
-catch { unset i }
+catch { unset trigger }
 
 bind pub $webw(autotriggerflag) $webw(autofftrigger) webw:autoff
 bind pub $webw(autotriggerflag) $webw(autontrigger) webw:auton
@@ -135,7 +136,7 @@ proc webw:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$webw(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*?)} $webw(proxy) t proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9].*)} $webw(proxy) trash proxyhost proxyport]} {
       putlog "\[WebWereld\] Wrong proxy configuration ($webw(proxy))"
       return -1
     }
@@ -150,36 +151,35 @@ proc webw:getdata {} {
   
   if {[::http::status $page] != "ok"} {
     putlog "\[WebWereld\] Problem: [::http::status $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[WebWereld\] Problem: [::http::code $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {[info exists webwdata]} { unset webwdata }
 
-  set lines [split [::http::data $page] \n]
   set count 0
   set item 0
-
-  for {set i 0} {$i < [llength $lines]} {incr i} {
-    set line [lindex $lines $i]
+  foreach line [split [::http::data $page] \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
     if {$item == 1} {
-      regexp "<title>(.*?)</title>" $line trash webwdata(title,$count)
-      regexp "<link>(.*?)</link>" $line trash webwdata(link,$count)
-      if {[regexp "<description>(.*?)</description>" $line trash webwdata(descr,$count)]} { incr count }
+      regexp "<title>(.*)</title>" $line trash webwdata(title,$count)
+      regexp "<link>(.*)</link>" $line trash webwdata(link,$count)
+      if {[regexp "<description>(.*)</description>" $line trash webwdata(descr,$count)]} { incr count }
     }
   }
 
   set webw(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg lines count item line trash }
+  catch { unset url page msg count item line trash }
 
   return 0
 }
@@ -230,7 +230,7 @@ proc webw:put {chan nick which method} {
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
   regsub -all "%u" $outchan "\037" outchan
-  switch -- $method {
+  switch $method {
     0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
