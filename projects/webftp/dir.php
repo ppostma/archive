@@ -1,5 +1,5 @@
 <? 
-  # $Id: dir.php,v 1.2 2003-08-01 21:48:47 peter Exp $
+  # $Id: dir.php,v 1.3 2003-10-11 17:08:49 peter Exp $
   #
   # WebFTP client - dir
   #
@@ -76,7 +76,7 @@
       $dir = ($ftp->curdir == '/') ? "" : $ftp->curdir;
   ?>
   <tr>
-    <td><img src="<?= ($isdir) ? "folder.gif" : "file.gif" ?>" alt="folder" /></td>
+    <td><img src="<?= ($isdir) ? "folder.gif" : "file.gif" ?>" alt="<?= ($isdir) ? "folder" : "file" ?>" /></td>
     <td><b><a href="<?= $_SERVER['PHP_SELF'] . "?dir=" . $ftp->curdir ?><?= (!$isdir) ? "&amp;file=" : "/" ?><?= $filedir ?>"><?= $filedir ?></a> &nbsp;</b></td>
     <td><?= round($size / 1024, 2) . " kB" ?> &nbsp;</td>
     <td><?= $chmod ?> &nbsp;</td>
