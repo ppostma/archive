@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.21 2003-07-09 15:14:07 peter Exp $
+# $Id: tweakers.tcl,v 1.22 2003-07-09 15:17:52 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -316,9 +316,7 @@ proc tnet:update {} {
         if {![info exists tnetdata(ts,$i)]} { break }
         if {$tnetdata(ts,$i) == $tnet(lastitem)} { break }
         foreach chan [split $tnet(autonewschan)] { tnet:put $chan $chan $i 1 }
-        catch { unset chan }
       }
-      catch { unset i }
     } else {
       if {$tnet(log)} { putlog "\[T.Net\] No news." } 
     }
@@ -333,6 +331,7 @@ proc tnet:update {} {
     timer $tnet(updates) tnet:update
   }
 
+  catch { unset i chan }
   return 0
 }
 

@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.6 2003-07-09 15:14:07 peter Exp $
+# $Id: webwereld.tcl,v 1.7 2003-07-09 15:17:52 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -263,9 +263,7 @@ proc webw:update {} {
         if {![info exists webwdata(link,$i)]} { break }
         if {$webwdata(link,$i) == $webw(lastitem)} { break }
         foreach chan [split $webw(autonewschan)] { webw:put $chan $chan $i 1 }
-        catch { unset chan }
       }
-      catch { unset i }
     } else {
       if {$webw(log)} { putlog "\[WebWereld\] No news." } 
     }
@@ -280,6 +278,7 @@ proc webw:update {} {
     timer $webw(updates) webw:update
   }
 
+  catch { unset i chan }
   return 0
 }
 

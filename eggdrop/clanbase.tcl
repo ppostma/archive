@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.18 2003-07-09 15:14:07 peter Exp $
+# $Id: clanbase.tcl,v 1.19 2003-07-09 15:17:52 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -271,9 +271,7 @@ proc cb:update {} {
         if {![info exists cbdata(title,$i)]} { break }
         if {$cbdata(title,$i) == $cb(lastitem)} { break }
         foreach chan [split $cb(autonewschan)] { cb:put $chan $chan $i 1 }
-        catch { unset chan }
       }
-      catch { unset i }
     } else {
       if {$cb(log)} { putlog "\[Clanbase\] No news." } 
     }
@@ -288,6 +286,7 @@ proc cb:update {} {
     timer $cb(updates) cb:update
   }
 
+  catch { unset i chan }
   return 0
 }
 
