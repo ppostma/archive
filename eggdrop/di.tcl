@@ -1,9 +1,11 @@
-# $Id: di.tcl,v 1.5 2003-07-04 13:49:09 peter Exp $
+# $Id: di.tcl,v 1.6 2003-07-10 08:56:18 peter Exp $
 
 # Digitally Imported Radio info script for the eggdrop
-# version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.2, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 0.3: (??/??/????)
+#  - fixes for TCL 8.0.
 # 0.2: (04/07/2003)
 #  - added several configuration options:
 #  - configurable flags
@@ -55,17 +57,15 @@ set di(layout) "\[%bDI%b %chantitle\] %tracktitle, playing since %since"
 
 package require http
 
-set di(version) 0.2
+set di(version) 0.3
 
-if {[info tclversion] < 8.1} {
-  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.0} {
+  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.0 and you have TCL version [info tclversion]."
   return 1
 }
 
-for {set i 0} {$i < [llength $di(triggers)]} {incr i} {
-  bind pub $di(flags) [lindex $di(triggers) $i] pub:di
-}
-catch { unset i }
+foreach trigger [split $di(triggers)] { bind pub $di(flags) $trigger pub:di }
+catch { unset trigger }
 
 proc pub:di {nick uhost hand chan text} {
   global di lastbind
@@ -149,7 +149,7 @@ proc pub:di {nick uhost hand chan text} {
   }
   set di(data) [http::data $di(page)]
 
-  if {[regexp -nocase "<CHANNELTITLE>$chantitle</CHANNELTITLE>.*?<TRACKTITLE>(.+)</TRACKTITLE>.*?<STARTTIME>(.+)</STARTTIME>" $di(data) t tracktitle starttime]} {
+  if {[regexp -nocase "<CHANNELTITLE>$chantitle</CHANNELTITLE>.*<TRACKTITLE>(.+)</TRACKTITLE>.*<STARTTIME>(.+)</STARTTIME>" $di(data) t tracktitle starttime]} {
     set outchan $di(layout)
     regsub -all "%chantitle"  $outchan $chantitle outchan
     regsub -all "%tracktitle" $outchan $tracktitle outchan
@@ -157,7 +157,7 @@ proc pub:di {nick uhost hand chan text} {
     regsub -all "%since" $outchan [clock format $starttime -format %H:%M:%S] outchan
     regsub -all "%b" $outchan "\002" outchan
     regsub -all "%u" $outchan "\037" outchan
-    switch -- $di(method) {
+    switch $di(method) {
       0 { putquick "PRIVMSG $nick :$outchan" }
       1 { putquick "PRIVMSG $chan :$outchan" }
       2 { putquick "NOTICE $nick :$outchan" }
