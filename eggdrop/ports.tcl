@@ -1,9 +1,11 @@
-# $Id: ports.tcl,v 1.6 2003-08-02 14:31:22 peter Exp $
+# $Id: ports.tcl,v 1.7 2003-08-02 14:37:06 peter Exp $
 
 # FreeBSD Ports search script for the eggdrop
-# version 0.2, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.3, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 0.3: (??/??/????)
+#  - code tweaks
 # 0.2: (04/07/2003)
 #  - added several configuration options:
 #  - configurable flags
@@ -20,14 +22,14 @@
 
 ### Configuration settings ###
 
+# the triggers: [seperate with spaces]
+set ports(triggers) "!port"
+
 # flags needed to use the trigger [default=everyone]
 set ports(flags) "-|-"
 
 # channels where the bot doesn't respond to triggers [seperate with spaces]
 set ports(nopub) "" 
-
-# the triggers: [seperate with spaces]
-set ports(triggers) "!port"
 
 # flood protection: seconds between use of the triggers
 # to disable: set it to 0
@@ -50,7 +52,7 @@ set ports(method) 1
 
 ### Begin Tcl code ###
 
-set ports(version) 0.2
+set ports(version) 0.3
 
 if {$ports(info) == "web"} {
   if {[catch { package require http } err]} {
@@ -64,13 +66,12 @@ if {[info tclversion] < 8.1} {
   return 1
 }
 
-
-for {set i 0} {$i < [llength $ports(triggers)]} {incr i} {
-  bind pub $ports(flags) [lindex $ports(triggers) $i] pub:ports
+foreach trigger [split $ports(triggers)] {
+  bind pub $ports(flags) $trigger ports:pub
 }
-catch { unset i }
+catch { unset trigger }
 
-proc pub:ports {nick uhost hand chan text} {
+proc ports:pub {nick uhost hand chan text} {
   global ports lastbind
 
   if {[string length [string trim [lindex $text 0]]] == 0} {

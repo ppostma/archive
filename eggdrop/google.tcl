@@ -1,23 +1,25 @@
-# $Id: google.tcl,v 1.8 2003-08-02 14:31:22 peter Exp $
+# $Id: google.tcl,v 1.9 2003-08-02 14:37:06 peter Exp $
 
 # Google script for the eggdrop
-# version 0.3, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 0.4: (??/??/????)
+#  - code tweaks
 # 0.3: (09/07/2003)
 #  - added several configuration options
 #
 
 ### Configuration settings ###
 
+# the triggers: [seperate with spaces]
+set google(triggers) "!google"
+
 # flags needed to use the trigger [default=everyone]
 set google(flags) "-|-"
 
 # channels where the bot doesn't respond to triggers [seperate with spaces]
 set google(nopub) "" 
-
-# the triggers: [seperate with spaces]
-set google(triggers) "!google"
 
 # flood protection: seconds between use of the triggers
 # to disable: set it to 0
@@ -38,7 +40,7 @@ set google(results) 3
 
 ### Begin Tcl code ###
 
-set google(version) 0.3
+set google(version) 0.4
 
 if {[catch { package require http } err]} {
   putlog "Cannot load [file tail [info script]]: Problem loading the http package: $err"
@@ -50,12 +52,12 @@ if {[info tclversion] < 8.1} {
   return 1
 }
 
-for {set i 0} {$i < [llength $google(triggers)]} {incr i} {
-  bind pub $google(flags) [lindex $google(triggers) $i] pub:google
+foreach trigger [split $google(triggers)] {
+  bind pub $google(flags) $trigger google:pub
 }
-catch { unset i }
+catch { unset trigger }
 
-proc pub:google {nick uhost hand chan text} {
+proc google:pub {nick uhost hand chan text} {
   global lastbind google
 
   if {[lsearch -exact $google(nopub) [string tolower $chan]] >= 0} { return 0 }
