@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.16 2003-08-16 14:19:00 peter Exp $
+ * $Id: ess.c,v 1.17 2003-08-16 15:57:38 peter Exp $
  */
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ main(argc, argv)
 			verbose_flag = 1;
 			break;
 		case 'V':
-			fprintf(stderr, "Service Scan v%s by Peter Postma "
+			fprintf(stderr, "Easy Service Scan v%s by Peter Postma "
 					"<peter@webdeveloping.nl>\n", VERSION);
 			exit(99);
 		case 'h':
