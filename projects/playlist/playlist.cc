@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.7 2003-07-28 17:28:48 peter Exp $
+ * $Id: playlist.cc,v 1.8 2003-07-28 18:21:46 peter Exp $
  */
 
 #include <stdlib.h>
@@ -273,6 +273,9 @@ int main(int argc, char *argv[])
 				continue;
 
 			time  = temp.substr(pos1+1, (pos2 - pos1) - 1);
+			if (atol(time.c_str()) < 0)  // Remove negative values
+				time.erase();
+
 			track = temp.substr(pos2+1, temp.length());
 		} else {
 			time.erase();
