@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.13 2003-08-13 11:16:02 peter Exp $
+ * $Id: ess.c,v 1.14 2003-08-13 15:48:55 peter Exp $
  */
 
 #include <sys/types.h>
@@ -339,9 +339,9 @@ readcode(fd)
 			printf("<<< %s", response);
 	} while (response[3] == '-');
 
-	if (isnumber((int)response[0]) &&
-	    isnumber((int)response[1]) &&
-	    isnumber((int)response[2])) {
+	if (isdigit((int)response[0]) &&
+	    isdigit((int)response[1]) &&
+	    isdigit((int)response[2])) {
 		strncpy(code, response, 3);
 		return atoi(code);
 	}
