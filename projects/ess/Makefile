@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2003-10-12 17:01:30 peter Exp $
+# $Id: Makefile,v 1.8 2003-11-02 19:13:16 peter Exp $
 
 CC	= gcc
 CFLAGS	= -DRESOLVE -Wall -O2
@@ -10,7 +10,7 @@ CFLAGS	= -DRESOLVE -Wall -O2
 SRC	= ess.c
 EXEC	= ess
 
-default:
+all:
 	$(CC) $(CFLAGS) -o $(EXEC) $(SRC) $(LIBS)
 	strip $(EXEC)
 
