@@ -1,4 +1,4 @@
-Service Scanner v0.3 by Peter Postma <peter@webdeveloping.nl>
+Service Scanner v0.3.1 by Peter Postma <peter@webdeveloping.nl>
 
 This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
