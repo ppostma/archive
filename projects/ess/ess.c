@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.35 2003-11-05 16:00:28 peter Exp $
+ * $Id: ess.c,v 1.36 2003-11-05 18:00:36 peter Exp $
  */
 
 #include <sys/types.h>
@@ -444,9 +444,10 @@ banner_scan(u_short port)
 	FD_ZERO(&read_fds);
 	FD_SET(ssock, &read_fds);
 
-	buf = (char *)malloc(BANNER_SIZE);
-	if (buf == NULL)
-		return;
+	if ((buf = (char *)malloc(BANNER_SIZE)) == NULL) {
+		perror("malloc");
+		exit(255);
+	}
 
 	if (port == 80)
 		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);

@@ -46,4 +46,5 @@ Exit codes:
   99 - code when option -V is used
  128 - bad address/service or some other error which causes
        the address/name resolve functions to fail
- 255 - error in a socket operation (write, read, getsockname, etc...)
+ 255 - error in socket operation (send, recv, getsockname, etc...)
+       or malloc failure
