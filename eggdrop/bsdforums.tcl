@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.8 2003-07-07 17:36:16 peter Exp $
+# $Id: bsdforums.tcl,v 1.9 2003-07-07 18:57:29 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -246,32 +246,30 @@ proc bsdforums:update {} {
 
   if {[bsdforums:getdata] != -1} {
 
-    if {![info exists bsdforumsdata(title,0)]} {
+    if {![info exists bsdforumsdata(link,0)]} {
       putlog "\[BSDForums\] Something went wrong while updating..."
       return -1
     }
 
     if {![info exists bsdforums(lastitem)]} {
-      set bsdforums(lastitem) $bsdforumsdata(title,0)
-      if {$bsdforums(log)} { putlog "\[BSDForums\] Last news item set to '$bsdforumsdata(title,0)'." }
+      set bsdforums(lastitem) $bsdforumsdata(link,0)
+      if {$bsdforums(log)} { putlog "\[BSDForums\] Last news item set to '$bsdforumsdata(link,0)'." }
     } else {
-      if {$bsdforums(log)} { putlog "\[BSDForums\] Last news item is '$bsdforumsdata(title,0)'." }
+      if {$bsdforums(log)} { putlog "\[BSDForums\] Last news item is '$bsdforumsdata(link,0)'." }
     }
 
-    if {$bsdforumsdata(title,0) != $bsdforums(lastitem)} {
+    if {$bsdforumsdata(link,0) != $bsdforums(lastitem)} {
       if {$bsdforums(log)} { putlog "\[BSDForums\] There's news!" }
       for {set i 0} {$i < $bsdforums(automax)} {incr i} {
-        if {![info exists bsdforumsdata(title,$i)]} { break }
-        if {$bsdforumsdata(title,$i) == $bsdforums(lastitem)} { break }
+        if {![info exists bsdforumsdata(link,$i)]} { break }
+        if {$bsdforumsdata(link,$i) == $bsdforums(lastitem)} { break }
         foreach chan [split $bsdforums(autonewschan)] { bsdforums:put $chan $chan $i 1 }
-        catch { unset chan }
       }
-      catch { unset i }
     } else {
       if {$bsdforums(log)} { putlog "\[BSDForums\] No news." } 
     }
 
-    set bsdforums(lastitem) $bsdforumsdata(title,0)
+    set bsdforums(lastitem) $bsdforumsdata(link,0)
   }
 
   if {$bsdforums(updates) < 120} { 
@@ -281,6 +279,7 @@ proc bsdforums:update {} {
     timer $bsdforums(updates) bsdforums:update
   }
 
+  catch { unset i chan }
   return 0
 }
 

@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.16 2003-07-07 17:36:16 peter Exp $
+# $Id: kerneltrap.tcl,v 1.17 2003-07-07 18:57:29 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -252,32 +252,30 @@ proc kerneltrap:update {} {
 
   if {[kerneltrap:getdata] != -1} {
 
-    if {![info exists kerneltrapdata(title,0)]} {
+    if {![info exists kerneltrapdata(link,0)]} {
       putlog "\[KernelTrap\] Something went wrong while updating..."
       return -1
     }
 
     if {![info exists kerneltrap(lastitem)]} {
-      set kerneltrap(lastitem) $kerneltrapdata(title,0)
-      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item set to '$kerneltrapdata(title,0)'." }
+      set kerneltrap(lastitem) $kerneltrapdata(link,0)
+      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item set to '$kerneltrapdata(link,0)'." }
     } else {
-      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item is '$kerneltrapdata(title,0)'." }
+      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item is '$kerneltrapdata(link,0)'." }
     }
 
-    if {$kerneltrapdata(title,0) != $kerneltrap(lastitem)} {
+    if {$kerneltrapdata(link,0) != $kerneltrap(lastitem)} {
       if {$kerneltrap(log)} { putlog "\[KernelTrap\] There's news!" }
       for {set i 0} {$i < $kerneltrap(automax)} {incr i} {
-        if {![info exists kerneltrapdata(title,$i)]} { break }
-        if {$kerneltrapdata(title,$i) == $kerneltrap(lastitem)} { break }
+        if {![info exists kerneltrapdata(link,$i)]} { break }
+        if {$kerneltrapdata(link,$i) == $kerneltrap(lastitem)} { break }
         foreach chan [split $kerneltrap(autonewschan)] { kerneltrap:put $chan $chan $i 1 }
-        catch { unset chan }
       }
-      catch { unset i }
     } else {
       if {$kerneltrap(log)} { putlog "\[KernelTrap\] No news." } 
     }
 
-    set kerneltrap(lastitem) $kerneltrapdata(title,0)
+    set kerneltrap(lastitem) $kerneltrapdata(link,0)
   }
 
   if {$kerneltrap(updates) < 30} {
@@ -287,6 +285,7 @@ proc kerneltrap:update {} {
     timer $kerneltrap(updates) kerneltrap:update
   }
 
+  catch { unset i chan }
   return 0
 }
 

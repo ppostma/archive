@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.16 2003-07-07 17:36:16 peter Exp $
+# $Id: osnews.tcl,v 1.17 2003-07-07 18:57:29 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -252,32 +252,30 @@ proc osnews:update {} {
 
   if {[osnews:getdata] != -1} {
 
-    if {![info exists osnewsdata(title,0)]} {
+    if {![info exists osnewsdata(link,0)]} {
       putlog "\[OSnews\] Something went wrong while updating..."
       return -1
     }
 
     if {![info exists osnews(lastitem)]} {
-      set osnews(lastitem) $osnewsdata(title,0)
-      if {$osnews(log)} { putlog "\[OSnews\] Last news item set to '$osnewsdata(title,0)'." }
+      set osnews(lastitem) $osnewsdata(link,0)
+      if {$osnews(log)} { putlog "\[OSnews\] Last news item set to '$osnewsdata(link,0)'." }
     } else {
-      if {$osnews(log)} { putlog "\[OSnews\] Last news item is '$osnewsdata(title,0)'." }
+      if {$osnews(log)} { putlog "\[OSnews\] Last news item is '$osnewsdata(link,0)'." }
     }
 
-    if {$osnewsdata(title,0) != $osnews(lastitem)} {
+    if {$osnewsdata(link,0) != $osnews(lastitem)} {
       if {$osnews(log)} { putlog "\[OSnews\] There's news!" }
       for {set i 0} {$i < $osnews(automax)} {incr i} {
-        if {![info exists osnewsdata(title,$i)]} { break }
-        if {$osnewsdata(title,$i) == $osnews(lastitem)} { break }
+        if {![info exists osnewsdata(link,$i)]} { break }
+        if {$osnewsdata(link,$i) == $osnews(lastitem)} { break }
         foreach chan [split $osnews(autonewschan)] { osnews:put $chan $chan $i 1 }
-        catch { unset chan }
       }
-      catch { unset i }
     } else {
       if {$osnews(log)} { putlog "\[OSnews\] No news." } 
     }
 
-    set osnews(lastitem) $osnewsdata(title,0)
+    set osnews(lastitem) $osnewsdata(link,0)
   }
 
   if {$osnews(updates) < 30} { 
@@ -287,6 +285,7 @@ proc osnews:update {} {
     timer $osnews(updates) osnews:update
   }
 
+  catch { unset i chan }
   return 0
 }
 
