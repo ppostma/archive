@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.23 2003-08-22 16:29:07 peter Exp $
+ * $Id: ess.c,v 1.24 2003-09-29 19:52:32 peter Exp $
  */
 
 #include <sys/types.h>
@@ -68,9 +68,7 @@ int	resolve_flag = 0;
 #endif
 
 int
-main(argc, argv)
-	int	 argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	struct sockaddr_storage	ss;
 	struct addrinfo	 hints, *res, *ai;
@@ -285,10 +283,7 @@ print_results:
 }
 
 size_t
-readln(fd, line, len)
-	int	 fd;
-	char	*line;
-	size_t	 len;
+readln(int fd, char *line, size_t len)
 {
 	size_t	b, i = 0;
 	char	temp[1];
@@ -309,8 +304,7 @@ readln(fd, line, len)
 }
 
 size_t
-readall(fd)
-	int	fd;
+readall(int fd)
 {
 	char	response[1024];
 	size_t	b, count = 0;
@@ -326,8 +320,7 @@ readall(fd)
 }
 
 int
-readcode(fd)
-	int	fd;
+readcode(int fd)
 {
 	char	response[1024];
 	char	code[4];
@@ -349,8 +342,7 @@ readcode(fd)
 }
 
 char *
-get_af(af)
-	int	af;
+get_af(int af)
 {
 	switch (af) {
 	case AF_INET:
@@ -364,10 +356,7 @@ get_af(af)
 }
 
 char *
-get_addr(addr, len, resolve)
-	struct sockaddr *addr;
-	size_t		 len;
-	int		 resolve;
+get_addr(struct sockaddr *addr, size_t len, int resolve)
 {
 	struct sockaddr_storage	ss;
 	static char	host[NI_MAXHOST];
@@ -381,8 +370,7 @@ get_addr(addr, len, resolve)
 }
 
 char *
-get_serv(port)
-	char	*port;
+get_serv(char *port)
 {
 	struct servent	*service;
 	static char	 buf[NI_MAXSERV];
@@ -409,10 +397,7 @@ name:
 }
 
 char *
-ident_scan(host, ai_family, remoteport, localport)
-	char	*host;
-	int	 ai_family;
-	u_short	 remoteport, localport;
+ident_scan(char *host, int ai_family, u_short remoteport, u_short localport)
 {
 	struct addrinfo	 hints;
 	struct addrinfo *res, *ai;
@@ -471,8 +456,7 @@ ident_scan(host, ai_family, remoteport, localport)
 }
 
 char *
-banner_scan(port)
-	u_short	port;
+banner_scan(u_short port)
 {
 	static char	buf[2048];
 	int		count;
@@ -489,8 +473,7 @@ banner_scan(port)
 }
 
 int
-ftp_scan(name)
-	char	*name;
+ftp_scan(char *name)
 {
 	char	 request[1024];
 	int	 code;
@@ -528,9 +511,7 @@ ftp_scan(name)
 }
 
 int
-relay_scan(host, ip)
-	char	*host;
-	char	*ip;
+relay_scan(char *host, char *ip)
 {
 	char	 request[1024];
 	struct	 scans {
@@ -639,16 +620,14 @@ relay_scan(host, ip)
 }
 
 void
-timeout_handler(s)
-	int	s;
+timeout_handler(int s)
 {
 	timedout = 1;
 	close(ssock);
 }
 
 void
-usage(progname)
-	char	*progname;
+usage(char *progname)
 {
 	fprintf(stderr,
 "Usage: %s [options] hostname port\n"
@@ -671,8 +650,7 @@ usage(progname)
 }
 
 void
-error(errornum)
-	int	errornum;
+error(int errornum)
 {
 	fprintf(stderr, "Fatal error: ");
 
