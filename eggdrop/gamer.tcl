@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.7 2003-05-21 15:45:27 peter Exp $
+# $Id: gamer.tcl,v 1.8 2003-05-21 16:26:02 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
 # version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -214,7 +214,7 @@ proc gamer:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset outchan }
+  catch { unset item outchan }
 }
 
 proc gamer:update {} {

@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.8 2003-05-21 15:45:27 peter Exp $
+# $Id: slashdot.tcl,v 1.9 2003-05-21 16:26:02 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.7 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -186,7 +186,7 @@ proc slashdot:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset outchan }
+  catch { unset item outchan }
 }
 
 proc slashdot:update {} {

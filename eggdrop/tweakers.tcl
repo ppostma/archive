@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.8 2003-05-21 15:45:27 peter Exp $
+# $Id: tweakers.tcl,v 1.9 2003-05-21 16:26:02 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
 # version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -223,7 +223,7 @@ proc tnet:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset outchan }
+  catch { unset item outchan }
 }
 
 proc tnet:update {} {
