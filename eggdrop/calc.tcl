@@ -1,17 +1,17 @@
-# $Id: calc.tcl,v 1.2 2003-06-22 12:22:44 peter Exp $
+# $Id: calc.tcl,v 1.3 2003-07-03 21:22:51 peter Exp $
 
 # Calculator for an eggdrop
-# version 1.0, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 03/07/2003, by Peter Postma <peter@webdeveloping.nl>
 
 bind pub -|- "!calc" pub:calc
 
-set calc_version "1.0"
+set calc(version) "1.1"
 
 proc pub:calc {nick uhost hand chan text} {
   global lastbind
  
   if {[string length [string trim [lindex $text 0]]] == 0} {
-    putserv "notice $nick :Syntax: $lastbind <math>"
+    putserv "NOTICE $nick :Syntax: $lastbind <math>"
     return 0
   }
 
@@ -23,13 +23,13 @@ proc pub:calc {nick uhost hand chan text} {
 
   # do not allow brackets!!
   if {![regexp -all {\[} $text] || ![regexp -all {\]} $text]} {
-    putserv "privmsg $chan :$text = [expr $math]"
+    putserv "PRIVMSG $chan :$text = [expr $math]"
   } else {
-    putserv "notice $nick :sorry, those chars are not allowed."
+    putserv "NOTICE $nick :sorry, those chars are not allowed."
   } 
   
-  putlog "($lastbind) $nick $uhost at $chan: $text"
+  putlog "($lastbind) $nick $uhost in $chan: $text"
   
 }
 
-putlog "Calculator v$calc_version is loaded."
+putlog "Calculator v$calc(version) is loaded."
