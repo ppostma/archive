@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.10 2003-07-29 15:26:41 peter Exp $
+ * $Id: playlist.cc,v 1.11 2003-10-10 19:58:27 peter Exp $
  */
 
 #include <stdlib.h>
@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
 			if (pos1 == string::npos) {
 				pos1 = temp.find_last_of("\\");	// Windows
 				if (pos1 == string::npos)
-					continue;
+					pos1 = 0;		// No Path
 			}
 
 			pos2 = temp.find(".mp3");
@@ -318,7 +318,8 @@ int main(int argc, char *argv[])
 
 	cout << DIV_STATS;
 	cout << HILITE(itos(totaltracks)) << " tracks in playlist, average track length: ";
-	cout << HILITE(time2texts(totaltime / (totaltracks - unknownlength)));
+	if (totaltime > 0)
+		cout << HILITE(time2texts(totaltime / (totaltracks - unknownlength)));
 	cout << BR << endl;
 
 	if (unknownlength > 0) {
