@@ -1,10 +1,10 @@
-# $Id: bsdforums.tcl,v 1.22 2003-08-20 18:44:16 peter Exp $
+# $Id: bsdforums.tcl,v 1.23 2003-08-24 13:55:26 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
-# version 1.2, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.1: (??/??/????)
+# 1.2: (24/08/2003)
 #  - changed the update method somewhat.
 #    the bsdforums(updates) it now also being used by the triggers
 #    to check how long to cache the data.
