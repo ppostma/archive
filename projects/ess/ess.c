@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.12 2003-08-10 19:43:59 peter Exp $
+ * $Id: ess.c,v 1.13 2003-08-13 11:16:02 peter Exp $
  */
 
 #include <sys/types.h>
@@ -35,9 +35,9 @@
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define TIMEOUT		3  /* seconds */
 
-const char	*progname;
-
 size_t	 readln(int, char *, size_t);
+size_t	 readall(int);
+int	 readcode(int);
 char	*get_af(int);
 char	*get_addr(struct sockaddr *, size_t, int);
 char	*get_serv(char *);
@@ -46,13 +46,14 @@ char	*banner_scan(u_short);
 int	 ftp_scan(char *);
 int	 relay_scan(char *, char *);
 void	 timeout_handler(int);
-void	 usage(void);
+void	 usage(char *);
 void	 error(int);
 
 int	ssock, isock;
 int	timedout = 0;
 int	verbose_flag = 0;
 int	relay_flag = 0;
+int	quiet_flag = 0;
 
 #ifdef IPV4_DEFAULT
 int	IPv4or6 = AF_INET;
@@ -74,23 +75,24 @@ main(argc, argv)
 	struct sockaddr_storage	ss;
 	struct addrinfo	 hints, *res, *ai;
 	struct servent	*serv;
+	char		*progname;
 	char		*host = NULL;
 	char		*port = NULL;
-	char		 thost[NI_MAXHOST];
-	char		 tip[NI_MAXHOST];
+	char		 ip[NI_MAXHOST];
+	char		 name[NI_MAXHOST];
 	char		 sbuf[NI_MAXSERV];
-	char		 result[512];
-	int		 ch, err, ret;
+	char		 result[128];
+	int		 ch, err, ret = 70;
 	int		 all_flag = 0;
 	int		 banner_flag = 0;
 	int		 ftp_flag = 0;
 	int		 ident_flag = 0;
-	u_short		 tport;
+	u_short		 remoteport, localport;
 	socklen_t	 len;
 
 	progname = argv[0];
 
-	while ((ch = getopt(argc, argv, "46abfinrvVh")) != -1) {
+	while ((ch = getopt(argc, argv, "46abfhinqrvV")) != -1) {
 		switch (ch) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -114,21 +116,34 @@ main(argc, argv)
 		case 'n':
 			resolve_flag = (resolve_flag) ? 0 : 1;
 			break;
+		case 'q':
+			if (verbose_flag) {
+				fprintf(stderr, "Options -v (verbose) and -q (quiet) "
+						"cannot be used together!\n");
+				exit(65);
+			}
+			quiet_flag = 1;
+			break;
 		case 'r':
 			relay_flag++;
 			port = "25";
 			break;
 		case 'v':
+			if (quiet_flag) {
+				fprintf(stderr, "Options -v (verbose) and -q (quiet) "
+						"cannot be used together!\n");
+				exit(65);
+			}
 			verbose_flag = 1;
 			break;
 		case 'V':
 			fprintf(stderr, "Service Scan v%s by Peter Postma "
 					"<peter@webdeveloping.nl>\n", VERSION);
-			exit(1);
+			exit(99);
 		case 'h':
 		case '?':
 		default:
-			usage();
+			usage(progname);
 			/* NOTREACHED */
 		}
 	}
@@ -136,7 +151,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (argc < 2 && port == NULL)
-		usage();
+		usage(progname);
 
 	host = argv[0];
 	if (port == NULL || argv[1] != NULL)
@@ -152,7 +167,7 @@ main(argc, argv)
 	if (err)
 		error(err);
 
-	if (res->ai_next != NULL && !all_flag)
+	if (res->ai_next != NULL && !all_flag && !quiet_flag)
 		printf("Resolved to multiple addresses! "
 		       "Use option -a to scan them all.\n");
 
@@ -163,9 +178,14 @@ main(argc, argv)
 			continue;
 		}
 		if (verbose_flag) {
-			printf("Trying %s ", get_addr(ai->ai_addr, ai->ai_addrlen, 1));
-			printf("(%s)...", get_addr(ai->ai_addr, ai->ai_addrlen, 0));
-			(void)fflush(stdout);
+			strcpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
+			strcpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
+			printf("Trying %s", name);
+			if (strcmp(ip, name) != 0)
+				printf(" (%s)...", ip);
+			else
+				printf("...");
+			fflush(stdout);
 		}
 		alarm(TIMEOUT);
 		if (connect(ssock, ai->ai_addr, ai->ai_addrlen) < 0) {
@@ -174,18 +194,22 @@ main(argc, argv)
 			if (timedout) {
 				strcpy(result, "no response");
 				timedout = 0;
-			} else
+				ret = 2;
+			} else {
 				strcpy(result, "closed");
+				ret = 1;
+			}
 			goto print_results;
 		}
 		alarm(0);
+		ret = 0;
 		if (verbose_flag)
-			printf(" connection succeeded!\n");
+			printf(" connection successful!\n");
 		if (ident_flag) {
 			len = sizeof(ss);
 			if (getsockname(ssock, (struct sockaddr *)&ss, &len) < 0) {
 				perror("getsockname");
-				exit(1);
+				exit(255);
 			}
 			err = getnameinfo((struct sockaddr *)&ss, len, NULL, 0,
 			    sbuf, sizeof(sbuf), NI_NUMERICSERV);
@@ -193,42 +217,45 @@ main(argc, argv)
 				error(err);
 			serv = getservbyname(port, "tcp");
 			if (serv != NULL)
-				tport = ntohs(serv->s_port);
+				remoteport = ntohs(serv->s_port);
 			else
-				tport = atoi(port);
-			snprintf(result, sizeof(result), "owner: %s",
-			   ident_scan(host, ai->ai_family, tport, atoi(sbuf)));
+				remoteport = atoi(port);
+			localport = atoi(sbuf);
+			sprintf(result, "owner: %s", ident_scan(host,
+			    ai->ai_family, remoteport, localport));
 		} else if (ftp_flag) {
-			switch (ftp_scan("anonymous")) {
-			case -1:
-				strcpy(result, "could not login.");
+			ret = ftp_scan("anonymous");
+			switch (ret) {
+			case 0:
+				strcpy(result, "anonymous login allowed!");
 				break;
-			case  0:
+			case 1:
 				strcpy(result, "anonymous login denied!");
 				break;
-			case  1:
-				strcpy(result, "anonymous login allowed!");
+			case 2:
+				strcpy(result, "could not login.");
 				break;
 			}
 		} else if (relay_flag) {
 			if (relay_flag > 1) {
-				strcpy(tip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
-				if (strcmp(host, tip) == 0)
-					strcpy(thost, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
+				strcpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
+				if (strcmp(name, ip) == 0)
+					strcpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
 				else
-					strcpy(thost, host);
-				ret = relay_scan(thost, tip);
+					strcpy(name, host);
+				ret = relay_scan(name, ip);
 			} else
 				ret = relay_scan(NULL, NULL);
+
 			switch (ret) {
-			case -1:
-				strcpy(result, "could not login.");
+			case 0:
+				strcpy(result, "relay access allowed!");
 				break;
-			case  0:
+			case 1:
 				strcpy(result, "relay access denied!");
 				break;
-			case  1:
-				strcpy(result, "relay access allowed!");
+			case 2:
+				strcpy(result, "could not login.");
 				break;
 			}
 		} else if (banner_flag) {
@@ -238,13 +265,15 @@ main(argc, argv)
 
 print_results:
 		/* Print af, address, port, and result */
-		printf("%s host (%s) ", get_af(ai->ai_family),
-		    get_addr(ai->ai_addr, ai->ai_addrlen, resolve_flag));
-		printf("port %s -> %s\n", get_serv(port), result);
+		if (!quiet_flag) {
+			printf("%s host (%s) ", get_af(ai->ai_family),
+			   get_addr(ai->ai_addr, ai->ai_addrlen, resolve_flag));
+			printf("port %s -> %s\n", get_serv(port), result);
 
-		/* Print banner at last */
-		if (banner_flag)
-			printf("%s", banner_scan(atoi(port)));
+			/* Print banner at last */
+			if (banner_flag)
+				printf("%s", banner_scan(atoi(port)));
+		}
 
 		if (!all_flag)
 			break;
@@ -252,7 +281,7 @@ print_results:
 	close(ssock);
 	freeaddrinfo(res);
 
-	return 0;
+	return ret;
 }
 
 size_t
@@ -278,6 +307,46 @@ readln(fd, line, len)
 		line[i] = '\0';
 
 	return i;
+}
+
+size_t
+readall(fd)
+	int	fd;
+{
+	char	response[1024];
+	size_t	b, count = 0;
+
+        do {
+                if ((b = readln(ssock, response, sizeof(response))) > 0)
+			count += b;
+                if (verbose_flag)
+                        printf("<<< %s", response);
+        } while (response[3] == '-');
+
+	return count;
+}
+
+int
+readcode(fd)
+	int	fd;
+{
+	char	response[1024];
+	char	code[4];
+
+	do {
+		(void)readln(ssock, response, sizeof(response));
+		if (verbose_flag)
+			printf("<<< %s", response);
+	} while (response[3] == '-');
+
+	if (isnumber((int)response[0]) &&
+	    isnumber((int)response[1]) &&
+	    isnumber((int)response[2])) {
+		strncpy(code, response, 3);
+		return atoi(code);
+	}
+
+	return -1;
 }
 
 char *
@@ -381,12 +450,12 @@ ident_scan(host, ai_family, remoteport, localport)
 	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
 	if (write(isock, request, strlen(request)) < 0) {
 		perror("write");
-		exit(1);
+		exit(255);
 	}
 	bytes = read(isock, response, sizeof(response));
 	if (bytes < 0) {
 		perror("read");
-		exit(1);
+		exit(255);
 	} else if (bytes == 0)
 		return "?";
 
@@ -410,7 +479,7 @@ banner_scan(port)
 	int		count;
 
 	if (port == 80)
-		write(ssock, HTTP_REQUEST, strlen(HTTP_REQUEST));
+		write(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST));
 	else
 		write(ssock, "", 0);
 
@@ -424,14 +493,11 @@ int
 ftp_scan(name)
 	char	*name;
 {
-	char	 request[1024], response[1024];
+	char	 request[1024];
+	int	 code;
 
 	/* Read ftp banner */
-	do {
-		(void)readln(ssock, response, sizeof(response));
-		if (verbose_flag)
-			printf("<<< %s", response);
-	} while (response[3] == '-');
+	(void)readall(ssock);
 
 	/* Send USER command */
 	snprintf(request, sizeof(request), "USER %s\r\n", name);
@@ -439,14 +505,9 @@ ftp_scan(name)
 	if (verbose_flag)
 		printf(">>> %s", request);
 
-	/* Get answer from ftpd */
-	(void)readln(ssock, response, sizeof(response)); 
-	if (verbose_flag)
-		printf("<<< %s", response);
-
 	/* User not logged in reply */
-	if (strstr(response, "530 "))
-		return 0;
+	if (readcode(ssock) == 530)
+		return 1;
 
 	/* Send PASS command */
 	strcpy(request, "PASS anonymous@moo\r\n");
@@ -454,20 +515,17 @@ ftp_scan(name)
 	if (verbose_flag)
 		printf(">>> %s", request);
 
-	/* Get answer from ftpd */
-	(void)readln(ssock, response, sizeof(response));
-	if (verbose_flag)
-		printf("<<< %s", response);
+	code = readcode(ssock); 
 
 	/* User not logged in reply */
-	if (strstr(response, "530 "))
-		return 0;
-
-	/* User name okay reply */
-	if (strstr(response, "331 "))
+	if (code == 530)
 		return 1;
 
-	return -1;
+	/* User logged in reply */
+	if (code == 230)
+		return 0;
+
+	return 2;
 }
 
 int
@@ -475,10 +533,10 @@ relay_scan(host, ip)
 	char	*host;
 	char	*ip;
 {
-	char	 request[1024], response[1024];
+	char	 request[1024];
 	struct	 scans {
-	    char	from[64];
-	    char	rcpt[64];
+	    char	from[128];
+	    char	rcpt[128];
 	};
 	struct	 scans	s[20];
 	int	 i, n = 1;
@@ -534,22 +592,17 @@ relay_scan(host, ip)
 	strcpy (s[19].rcpt, "<test@pointless.nl>");
 
 	/* Read banner */
-	(void)readln(ssock, response, sizeof(response));
-	if (verbose_flag)
-		printf("<<< %s", response);
+	(void)readall(ssock);
 
 	/* Send HELO, quit if return code is not 250 */
 	strcpy(request, "HELO www.pointless.nl\r\n");
 	write(ssock, request, strlen(request));
 	if (verbose_flag)
 		printf(">>> %s", request);
-	(void)readln(ssock, response, sizeof(response));
-	if (verbose_flag)
-		printf("<<< %s", response);
-	if (strstr(response, "250 ") == 0)
-		return -1;
+	if (readcode(ssock) != 250)
+		return 2;
 
-	/* Do all scans */
+	/* Do requested tests */
 	for (i=0; i<n; i++) {
 
 		if (verbose_flag)
@@ -560,37 +613,30 @@ relay_scan(host, ip)
 		write(ssock, request, strlen(request));
 		if (verbose_flag)
 	                printf(">>> %s", request);
-		(void)readln(ssock, response, sizeof(response));
-		if (verbose_flag)
-			printf("<<< %s", response);
+		(void)readall(ssock);
 
 		/* Send MAIL FROM */
 		snprintf(request, sizeof(request), "MAIL FROM: %s\r\n", s[i].from);
 		write(ssock, request, strlen(request));
 		if (verbose_flag)
 			printf(">>> %s", request);
-		(void)readln(ssock, response, sizeof(response));
-		if (verbose_flag)
-			printf("<<< %s", response);
+		(void)readall(ssock);
 
 		/* Send RCPT TO */
 		snprintf(request, sizeof(request), "RCPT TO: %s\r\n", s[i].rcpt);
 		write(ssock, request, strlen(request));
 		if (verbose_flag)
 			printf(">>> %s", request);
-		(void)readln(ssock, response, sizeof(response));
-		if (verbose_flag)
-			printf("<<< %s", response);
 
 		/* 250 Ok = relay accepted */
-		if (strstr(response, "250 "))
-			return 1;
+		if (readcode(ssock) == 250)
+			return 0;
 
 		if (n > 1)
 			sleep(1);
 	}
 
-	return 0;
+	return 1;
 }
 
 void
@@ -602,7 +648,7 @@ timeout_handler(s)
 }
 
 void
-usage(void)
+usage(char *progname)
 {
 	fprintf(stderr,
 "Usage: %s [options] hostname port\n"
@@ -615,12 +661,13 @@ usage(void)
 "  -i      Ident scan, queries ident/auth (port 113) and tries to get the\n"
 "          identity of the service we're connecting to.\n"
 "  -n      Don't try to resolve addresses.\n"
+"  -q      Be quiet. Don't output anything to stdout.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
 "          Use twice for an extensive open-relay test.\n"
 "  -v      Be verbose. It's use is recommended.\n\n",
 	progname);
 
-	exit(1);
+	exit(64);
 }
 
 void
@@ -660,5 +707,5 @@ error(errornum)
 	default:
 		fprintf(stderr, "%s\n", gai_strerror(errornum));
 	}
-	exit(1);
+	exit(128);
 }

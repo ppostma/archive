@@ -4,6 +4,7 @@ This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
 mail relaying test and it has support for round robin dns entry's.
 
+
 To compile the program on Linux/*BSD:
 # make
 
@@ -11,6 +12,11 @@ To compile the program on Solaris:
 # make solaris
 
 You can specify -DIPV4_DEFAULT to use IPv4 only by default.
+See the Makefile for an example.
+
+If you want to install the program to /usr/local/bin then simply do
+# make install
+
 
 Usage: ./ss [options] hostname port
 Options:
@@ -20,11 +26,25 @@ Options:
   -b      Grab the banner from an open port.
   -f      Anonymous FTP scan, checks if the server allows anonymous logins.
   -i      Ident scan, queries ident/auth (port 113) and tries to get the
-          identity of the service we're connecting to. This method is also
-          known as 'reverse ident'. The client and server need to be connected
-          directly to the internet, a NAT router between will not work.
+          identity of the service we're connecting to.
   -n      Don't try to resolve addresses.
+  -q      Be quiet. Don't output anything to stdout.
   -r      Mail Relay test, performs a simple test to check for open-relay.
           Use twice for an extensive open-relay test.
   -v      Be verbose. It's use is recommended.
 
+
+The program returns several exit codes (described below) which 
+makes the program useful to integrate in shell scripts or automated tasks.
+
+Exit codes:
+   0 - port is open (or service allowed)
+   1 - port is closed (or service denied)
+   2 - request timed out (or unable to login)
+  64 - invalid arguments/flags
+  65 - invalid combination of flags
+  70 - unknown error (this should never happen)
+  99 - code when option -V is used
+ 128 - bad address/service or some other error which causes
+       the address/name resolve functions to fail
+ 255 - error in a socket operation (write, read, getsockname, etc...)
