@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.33 2003-11-04 15:57:29 peter Exp $
+ * $Id: ess.c,v 1.34 2003-11-04 16:11:43 peter Exp $
  */
 
 #include <sys/types.h>
@@ -257,6 +257,8 @@ main(int argc, char *argv[])
 				strcpy(result, "could not login.");
 				break;
 			}
+			if (verbose_flag)
+				printf("\n");
 		} else if (relay_flag) {
 			if (relay_flag > 1) {
 				strncpy(ip, get_addr(ai->ai_addr,
@@ -281,6 +283,8 @@ main(int argc, char *argv[])
 				strcpy(result, "could not login.");
 				break;
 			}
+			if (verbose_flag)
+				printf("\n");
 		} else if (banner_flag) {
 			strcpy(result, "banner:\n");
 		} else
@@ -678,7 +682,7 @@ usage(char *progname)
 "  -f      Anonymous FTP scan, checks if the server allows anonymous logins.\n"
 "  -i      Ident scan, queries ident/auth (port 113) and tries to get the\n"
 "          identity of the service we're connecting to.\n"
-"  -n      Don't try to resolve addresses.\n"
+"  -n      Don't try to resolve addresses to names.\n"
 "  -q      Be quiet. Don't output anything to stdout.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
 "          Use twice for an extensive open-relay test.\n"
