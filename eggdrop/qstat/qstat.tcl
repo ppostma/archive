@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.8 2003-07-09 01:47:16 peter Exp $
+# $Id: qstat.tcl,v 1.9 2003-07-09 02:28:29 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 04/07/2003 
 # 
@@ -60,7 +60,7 @@ set qstat(nopub) ""
 
 # flood protection: seconds between use of the triggers
 # to disable: set it to 0
-set qstat(antiflood) 10
+set qstat(antiflood) 5
 
 # method to send the messages:
 # 0 = Private message
@@ -91,6 +91,7 @@ bind pub $qstat(flags) "!ut2003" qstat:pub
 
 bind pub $qstat(flags) "!utp"  qstat:pub 
 bind pub $qstat(flags) "!hlp"  qstat:pub
+bind pub $qstat(flags) "!csp"  qstat:pub
 bind pub $qstat(flags) "!qwp"  qstat:pub
 bind pub $qstat(flags) "!q1p"  qstat:pub
 bind pub $qstat(flags) "!q3p"  qstat:pub
@@ -146,6 +147,7 @@ proc qstat:pub {nick host hand chan arg} {
     "!ut2k3"  { set gametype "-ut2s"; set players 0 }
     "!ut2003" { set gametype "-ut2s"; set players 0 }
     "!hlp"     { set gametype "-hls";  set players 1 }
+    "!csp"     { set gametype "-hls";  set players 1 }
     "!utp"     { set gametype "-uns";  set players 1 }
     "!qwp"     { set gametype "-qws";  set players 1 }
     "!q1p"     { set gametype "-qs";   set players 1 }
@@ -172,23 +174,21 @@ proc qstat:pub {nick host hand chan arg} {
   set qstat(floodprot) [clock seconds]
 
   # run the qstat program.
-  if {$players == 1} { 
-    set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat -Tp $qstat(path)/players.qstat -P" r]
+  if {$players == 1} {
+    catch { exec $qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat -Tp $qstat(path)/players.qstat -P } lines
   } else {
-    set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat" r]
+    catch { exec $qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat } lines
   }
 
   # output the result.
-  qstat:results $fd $chan $nick $qstat(method)
+  qstat:results $lines $chan $nick $qstat(method)
 
-  # close fork, end program.
-  close $fd
   return 0
 }
 
 # show results.
-proc qstat:results {fd chan nick method} {
-  while {[gets $fd line] >= 0} { 
+proc qstat:results {lines chan nick method} {
+  foreach line [split $lines \n] {
     if {[string match "DOWN*" $line]} {
       putquick "NOTICE $nick :Connection refused while querying server."
       break
@@ -212,7 +212,6 @@ proc qstat:results {fd chan nick method} {
 # check for valid characters
 proc qstat:input_check {text} {
   if {[regexp \[^\[:alnum:\]_\.\:\-\] $text]} { return 1 }
-  if {[string match "0*" $text]} { return 1 }
   return 0
 }
 
