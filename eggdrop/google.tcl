@@ -1,4 +1,4 @@
-# $Id: google.tcl,v 1.4 2003-07-08 16:41:39 peter Exp $
+# $Id: google.tcl,v 1.5 2003-07-08 18:09:42 peter Exp $
 
 # Google script for the eggdrop
 # version 0.3, 08/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -29,6 +29,9 @@ set google(antiflood) 5
 # 2 = Private notice 
 # 3 = Public notice
 set google(method) 1
+
+# show how many results? 1, 2 or 3??
+set google(results) 3
 
 ### End Configuration settings ###
 
@@ -78,9 +81,15 @@ proc pub:google {nick uhost hand chan text} {
   }
   set google(data) [http::data $google(page)]
 
-  regexp -nocase {related:(.*?)>} $google(data) t link1
-  regexp -nocase {related:.*?>.*?related:(.*?)>} $google(data) t link2
-  regexp -nocase {related:.*?>.*?related:.*?>.*?related:(.*?)>} $google(data) t link3
+  if {$google(results) >= 1} {
+    regexp -nocase {related:(.*?)>} $google(data) t link1
+  }
+  if {$google(results) >= 2} {
+    regexp -nocase {related:.*?>.*?related:(.*?)>} $google(data) t link2
+  }
+  if {$google(results) >= 3} {
+    regexp -nocase {related:.*?>.*?related:.*?>.*?related:(.*?)>} $google(data) t link3
+  }
 
   if {[info exists link3]} {
     set output "http://$link1 - http://$link2 - http://$link3"
@@ -104,7 +113,7 @@ proc pub:google {nick uhost hand chan text} {
     default { putquick "PRIVMSG $chan :$output" }
   }
 
-  catch { unset output link1 link2 link3 }
+  catch { unset output t link1 link2 link3 }
   catch { http::cleanup $google(page) }
   return 0
 }
