@@ -1,7 +1,8 @@
-# $Id: Makefile,v 1.2 2003-08-03 15:26:17 peter Exp $
+# $Id: Makefile,v 1.3 2003-08-13 11:12:43 peter Exp $
 
 CC	= gcc
 CFLAGS	= -DRESOLVE -Wall -O
+#CFLAGS	= -DIPV4_DEFAULT -DRESOLVE -Wall -O
 SRC	= ss.c
 EXEC	= ss
 
