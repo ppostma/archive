@@ -1,4 +1,4 @@
-# $Id: tclbot.tcl,v 1.1 2003-08-01 17:22:43 peter Exp $
+# $Id: tclbot.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
 
 #
 # Copyright (c) 2003 Peter Postma <peter@webdeveloping.nl>
@@ -16,7 +16,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-# TCLBot main.
+# TclBot main.
 
 package require Tcl 8.1
 
@@ -257,8 +257,8 @@ proc reload {} {
 	}
 }
 
-# Yes, I'm really TCLBot :)
-log "TCLBot v$botversion by Peter Postma <peter@webdeveloping.nl>"
+# Yes, I'm really TclBot :)
+log "TclBot v$botversion by Peter Postma <peter@webdeveloping.nl>"
 
 # Check which configfile to use
 if {[file exists "default.conf"] && $argc < 1} {

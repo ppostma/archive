@@ -1,7 +1,7 @@
-# $Id: eggdrop.tcl,v 1.1 2003-08-01 17:22:43 peter Exp $
+# $Id: eggdrop.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
 
-# Eggdrop compatibility module for the TCLBot.
-# This script adds the eggdrop specific functions to TCLBot.
+# Eggdrop compatibility module for the TclBot.
+# This script adds the eggdrop specific functions to TclBot.
 # It's quite limited and buggy and very incomplete.
 
 # Cheat :)

@@ -1,6 +1,6 @@
-# $Id: devel.tcl,v 1.1 2003-08-01 17:22:43 peter Exp $
+# $Id: devel.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
 
-# Developer commands for the TCLBot.
+# Developer commands for the TclBot.
 # Has some handy functions which makes debugging quite easier.
 # Requires the message.tcl module to be loaded.
 

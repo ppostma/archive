@@ -1,6 +1,6 @@
-# $Id: join.tcl,v 1.1 2003-08-01 17:22:43 peter Exp $
+# $Id: join.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
 
-# TCLBot Join log module.
+# TclBot Join log module.
 
 # Add proc
 addproc "irc:join"

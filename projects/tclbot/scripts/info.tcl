@@ -1,6 +1,6 @@
-# $Id: info.tcl,v 1.1 2003-08-01 17:22:43 peter Exp $
+# $Id: info.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
 
-# Info commands for the TCLBot.
+# Info commands for the TclBot.
 # Requires the message.tcl module to be loaded.
 
 addtrigger pub - "!flags"     pub:flags
@@ -42,7 +42,7 @@ proc pub:operator {nick mask hand chan text} {
 
 proc pub:version {nick mask hand chan text} {
 	global botversion
-	ircsend "PRIVMSG $chan :I'm TCLBot $botversion running on TCL [info patchlevel]"
+	ircsend "PRIVMSG $chan :I'm TclBot $botversion running on Tcl [info patchlevel]"
 }
 
 proc pub:date {nick mask hand chan text} {
@@ -72,7 +72,7 @@ proc pub:botuptime {nick mask hand chan text} {
 	if {$hours > 0} { append show "$hours hours " }
 	if {$mins  > 0} { append show "$mins minutes" }
 
-	ircsend "PRIVMSG $chan :TCLBot $botversion is up for $show."
+	ircsend "PRIVMSG $chan :TclBot $botversion is up for $show."
 }
 
-log "TCLBot Info commands: Loaded."
+log "TclBot Info commands: Loaded."
