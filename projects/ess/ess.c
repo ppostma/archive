@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.26 2003-10-11 16:14:43 peter Exp $
+ * $Id: ess.c,v 1.27 2003-10-11 16:31:20 peter Exp $
  */
 
 #include <sys/types.h>
@@ -116,8 +116,9 @@ main(int argc, char *argv[])
 			break;
 		case 'q':
 			if (verbose_flag) {
-				fprintf(stderr, "Options -v (verbose) and -q (quiet) "
-						"cannot be used together!\n");
+				fprintf(stderr,
+				    "Options -v (verbose) and -q (quiet) "
+				    "cannot be used together!\n");
 				exit(65);
 			}
 			quiet_flag = 1;
@@ -128,8 +129,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			if (quiet_flag) {
-				fprintf(stderr, "Options -v (verbose) and -q (quiet) "
-						"cannot be used together!\n");
+				fprintf(stderr,
+				    "Options -v (verbose) and -q (quiet) "
+				    "cannot be used together!\n");
 				exit(65);
 			}
 			verbose_flag = 1;
@@ -176,8 +178,10 @@ main(int argc, char *argv[])
 			continue;
 		}
 		if (verbose_flag) {
-			strcpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
-			strcpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
+			strncpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0),
+			    sizeof(ip));
+			strncpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1),
+			    sizeof(name));
 			printf("Trying %s", name);
 			if (strcmp(ip, name) != 0)
 				printf(" (%s)...", ip);
@@ -222,12 +226,13 @@ main(int argc, char *argv[])
 			memset(&owner, 0, sizeof(owner));
 			ret = ident_scan(host, ai->ai_family, remoteport,
 			    localport, owner, sizeof(owner));
+			strncpy(result, "owner: ", sizeof(result));
 			switch (ret) {
 			case 0:
-				sprintf(result, "owner: %s", owner);
+				strncat(result, owner, sizeof(result));
 				break;
 			case 1:
-				strcpy(result, "owner: ?");
+				strncat(result, "?", sizeof(result));
 				break;
 			}
 		} else if (ftp_flag) {
@@ -245,11 +250,13 @@ main(int argc, char *argv[])
 			}
 		} else if (relay_flag) {
 			if (relay_flag > 1) {
-				strcpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
+				strncpy(ip, get_addr(ai->ai_addr,
+				    ai->ai_addrlen, 0), sizeof(ip));
 				if (strcmp(ip, host) == 0)
-					strcpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
+					strncpy(name, get_addr(ai->ai_addr,
+					    ai->ai_addrlen, 1), sizeof(name));
 				else
-					strcpy(name, host);
+					strncpy(name, host, sizeof(name));
 				ret = relay_scan(name, ip);
 			} else
 				ret = relay_scan(NULL, NULL);
@@ -503,7 +510,7 @@ ftp_scan(char *name)
 		return 1;
 
 	/* Send PASS command */
-	strcpy(request, "PASS anonymous@moo\r\n");
+	strcpy(request, "PASS anonymous@moo.com\r\n");
 	send(ssock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
