@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.3 2003-08-03 15:30:04 peter Exp $
+ * $Id: ess.c,v 1.4 2003-08-03 19:29:57 peter Exp $
  */
 
 #include <sys/types.h>
@@ -33,7 +33,7 @@
 
 #define VERSION		"0.3.2-beta"
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\n\n"
-#define TIMEOUT		3	/* seconds */
+#define TIMEOUT		3  /* seconds */
 
 const char	*progname;
 
@@ -74,14 +74,15 @@ main(argc, argv)
 	struct servent	*serv;
 	char		*host = NULL;
 	char		*port = NULL;
-	int		 ch, err, ret, tport;
+	char		 sbuf[NI_MAXSERV];
+	char		 owner[128];
+	int		 ch, err, ret;
 	int		 all_flag = 0;
 	int		 banner_flag = 0;
 	int		 ftp_flag = 0;
 	int		 ident_flag = 0;
 	int		 relay_flag = 0;
-	char		 sbuf[NI_MAXSERV];
-	char		 owner[128];
+	u_short		 tport;
 	socklen_t	 len;
 
 	progname = argv[0];
@@ -237,7 +238,7 @@ readln(fd, line)
 	char	*line;
 {
 	size_t	b;
-	int	i; 
+	int	i;
 	char	temp[1];
 
 	for (i=0; ; i++) {
