@@ -1,7 +1,7 @@
-/* $Id: scan.c,v 1.3 2003-03-30 15:40:31 peter Exp $ */
+/* $Id: scan.c,v 1.4 2003-03-30 16:24:38 peter Exp $ */
 
 /*
- * scan.c - very simple portscanner for IPv4
+ * scan.c - very simple portscanner for IPv4 & IPv6
  *
  * scans a port and returns the status of the scanned port.
  * syntax: scan [-b] <host/ip> <port/service>
@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
 	/* Alarm call after X seconds */
 	ualarm(TIMEOUT, 0);
 
+	/* Get service name */
 	if ((error = getnameinfo(res->ai_addr, res->ai_addrlen, NULL, 0,
 	    strport, sizeof(strport), 0) == 0)) {
 		if ((port < 0) || (strlen(strport) == 0))
