@@ -1,10 +1,10 @@
-# $Id: google.tcl,v 1.5 2003-07-08 18:09:42 peter Exp $
+# $Id: google.tcl,v 1.6 2003-07-09 03:07:49 peter Exp $
 
 # Google script for the eggdrop
-# version 0.3, 08/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.3, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 0.3: (??/??/????)
+# 0.3: (09/07/2003)
 #  - added several configuration options
 #
 
