@@ -1,115 +1,123 @@
-# $Id: nforce.tcl,v 1.1 2004-08-14 15:39:52 peter Exp $
+# $Id: nforce.tcl,v 1.2 2004-08-25 15:11:49 peter Exp $
 
-# Nforce.nl releases script voor de eggdrop
-# version 1.0, 14/08/2004, door Peter Postma <peter@webdeveloping.nl>
+# Nforce.nl release script for the eggdrop
+# version 1.1, 25/08/2004, by Peter Postma <peter@webdeveloping.nl>
 #
-# Dit script maakt gebruik van een functie uit alltools.tcl.
-# Zorg ervoor dat alltools.tcl geladen wordt in je eggdrop configuratie!
+# Changelog:
+# 1.1: (25/08/2004)
+#  - translated to english.
+# 1.0: (14/08/2004) [first version]
+#  - first release.
 #
-# Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
-# Zet http.tcl *niet* in je eggdrop configuratie!
+# This script makes use of a function from alltools.tcl.
+# Please put alltools.tcl in your eggdrop configuration!
 #
-# Het nforce.tcl script werkt het best met Tcl versies vanaf 8.0.
+# This script also uses http.tcl. You don't need to put http.tcl
+# your eggdrop configuration!
 #
-# Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
-# 
-# De laatste versie van dit script kan je hier vinden:
-#   http://www.pointless.nl/?page=eggdrop
+# You need at least Tcl version 8.0 to get this script running!
 #
-# Pas aub. de configuratie hieronder aan:
+# For questions/suggestions/bug/etc: peter@webdeveloping.nl
+# If you found spelling/grammatical errors, please also mail me!
+#
+# You can always find the latest version of this script on this page:
+#   http://pointless.nl/eggdrop.php
+#
+# Please change the configuration setting below:
 #
 
-### Configuratie instellingen ###
+### Configuration settings ###
 
-# maak gebruik van een http proxy om de gegevens op te halen?
-# stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
+# use a http proxy the get the data? (use this if you don't have direct
+# internet connection). enter the info in this form: "host.isp.com:port" or
+# leave it empty for no proxy.
 set nforce(proxy) ""
 
-# de triggers: [scheiden met een spatie]
+# the triggers: [separate with spaces]
 set nforce(triggers) "!nforce"
 
-# benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
+# flags needed to use the triggers [default = everyone]
 set nforce(flags) "-|-"
 
-# kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
+# channels where the bot doesn't respond to triggers [separate with spaces]
 set nforce(nopub) "" 
 
-# stuur berichten public of private wanneer er een trigger wordt gebruikt?
+# method to send the messages:
 # 0 = Private message
 # 1 = Public message
 # 2 = Private notice
 # 3 = Public notice
 set nforce(method) 1
 
-# aantal releases weergeven wanneer een trigger wordt gebruikt. [> 1]
+# display how many releases when a trigger is used [> 1]
 set nforce(releases) 2
 
-# flood protectie: aantal seconden tussen gebruik van de triggers
-# zet 't op 0 om de flood protectie uit te zetten.
+# flood protection: seconds between use of the triggers
+# set this to 0 to disable the flood protection.
 set nforce(antiflood) 10
 
-# hieronder kun je de layout aanpassen voor de output:
-# %date    = datum
-# %name    = naam van de release
-# %group   = naam van de group
-# %section = sectie naam / categorie
-# %size    = aantal bestanden + MB
-# %orig    = originele NFO naam
+# below you can change the layout of the output:
+# %date    = date
+# %name    = name of the release
+# %group   = naam of the group
+# %section = section name / categorie
+# %size    = number of files + MB
+# %orig    = original NFO name
 # %nfo     = NFO url
 # %site    = site url
 # %review  = review url
-# %b       = bold (dikgedrukte) tekst
-# %u       = underlined (onderstreepte) tekst
+# %b       = bold text
+# %u       = underlined text
 set nforce(layout) "\[%bNFOrce%b\] %date - %name (%section) - %nfo"
 
-# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
-# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+# check for releases after how many minutes? [minimal 15]
+# this is used by the triggers and the auto updater.
 set nforce(updates) 20
 
-# het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set nforce(autonews) 0
+# announce new releases automatically in the channels? [0=no / 1=yes]
+set nforce(announcer) 0
 
-# autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
-# gebruik "*" om het nieuws naar alle kanalen te sturen (/amsg).
-set nforce(autonewschan) "#channel"
+# announcer: send to which channels? [separate channels with spaces]
+# use "*" to announce to all channels (/amsg).
+set nforce(announcechan) "#channel"
 
-# maximaal aantal berichten die worden getoond tijdens de automatische updates.
-# hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
-# updates hoog hebt staan (bv. langer dan een uur).
-set nforce(automax) 3
+# maximum number of messages which will be displayed with the automatic updates.
+# with this setting you can prevent channel flooding if the updates are high
+# (e.g. longer than a hour).
+set nforce(announcemax) 3
 
-# trigger om het autonews aan te zetten. [string]
+# trigger to turn off the announcer. [string]
 set nforce(autontrigger) "!nforceon"
 
-# trigger om het autonews uit te zetten. [string]
+# trigger to turn on the announcer. [string]
 set nforce(autofftrigger) "!nforceoff"
 
-# benodigde flags om de autonews[on/off] triggers te gebruiken [default=master]
+# flags needed to use the announcer [on/off] triggers [default = master]
 set nforce(autotriggerflag) "m|m"
 
-# log extra informatie (debug) naar de partyline? [0=nee / 1=ja]
+# log additional information (debug) to the partyline? [0=no / 1=yes]
 set nforce(log) 1
 
-### Eind configuratie instellingen ###
+### End Configuration settings ###
 
 
 
 ### Begin Tcl code ###
 
-set nforce(version) "1.0"
+set nforce(version) "1.1"
 
 if {[catch { package require http } err]} {
-  putlog "\[NFOrce\] Kan [file tail [info script]] niet laden: Probleem met het laden van de http package: $err"
+  putlog "\[NFOrce\] Cannot load [file tail [info script]]: Problem loading the http package: $err"
   return 1
 }
 
 if {[info tclversion] < 8.0} {
-  putlog "\[NFOrce\] Kan [file tail [info script]] niet laden: U heeft minimaal Tcl versie 8.0 nodig en u heeft Tcl versie [info tclversion]."
+  putlog "\[NFOrce\] Cannot load [file tail [info script]]: You need at least Tcl version 8.0 and you have Tcl version [info tclversion]."
   return 1
 }
 
 if {![info exists alltools_loaded]} {
-  putlog "\[NFOrce\] Kan [file tail [info script]] niet laden: Zorg ervoor dat alltools.tcl in uw eggdrop configuratie wordt geladen!"
+  putlog "\[NFOrce\] Cannot load [file tail [info script]]: Please put alltools.tcl in your eggdrop configuration!"
   return 1
 }
 
@@ -136,7 +144,7 @@ proc nforce:getdata {} {
 
   if {$nforce(proxy) != ""} {
     if {![regexp {(.+):([0-9]+)} $nforce(proxy) trash proxyhost proxyport]} {
-      putlog "\[NFOrce\] Wrong proxy configuration ($nforce(proxy))"
+      putlog "\[NFOrce\] Invalid proxy configuration ($nforce(proxy))"
       return -1
     }
     set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
@@ -205,7 +213,7 @@ proc nforce:pub {nick uhost hand chan text} {
     if {[info exists nforce(floodprot,$chan)]} {
       set diff [expr [clock seconds] - $nforce(floodprot,$chan)]
       if {$diff < $nforce(antiflood)} {
-        putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $nforce(antiflood) - $diff] seconden..."
+        putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $nforce(antiflood) - $diff] seconds..."
         return 0
       }
     }
@@ -231,7 +239,7 @@ proc nforce:pub {nick uhost hand chan text} {
       }
     }
   } else {
-    putserv "NOTICE $nick :\[NFOrce\] Er ging iets fout tijdens het ophalen van de gegevens."
+    putserv "NOTICE $nick :\[NFOrce\] Something went wrong while updating."
   }
   catch { unset ret diff i err }
 }
@@ -283,12 +291,12 @@ proc nforce:update {} {
 
     if {$nforcedata(nfo,0) > $nforce(lastitem)} {
       if {$nforce(log)} { putlog "\[NFOrce\] New release found." }
-      if {[regexp {^\*$} $nforce(autonewschan)]} {
+      if {[regexp {^\*$} $nforce(announcechan)]} {
         set dest [channels]
       } else {
-        set dest $nforce(autonewschan)
+        set dest $nforce(announcechan)
       }
-      for {set i 0} {$i < $nforce(automax)} {incr i} {
+      for {set i 0} {$i < $nforce(announcema)} {incr i} {
         if {![info exists nforcedata(nfo,$i)]} { break }
         if {$nforcedata(nfo,$i) == $nforce(lastitem)} { break }
         foreach chan [split $dest] {
@@ -321,15 +329,15 @@ proc nforce:autoff {nick uhost hand chan text} {
 
   if {$nforce(log)} { putlog "\[NFOrce\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$nforce(autonews) == 1} {
-    set nforce(autonews) 0;  catch { unset nforce(lastitem) }
+  if {$nforce(announcer) == 1} {
+    set nforce(announcer) 0;  catch { unset nforce(lastitem) }
     set whichtimer [timerexists "nforce:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
     catch { unset whichtimer }
-    putlog "\[NFOrce\] Autonews turned off."
-    putserv "PRIVMSG $chan :\001ACTION heeft de nforce.nl release aankondiger uitgezet.\001"
+    putlog "\[NFOrce\] Announcer turned off."
+    putserv "PRIVMSG $chan :\001ACTION has turned the nforce.nl release announcer off.\001"
   } else {
-    putserv "NOTICE $nick :De nforce.nl release aankondiger staat al uit."
+    putserv "NOTICE $nick :The nforce.nl release announcer is already off."
   }
 }
 
@@ -339,15 +347,15 @@ proc nforce:auton {nick uhost hand chan text} {
 
   if {$nforce(log)} { putlog "\[NFOrce\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$nforce(autonews) == 0} {
-    set nforce(autonews) 1;  nforce:update
-    putlog "\[NFOrce\] Autonews turned on."
-    putserv "PRIVMSG $chan :\001ACTION heeft de nforce.nl release aankondiger aangezet.\001"
+  if {$nforce(announcer) == 0} {
+    set nforce(announcer) 1;  nforce:update
+    putlog "\[NFOrce\] Announcer turned on."
+    putserv "PRIVMSG $chan :\001ACTION has turned the nforce.nl release announcer on.\001"
   } else {
-    putserv "NOTICE $nick :De nforce.nl release aankondiger staat al aan."
+    putserv "NOTICE $nick :The nforce.nl release announcer is already on."
   }
 }
 
-if {$nforce(autonews) == 1} { nforce:update }
+if {$nforce(announcer) == 1} { nforce:update }
 
 putlog "\[NFOrce\] Release announcer version $nforce(version): Loaded!"
