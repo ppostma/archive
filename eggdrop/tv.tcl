@@ -1,7 +1,9 @@
-# $Id: tv.tcl,v 1.2 2003-03-19 17:03:09 peter Exp $
+# $Id: tv.tcl,v 1.3 2003-06-22 12:27:04 peter Exp $
 
-# tv.tcl / TV gids script for an eggdrop
-# version 0.2 / 19/03/2003 / by Peter Postma <peter@webdeveloping.nl>
+# TV gids script for an eggdrop
+# version 0.2.1, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
+#
+# !! Script werkt niet meer !!
 
 package require http
 
@@ -68,4 +70,4 @@ proc tv:fixchars {text} {
   return $text
 }
 
-putlog "TV script 0.2 loaded!"
+putlog "TV script 0.2.1 loaded!"
