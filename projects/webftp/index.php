@@ -1,5 +1,5 @@
 <?
-  # $Id: index.php,v 1.4 2003-10-13 19:53:55 peter Exp $
+  # $Id: index.php,v 1.5 2003-10-13 19:55:16 peter Exp $
   #
   # WebFTP client - index
   #
@@ -37,7 +37,7 @@
     /* Connect to server with username and pass */
     if (!$ftp->open($server, $username, $password)) {
       require_once('login.php');
-      exit;
+      exit();
     }
 
 
@@ -67,7 +67,7 @@
 
       $ftp->logout();
       require_once('login.php');
-      exit;
+      exit();
 
     } elseif (isset($_POST['upload'])) {
       /* Upload a file */
@@ -139,7 +139,7 @@
     /* Not logged in so go to login form */
 
     require_once('login.php');
-    exit;
+    exit();
   }
 
   if (!empty($ftp->error))

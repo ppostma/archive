@@ -1,5 +1,5 @@
 <?
-  # $Id: ftp.php,v 1.4 2003-10-11 17:22:09 peter Exp $
+  # $Id: ftp.php,v 1.5 2003-10-13 19:55:16 peter Exp $
   #
   # WebFTP client - ftp class
   #
@@ -122,7 +122,7 @@
       while ($data[$i]) echo($data[$i++]);
 
       @unlink($tname);
-      exit;   /* stop execution or else our file may be screwed */
+      exit();		/* stop execution or else our file may be screwed */
     }
 
     function upload($dir, $file)
