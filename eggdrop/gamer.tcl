@@ -1,10 +1,11 @@
-# $Id: gamer.tcl,v 1.13 2003-06-24 15:29:01 peter Exp $
+# $Id: gamer.tcl,v 1.14 2003-07-01 01:50:30 peter Exp $
 
 # Gamer.nl Nieuws script voor een eggdrop
-# version 1.9, 24/06/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.9: (??/??/????)
+#  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
 #  - style changes.
 # 1.8: (26/05/03) [bugfix]
@@ -72,6 +73,9 @@ set gamer(nopub) ""
 
 # de triggers: [scheiden met een spatie]
 set gamer(triggers) "!gamer"
+
+# flood protectie: aantal seconden tussen gebruik van de triggers
+set gamer(antiflood) 60
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -188,6 +192,16 @@ proc gamer:getdata {} {
 proc gamer:pub {nick uhost hand chan text} {
   global lastbind gamer gamerdata
   if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }  
+
+  if {[info exists gamer(floodprot)]} {
+    set verschil [expr [clock seconds] - $gamer(floodprot)]
+    if {$verschil < $gamer(antiflood)} {
+      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $gamer(antiflood) - $verschil] seconden..."
+      return 0
+    }
+    catch { unset verschil }
+  }
+  set gamer(floodprot) [clock seconds]
 
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 

@@ -1,10 +1,11 @@
-# $Id: fok.tcl,v 1.13 2003-06-24 15:29:01 peter Exp $
+# $Id: fok.tcl,v 1.14 2003-07-01 01:50:30 peter Exp $
 
 # fok.nl Nieuws script voor een eggdrop
-# version 1.9, 24/06/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.9: (??/??/????)
+# 1.9: (??/??/????) [changes]
+#  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
 #  - style changes.
 # 1.8: (26/05/03) [bugfix]
@@ -72,6 +73,9 @@ set fok(nopub) ""
 
 # de triggers: [scheiden met een spatie]
 set fok(triggers) "!fok fok!"
+
+# flood protectie: aantal seconden tussen gebruik van de triggers
+set fok(antiflood) 60
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -186,6 +190,16 @@ proc fok:getdata {} {
 proc fok:pub {nick uhost hand chan text} {
   global lastbind fok fokdata
   if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }  
+
+  if {[info exists fok(floodprot)]} {
+    set verschil [expr [clock seconds] - $fok(floodprot)]
+    if {$verschil < $fok(antiflood)} {
+      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $fok(antiflood) - $verschil] seconden..."
+      return 0
+    }
+    catch { unset verschil }
+  }
+  set fok(floodprot) [clock seconds]
 
   if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 

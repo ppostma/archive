@@ -1,10 +1,11 @@
-# $Id: slashdot.tcl,v 1.14 2003-06-24 15:29:01 peter Exp $
+# $Id: slashdot.tcl,v 1.15 2003-07-01 01:50:30 peter Exp $
 
 # Slashdot.org News Announce Script for an eggdrop
-# version 1.9, 24/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.9, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.9: (??/??/????)
+# 1.9: (??/??/????) [changes]
+#  - added flood protection.
 #  - added url for latest version.
 #  - trivial style changes.
 # 1.8: (26/05/2003) [bugfix]
@@ -42,6 +43,10 @@ set slashdot(nopub) ""
 
 # the triggers: [seperate with spaces]
 set slashdot(triggers) "!slashdot /."
+
+# flood protection: seconds between use of the triggers
+# /. bans people who abuse the rss feed so lower this value at your own risk!
+set slashdot(antiflood) 1800
 
 # method to send the messages:
 # 0 = Private message
@@ -159,6 +164,16 @@ proc slashdot:getdata {} {
 proc slashdot:pub {nick uhost hand chan text} {
   global lastbind slashdot slashdotdata
   if {[lsearch -exact $slashdot(nopub) [string tolower $chan]] >= 0} { return 0 }  
+
+  if {[info exists slashdot(floodprot)]} {
+    set diff [expr [clock seconds] - $slashdot(floodprot)]
+    if {$diff < $slashdot(antiflood)} {
+      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $slashdot(antiflood) - $diff] seconds..."
+      return 0
+    }
+    catch { unset diff }
+  }
+  set slashdot(floodprot) [clock seconds]
 
   if {$slashdot(log)} { putlog "\[Slashdot\] Trigger: $lastbind in $chan by $nick" }
 

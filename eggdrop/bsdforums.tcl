@@ -1,10 +1,11 @@
-# $Id: bsdforums.tcl,v 1.3 2003-06-24 15:29:01 peter Exp $
+# $Id: bsdforums.tcl,v 1.4 2003-07-01 01:50:30 peter Exp $
 
 # BSDForums.org News Announce Script for an eggdrop
-# version 1.1, 24/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
+#  - added flood protection.
 #  - added url for latest version. 
 # 1.0: (20/06/2003) [first version]
 #  - wrote the script, based on osnews.tcl version 1.3 (beta)
@@ -36,6 +37,9 @@ set bsdforums(nopub) ""
 
 # the triggers: [seperate with spaces]
 set bsdforums(triggers) "!bsdforums"
+
+# flood protection: seconds between use of the triggers
+set bsdforums(antiflood) 60
 
 # method to send the messages:
 # 0 = Private message
@@ -149,6 +153,16 @@ proc bsdforums:getdata {} {
 proc bsdforums:pub {nick uhost hand chan text} {
   global lastbind bsdforums bsdforumsdata
   if {[lsearch -exact $bsdforums(nopub) [string tolower $chan]] >= 0} { return 0 }  
+
+  if {[info exists bsdforums(floodprot)]} {
+    set diff [expr [clock seconds] - $bsdforums(floodprot)]
+    if {$diff < $bsdforums(antiflood)} {
+      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $bsdforums(antiflood) - $diff] seconds..."
+      return 0
+    }
+    catch { unset diff }
+  }
+  set bsdforums(floodprot) [clock seconds]
 
   if {$bsdforums(log)} { putlog "\[BSDForums\] Trigger: $lastbind in $chan by $nick" }
 

@@ -1,10 +1,11 @@
-# $Id: kerneltrap.tcl,v 1.11 2003-06-24 15:29:01 peter Exp $
+# $Id: kerneltrap.tcl,v 1.12 2003-07-01 01:50:30 peter Exp $
 
 # KernelTrap.org News Announce Script for an eggdrop
-# version 1.3, 24/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.3: (??/??/????)
+# 1.3: (??/??/????) [changes]
+#  - added flood protection.
 #  - added url for latest version.
 #  - trivial style changes.
 # 1.2: (26/05/2003) [bugfix]
@@ -42,6 +43,9 @@ set kerneltrap(nopub) ""
 
 # the triggers: [seperate with spaces]
 set kerneltrap(triggers) "!kerneltrap"
+
+# flood protection: seconds between use of the triggers
+set kerneltrap(antiflood) 60
 
 # method to send the messages:
 # 0 = Private message
@@ -156,6 +160,16 @@ proc kerneltrap:getdata {} {
 proc kerneltrap:pub {nick uhost hand chan text} {
   global lastbind kerneltrap kerneltrapdata
   if {[lsearch -exact $kerneltrap(nopub) [string tolower $chan]] >= 0} { return 0 }  
+
+  if {[info exists kerneltrap(floodprot)]} {
+    set diff [expr [clock seconds] - $kerneltrap(floodprot)]
+    if {$diff < $kerneltrap(antiflood)} {
+      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $kerneltrap(antiflood) - $diff] seconds..."
+      return 0
+    }
+    catch { unset diff }
+  }
+  set kerneltrap(floodprot) [clock seconds]
 
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Trigger: $lastbind in $chan by $nick" }
 

@@ -1,10 +1,11 @@
-# $Id: clanbase.tcl,v 1.11 2003-06-24 15:29:01 peter Exp $
+# $Id: clanbase.tcl,v 1.12 2003-07-01 01:50:30 peter Exp $
 
 # Clanbase.com News Announce Script for an eggdrop
-# version 1.3, 24/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.3: (??/??/????)
+# 1.3: (??/??/????) [changes]
+#  - added flood protection.
 #  - added url for latest version.
 #  - trivial style changes.
 # 1.2: (26/05/2003) [bugfix]
@@ -42,6 +43,9 @@ set cb(nopub) ""
 
 # the triggers: [seperate with spaces]
 set cb(triggers) "!cb !clanbase"
+
+# flood protection: seconds between use of the triggers
+set cb(antiflood) 60
 
 # method to send the messages:
 # 0 = Private message
@@ -156,6 +160,16 @@ proc cb:getdata {} {
 proc cb:pub {nick uhost hand chan text} {
   global lastbind cb cbdata
   if {[lsearch -exact $cb(nopub) [string tolower $chan]] >= 0} { return 0 }
+
+  if {[info exists cb(floodprot)]} {
+    set diff [expr [clock seconds] - $cb(floodprot)]
+    if {$diff < $cb(antiflood)} {
+      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $cb(antiflood) - $diff] seconds..."
+      return 0
+    }
+    catch { unset diff }
+  }
+  set cb(floodprot) [clock seconds]
 
   if {$cb(log)} { putlog "\[Clanbase\] Trigger: $lastbind in $chan by $nick" }
 
