@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.32 2003-08-09 15:16:57 peter Exp $
+# $Id: gamer.tcl,v 1.33 2003-08-18 20:36:43 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
 # version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -265,12 +265,14 @@ proc gamer:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $gamer(headlines)} {incr i} {
       if {![info exists gamerdata(id,$i)]} { break }
-      gamer:put $chan $nick $i $gamer(method)
+      if {[catch { gamer:put $chan $nick $i $gamer(method) } err]} {
+        putlog "\[Gamer.nl\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[Gamer.nl\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc gamer:put {chan nick which method} {
@@ -323,9 +325,13 @@ proc gamer:update {} {
       for {set i 0} {$i < $gamer(automax)} {incr i} {
         if {![info exists gamerdata(ts,$i)]} { break }
         if {$gamerdata(ts,$i) == $gamer(lastitem)} { break }
-        foreach chan [split $dest] { gamer:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { gamer:put $chan $chan $i 1 } err]} {
+            putlog "\[Gamer.nl\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$gamer(log)} { putlog "\[Gamer.nl\] No news." }
     }

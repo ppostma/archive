@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.28 2003-08-09 15:16:57 peter Exp $
+# $Id: osnews.tcl,v 1.29 2003-08-18 20:36:43 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -233,12 +233,14 @@ proc osnews:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $osnews(headlines)} {incr i} {
       if {![info exists osnewsdata(title,$i)]} { break }
-      osnews:put $chan $nick $i $osnews(method)
+      if {[catch { osnews:put $chan $nick $i $osnews(method) } err]} {
+        putlog "\[OSnews\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[OSnews\] Something went wrong while updating."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc osnews:put {chan nick which method} {
@@ -288,9 +290,13 @@ proc osnews:update {} {
       for {set i 0} {$i < $osnews(automax)} {incr i} {
         if {![info exists osnewsdata(link,$i)]} { break }
         if {$osnewsdata(link,$i) == $osnews(lastitem)} { break }
-        foreach chan [split $dest] { osnews:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { osnews:put $chan $chan $i 1 } err]} {
+            putlog "\[OSnews\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$osnews(log)} { putlog "\[OSnews\] No news." }
     }

@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.29 2003-08-09 15:16:57 peter Exp $
+# $Id: kerneltrap.tcl,v 1.30 2003-08-18 20:36:43 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -233,12 +233,14 @@ proc kerneltrap:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $kerneltrap(headlines)} {incr i} {
       if {![info exists kerneltrapdata(title,$i)]} { break }
-      kerneltrap:put $chan $nick $i $kerneltrap(method)
+      if {[catch { kerneltrap:put $chan $nick $i $kerneltrap(method) } err]} {
+        putlog "\[KernelTrap\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[KernelTrap\] Something went wrong while updating."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc kerneltrap:put {chan nick which method} {
@@ -288,9 +290,13 @@ proc kerneltrap:update {} {
       for {set i 0} {$i < $kerneltrap(automax)} {incr i} {
         if {![info exists kerneltrapdata(link,$i)]} { break }
         if {$kerneltrapdata(link,$i) == $kerneltrap(lastitem)} { break }
-        foreach chan [split $dest] { kerneltrap:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { kerneltrap:put $chan $chan $i 1 } err]} {
+            putlog "\[KernelTrap\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$kerneltrap(log)} { putlog "\[KernelTrap\] No news." }
     }

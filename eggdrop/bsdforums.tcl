@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.20 2003-08-09 15:16:57 peter Exp $
+# $Id: bsdforums.tcl,v 1.21 2003-08-18 20:36:43 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -227,12 +227,14 @@ proc bsdforums:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $bsdforums(headlines)} {incr i} {
       if {![info exists bsdforumsdata(title,$i)]} { break }
-      bsdforums:put $chan $nick $i $bsdforums(method)
+      if {[catch { bsdforums:put $chan $nick $i $bsdforums(method) } err]} {
+        putlog "\[BSDForums\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[BSDForums\] Something went wrong while updating."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc bsdforums:put {chan nick which method} {
@@ -282,9 +284,13 @@ proc bsdforums:update {} {
       for {set i 0} {$i < $bsdforums(automax)} {incr i} {
         if {![info exists bsdforumsdata(link,$i)]} { break }
         if {$bsdforumsdata(link,$i) == $bsdforums(lastitem)} { break }
-        foreach chan [split $dest] { bsdforums:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { bsdforums:put $chan $chan $i 1 } err]} {
+            putlog "\[BSDForums\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$bsdforums(log)} { putlog "\[BSDForums\] No news." }
     }

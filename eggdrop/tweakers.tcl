@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.33 2003-08-09 15:16:57 peter Exp $
+# $Id: tweakers.tcl,v 1.34 2003-08-18 20:36:43 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -271,12 +271,14 @@ proc tnet:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $tnet(headlines)} {incr i} { 
       if {![info exists tnetdata(ts,$i)]} { break }
-      tnet:put $chan $nick $i $tnet(method)
+      if {[catch { tnet:put $chan $nick $i $tnet(method) } err]} {
+        putlog "\[T.Net\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[T.Net\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc tnet:put {chan nick which method} {
@@ -333,9 +335,13 @@ proc tnet:update {} {
       for {set i 0} {$i < $tnet(automax)} {incr i} {
         if {![info exists tnetdata(ts,$i)]} { break }
         if {$tnetdata(ts,$i) == $tnet(lastitem)} { break }
-        foreach chan [split $dest] { tnet:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { tnet:put $chan $chan $i 1 } err]} {
+            putlog "\[T.Net\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$tnet(log)} { putlog "\[T.Net\] No news." }
     }

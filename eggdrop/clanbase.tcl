@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.30 2003-08-09 15:16:57 peter Exp $
+# $Id: clanbase.tcl,v 1.31 2003-08-18 20:36:43 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -233,12 +233,14 @@ proc cb:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $cb(headlines)} {incr i} {
       if {![info exists cbdata(title,$i)]} { break }
-      cb:put $chan $nick $i $cb(method)
+      if {[catch { cb:put $chan $nick $i $cb(method) } err]} {
+        putlog "\[Clanbase\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[Clanbase\] Something went wrong while updating."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc cb:put {chan nick which method} {
@@ -288,9 +290,13 @@ proc cb:update {} {
       for {set i 0} {$i < $cb(automax)} {incr i} {
         if {![info exists cbdata(link,$i)]} { break }
         if {$cbdata(link,$i) == $cb(lastitem)} { break }
-        foreach chan [split $dest] { cb:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { cb:put $chan $chan $i 1 } err]} {
+            putlog "\[Clanbase\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$cb(log)} { putlog "\[Clanbase\] No news." }
     }

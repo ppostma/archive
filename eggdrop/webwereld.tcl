@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.18 2003-08-09 15:16:57 peter Exp $
+# $Id: webwereld.tcl,v 1.19 2003-08-18 20:36:43 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -224,12 +224,14 @@ proc webw:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $webw(headlines)} {incr i} { 
       if {![info exists webwdata(link,$i)]} { break }
-      webw:put $chan $nick $i $webw(method)
+      if {[catch { webw:put $chan $nick $i $webw(method) } err]} {
+        putlog "\[WebWereld\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[WebWereld\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret verschil i }
+  catch { unset ret verschil i err }
 }
 
 proc webw:put {chan nick which method} {
@@ -280,9 +282,13 @@ proc webw:update {} {
       for {set i 0} {$i < $webw(automax)} {incr i} {
         if {![info exists webwdata(link,$i)]} { break }
         if {$webwdata(link,$i) == $webw(lastitem)} { break }
-        foreach chan [split $dest)] { webw:put $chan $chan $i 1 }
+        foreach chan [split $dest)] {
+          if {[catch { webw:put $chan $chan $i 1 } err]} {
+            putlog "\[WebWereld\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$webw(log)} { putlog "\[WebWereld\] No news." }
     }

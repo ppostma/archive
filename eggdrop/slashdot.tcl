@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.30 2003-08-09 15:16:57 peter Exp $
+# $Id: slashdot.tcl,v 1.31 2003-08-18 20:36:43 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
 # version 2.0, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -236,12 +236,14 @@ proc slashdot:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $slashdot(headlines)} {incr i} {
       if {![info exists slashdotdata(time,$i)]} { break }
-      slashdot:put $chan $nick $i $slashdot(method)
+      if {[catch { slashdot:put $chan $nick $i $slashdot(method) } err]} {
+        putlog "\[Slashdot\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[Slashdot\] Something went wrong while updating."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc slashdot:put {chan nick which method} {
@@ -296,9 +298,13 @@ proc slashdot:update {} {
       for {set i 0} {$i < $slashdot(automax)} {incr i} {
         if {![info exists slashdotdata(time,$i)]} { break }
         if {$slashdotdata(time,$i) == $slashdot(lastitem)} { break }
-        foreach chan [split $dest] { slashdot:put $chan $chan $i 1 }
+        foreach chan [split $dest] {
+          if {[catch { slashdot:put $chan $chan $i 1 } err]} {
+            putlog "\[Slashdot\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$slashdot(log)} { putlog "\[Slashdot\] No news." }
     }

@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.31 2003-08-09 15:16:57 peter Exp $
+# $Id: fok.tcl,v 1.32 2003-08-18 20:36:43 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -263,12 +263,14 @@ proc fok:pub {nick uhost hand chan text} {
   if {$ret != -1} {
     for {set i 0} {$i < $fok(headlines)} {incr i} {
       if {![info exists fokdata(id,$i)]} { break }
-      fok:put $chan $nick $i $fok(method)
+      if {[catch { fok:put $chan $nick $i $fok(method) } err]} {
+        putlog "\[Fok!\] Problem in data array: $err"
+      }
     }
   } else {
     putserv "NOTICE $nick :\[Fok!\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret diff i }
+  catch { unset ret diff i err }
 }
 
 proc fok:put {chan nick which method} {
@@ -320,9 +322,13 @@ proc fok:update {} {
       for {set i 0} {$i < $fok(automax)} {incr i} {
         if {![info exists fokdata(ts,$i)]} { break }
         if {$fokdata(ts,$i) == $fok(lastitem)} { break }
-        foreach chan [split $dest] { fok:put $chan $chan $i 1 }
+        foreach chan [split $dest] { 
+          if {[catch { fok:put $chan $chan $i 1 } err]} {
+            putlog "\[Fok!\] Problem in data array: $err"
+          }
+        }
       }
-      catch { unset dest i chan }
+      catch { unset dest i chan err }
     } else {
       if {$fok(log)} { putlog "\[Fok!\] No news." }
     }
