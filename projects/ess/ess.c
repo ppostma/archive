@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.14 2003-08-13 15:48:55 peter Exp $
+ * $Id: ess.c,v 1.15 2003-08-16 14:16:26 peter Exp $
  */
 
 #include <sys/types.h>
@@ -295,7 +295,7 @@ readln(fd, line, len)
 	char	temp[1];
 
 	do {
-		if ((b = read(fd, temp, 1)) < 0) {
+		if ((b = recv(fd, temp, 1, 0)) < 0) {
 			return b;
 		} else if (b == 0)
 			break;
@@ -448,13 +448,13 @@ ident_scan(host, ai_family, remoteport, localport)
 		return "?";
 	}
 	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
-	if (write(isock, request, strlen(request)) < 0) {
-		perror("write");
+	if (send(isock, request, strlen(request), 0) < 0) {
+		perror("send");
 		exit(255);
 	}
-	bytes = read(isock, response, sizeof(response));
+	bytes = recv(isock, response, sizeof(response), 0);
 	if (bytes < 0) {
-		perror("read");
+		perror("recv");
 		exit(255);
 	} else if (bytes == 0)
 		return "?";
@@ -479,11 +479,11 @@ banner_scan(port)
 	int		count;
 
 	if (port == 80)
-		write(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST));
+		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
 	else
-		write(ssock, "", 0);
+		send(ssock, "", 0, 0);
 
-	count = read(ssock, buf, sizeof(buf));
+	count = recv(ssock, buf, sizeof(buf), 0);
 	buf[count] = '\0';
 
 	return buf;
@@ -501,7 +501,7 @@ ftp_scan(name)
 
 	/* Send USER command */
 	snprintf(request, sizeof(request), "USER %s\r\n", name);
-	write(ssock, request, strlen(request));
+	send(ssock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
 
@@ -511,7 +511,7 @@ ftp_scan(name)
 
 	/* Send PASS command */
 	strcpy(request, "PASS anonymous@moo\r\n");
-	write(ssock, request, strlen(request));
+	send(ssock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
 
@@ -596,7 +596,7 @@ relay_scan(host, ip)
 
 	/* Send HELO, quit if return code is not 250 */
 	strcpy(request, "HELO www.pointless.nl\r\n");
-	write(ssock, request, strlen(request));
+	send(ssock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
 	if (readcode(ssock) != 250)
@@ -610,21 +610,21 @@ relay_scan(host, ip)
 
 	        /* Reset */
 		strcpy(request, "RSET\n");
-		write(ssock, request, strlen(request));
+		send(ssock, request, strlen(request), 0);
 		if (verbose_flag)
 	                printf(">>> %s", request);
 		(void)readall(ssock);
 
 		/* Send MAIL FROM */
 		snprintf(request, sizeof(request), "MAIL FROM: %s\r\n", s[i].from);
-		write(ssock, request, strlen(request));
+		send(ssock, request, strlen(request), 0);
 		if (verbose_flag)
 			printf(">>> %s", request);
 		(void)readall(ssock);
 
 		/* Send RCPT TO */
 		snprintf(request, sizeof(request), "RCPT TO: %s\r\n", s[i].rcpt);
-		write(ssock, request, strlen(request));
+		send(ssock, request, strlen(request), 0);
 		if (verbose_flag)
 			printf(">>> %s", request);
 
