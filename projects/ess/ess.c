@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.10 2003-08-10 11:08:05 peter Exp $
+ * $Id: ess.c,v 1.11 2003-08-10 16:07:55 peter Exp $
  */
 
 #include <sys/types.h>
@@ -31,8 +31,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.2"
-#define HTTP_REQUEST	"HEAD / HTTP/1.0\n\n"
+#define VERSION		"0.3.3-beta"
+#define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define TIMEOUT		3  /* seconds */
 
 const char	*progname;
@@ -78,7 +78,7 @@ main(argc, argv)
 	char		*port = NULL;
 	char		 sbuf[NI_MAXSERV];
 	char		 result[512];
-	int		 ch, err, ret;
+	int		 ch, err;
 	int		 all_flag = 0;
 	int		 banner_flag = 0;
 	int		 ftp_flag = 0;
@@ -160,16 +160,17 @@ main(argc, argv)
 			perror("socket");
 			continue;
 		}
-		alarm(TIMEOUT);
 		if (verbose_flag) {
-			printf("Trying %s ",
-			    get_addr(ai->ai_addr, ai->ai_addrlen));
-			resolve_flag = !resolve_flag;
-			printf("(%s).\n",
-			    get_addr(ai->ai_addr, ai->ai_addrlen));
-			resolve_flag = !resolve_flag;
-		}			
+			printf("Trying %s ", get_addr(ai->ai_addr, ai->ai_addrlen));
+			resolve_flag = !resolve_flag;	/* reverse */
+			printf("(%s)...", get_addr(ai->ai_addr, ai->ai_addrlen));
+			resolve_flag = !resolve_flag;	/* reverse again to original state */
+			(void)fflush(stdout);
+		}
+		alarm(TIMEOUT);
 		if (connect(ssock, ai->ai_addr, ai->ai_addrlen) < 0) {
+			if (verbose_flag)
+				printf(" connection failed!\n");
 			if (timedout) {
 				strcpy(result, "no response");
 				timedout = 0;
@@ -178,6 +179,8 @@ main(argc, argv)
 			goto print_results;
 		}
 		alarm(0);
+		if (verbose_flag)
+			printf(" connection succeeded!\n");
 		if (ident_flag) {
 			len = sizeof(ss);
 			if (getsockname(ssock, (struct sockaddr *)&ss, &len) < 0) {
@@ -196,10 +199,7 @@ main(argc, argv)
 			snprintf(result, sizeof(result), "owner: %s",
 			   ident_scan(host, ai->ai_family, tport, atoi(sbuf)));
 		} else if (ftp_flag) {
-			ret = ftp_scan("ftp");
-			if (ret <= 0)
-				ftp_scan("anonymous");
-			switch (ret) {
+			switch (ftp_scan("anonymous")) {
 			case -1:
 				strcpy(result, "could not login.");
 				break;
@@ -211,8 +211,7 @@ main(argc, argv)
 				break;
 			}
 		} else if (relay_flag) {
-			ret = relay_scan("www.pointless.nl");
-			switch (ret) {
+			switch (relay_scan("www.pointless.nl")) {
 			case -1:
 				strcpy(result, "could not login.");
 				break;
@@ -369,7 +368,7 @@ ident_scan(host, ai_family, remoteport, localport)
 		fprintf(stderr, "Cannot connect to ident!\n");
 		return "?";
 	}
-	snprintf(request, sizeof(request), "%u,%u\n", remoteport, localport);
+	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
 	if (write(isock, request, strlen(request)) < 0) {
 		perror("write");
 		exit(1);
@@ -415,24 +414,50 @@ int
 ftp_scan(name)
 	char	*name;
 {
-	char	request[1024], response[1024];
-	int	ret = -1;
+	char	 request[1024], response[1024];
 
-	snprintf(request, sizeof(request), "USER %s\n", name);
-	write(ssock, request, strlen(request));
-	while (readln(ssock, response, sizeof(response)) > 0) {
+	/* Read ftp banner */
+	do {
+		(void)readln(ssock, response, sizeof(response));
 		if (verbose_flag)
 			printf("<<< %s", response);
-		if (strstr(response, "530 ")) {	/* User not logged in */
-			ret = 0;
-			break;
-		}
-		if (strstr(response, "331 ")) {	/* User name okay */
-			ret = 1;
-			break;
-		}
-	}
-	return ret;
+	} while (response[3] == '-');
+
+	/* Send USER command */
+	snprintf(request, sizeof(request), "USER %s\r\n", name);
+	write(ssock, request, strlen(request));
+	if (verbose_flag)
+		printf(">>> %s", request);
+
+	/* Get answer from ftpd */
+	(void)readln(ssock, response, sizeof(response)); 
+	if (verbose_flag)
+		printf("<<< %s", response);
+
+	/* User not logged in reply */
+	if (strstr(response, "530 "))
+		return 0;
+
+	/* Send PASS command */
+	strcpy(request, "PASS anonymous@moo\r\n");
+	write(ssock, request, strlen(request));
+	if (verbose_flag)
+		printf(">>> %s", request);
+
+	/* Get answer from ftpd */
+	(void)readln(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf("<<< %s", response);
+
+	/* User not logged in reply */
+	if (strstr(response, "530 "))
+		return 0;
+
+	/* User name okay reply */
+	if (strstr(response, "331 "))
+		return 1;
+
+	return -1;
 }
 
 int
@@ -447,7 +472,7 @@ relay_scan(host)
 		printf("<<< %s", response);
 
 	/* Send HELO, quit if return code is not 250 */
-	strcpy(request, "HELO www.pointless.nl\n");
+	strcpy(request, "HELO www.pointless.nl\r\n");
 	write(ssock, request, strlen(request));
 	if (verbose_flag)
 		printf(">>> %s", request);
@@ -467,7 +492,7 @@ relay_scan(host)
 		printf("<<< %s", response);
 
 	/* Send MAIL FROM */
-	strcpy(request, "MAIL FROM: <test@pointless.nl>\n");
+	strcpy(request, "MAIL FROM: <test@pointless.nl>\r\n");
 	write(ssock, request, strlen(request));
 	if (verbose_flag)
 		printf(">>> %s", request);
@@ -476,7 +501,7 @@ relay_scan(host)
 		printf("<<< %s", response);
 
 	/* Send RCPT TO */
-	strcpy(request, "RCPT TO: <test@pointless.nl>\n");
+	strcpy(request, "RCPT TO: <test@pointless.nl>\r\n");
 	write(ssock, request, strlen(request));
 	if (verbose_flag)
 		printf(">>> %s", request);
