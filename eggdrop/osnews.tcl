@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.7 2003-05-26 17:02:08 peter Exp $
+# $Id: osnews.tcl,v 1.8 2003-06-15 17:40:23 peter Exp $
 
 # osnews.tcl / OSnews.org News Announce Script for an eggdrop
 # version 1.2 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -88,6 +88,7 @@ set osnews(log) 1
 
 set osnews(version) "1.2"
 
+package require Tcl 8.2
 package require http
 
 for {set i 0} {$i < [llength $osnews(triggers)]} {incr i} {

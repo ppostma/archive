@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.7 2003-05-26 17:02:08 peter Exp $
+# $Id: clanbase.tcl,v 1.8 2003-06-15 17:40:23 peter Exp $
 
 # cb.tcl / Clanbase.com News Announce Script for an eggdrop
 # version 1.2 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -88,6 +88,7 @@ set cb(log) 1
 
 set cb(version) "1.2"
 
+package require Tcl 8.2
 package require http
 
 for {set i 0} {$i < [llength $cb(triggers)]} {incr i} {

@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.9 2003-05-26 17:02:08 peter Exp $
+# $Id: fok.tcl,v 1.10 2003-06-15 17:40:23 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
 # version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -120,6 +120,7 @@ set fok(log) 1
 
 set fok(version) "1.8"
 
+package require Tcl 8.2
 package require http
 
 for {set i 0} {$i < [llength $fok(triggers)]} {incr i} {

@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.11 2003-06-13 10:36:10 peter Exp $
+# $Id: tweakers.tcl,v 1.12 2003-06-15 17:40:24 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
 # version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -124,6 +124,7 @@ set tnet(log) 1
 
 set tnet(version) "1.8"
 
+package require Tcl 8.2
 package require http
 
 for {set i 0} {$i < [llength $tnet(triggers)]} {incr i} {

@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.10 2003-05-26 17:02:08 peter Exp $
+# $Id: slashdot.tcl,v 1.11 2003-06-15 17:40:24 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.8 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -92,6 +92,7 @@ set slashdot(log) 1
 
 set slashdot(version) "1.8"
 
+package require Tcl 8.2
 package require http
 
 for {set i 0} {$i < [llength $slashdot(triggers)]} {incr i} {
