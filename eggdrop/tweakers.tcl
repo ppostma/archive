@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.32 2003-08-09 15:10:57 peter Exp $
+# $Id: tweakers.tcl,v 1.33 2003-08-09 15:16:57 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -214,6 +214,7 @@ proc tnet:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[T.Net\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 

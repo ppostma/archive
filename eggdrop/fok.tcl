@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.30 2003-08-09 15:10:56 peter Exp $
+# $Id: fok.tcl,v 1.31 2003-08-09 15:16:57 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -210,6 +210,7 @@ proc fok:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[Fok!\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 

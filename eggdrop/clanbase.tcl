@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.29 2003-08-09 15:10:56 peter Exp $
+# $Id: clanbase.tcl,v 1.30 2003-08-09 15:16:57 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -178,6 +178,7 @@ proc cb:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[Clanbase\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 

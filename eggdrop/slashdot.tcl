@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.29 2003-08-09 15:10:57 peter Exp $
+# $Id: slashdot.tcl,v 1.30 2003-08-09 15:16:57 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
 # version 2.0, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -182,6 +182,7 @@ proc slashdot:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[Slashdot\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 

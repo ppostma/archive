@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.17 2003-08-09 15:10:57 peter Exp $
+# $Id: webwereld.tcl,v 1.18 2003-08-09 15:16:57 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -168,6 +168,7 @@ proc webw:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[WebWereld\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 

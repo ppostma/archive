@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.19 2003-08-09 15:10:56 peter Exp $
+# $Id: bsdforums.tcl,v 1.20 2003-08-09 15:16:57 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -172,6 +172,7 @@ proc bsdforums:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[BSDForums\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 

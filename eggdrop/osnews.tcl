@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.27 2003-08-09 15:10:57 peter Exp $
+# $Id: osnews.tcl,v 1.28 2003-08-09 15:16:57 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -178,6 +178,7 @@ proc osnews:getdata {} {
 
   if {[catch { set data [::http::data $page] } msg]} {
     putlog "\[OSnews\] Problem: $msg"
+    catch { ::http::cleanup $page }
     return -1
   }
 
