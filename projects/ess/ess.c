@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.40 2003-11-09 16:27:45 peter Exp $
+ * $Id: ess.c,v 1.41 2003-11-14 21:24:29 peter Exp $
  */
 
 #include <sys/types.h>
@@ -464,7 +464,7 @@ banner_scan(u_short port)
 		select(ssock+1, &read_fds, NULL, NULL, &tv);
 		if (!FD_ISSET(ssock, &read_fds))
 			goto cleanup;
-		count = recv(ssock, buf, sizeof(buf), 0);
+		count = recv(ssock, buf, BANNER_SIZE, 0);
 		if (count < 1)
 			goto cleanup;
 		buf[count] = '\0';
