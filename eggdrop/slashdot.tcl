@@ -1,9 +1,11 @@
-# $Id: slashdot.tcl,v 1.11 2003-06-15 17:40:24 peter Exp $
+# $Id: slashdot.tcl,v 1.12 2003-06-20 18:09:02 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
-# version 1.8 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.9 / 20/06/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.9: (??/??/????)
+#  - trivial style changes
 # 1.8: (26/05/2003) [bugfix]
 #  - third attempt to get rid of the bug with the & character.
 # 1.7: (20/05/2003) [changes]
@@ -18,9 +20,9 @@
 # This script also uses http.tcl. You *don't* need to put http.tcl
 # your eggdrop configuration!
 #
-# The slashdot.tcl script works best with TCL versions higher than 8.2.
+# You need at least TCL version 8.2 to get this script running!
 #
-# For Questions/suggestions/bug/etc: peter@webdeveloping.nl
+# For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
 # Please change the configuration setting below:
@@ -90,7 +92,7 @@ set slashdot(log) 1
 
 ### Begin TCL code ###
 
-set slashdot(version) "1.8"
+set slashdot(version) "1.9"
 
 package require Tcl 8.2
 package require http

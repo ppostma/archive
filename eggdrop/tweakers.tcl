@@ -1,9 +1,11 @@
-# $Id: tweakers.tcl,v 1.12 2003-06-15 17:40:24 peter Exp $
+# $Id: tweakers.tcl,v 1.13 2003-06-20 18:09:02 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
-# version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.9 / 20/06/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.9: (??/??/????)
+#  - style changes
 # 1.8: (26/05/03) [bugfix]
 #  - 3de poging om de bug met & teken te fixen.
 # 1.7: (20/05/03) [changes]
@@ -122,7 +124,7 @@ set tnet(log) 1
 
 ### Begin TCL code ###
 
-set tnet(version) "1.8"
+set tnet(version) "1.9"
 
 package require Tcl 8.2
 package require http
