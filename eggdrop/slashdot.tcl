@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.4 2003-05-17 21:43:33 peter Exp $
+# $Id: slashdot.tcl,v 1.5 2003-05-17 23:27:20 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.6 / 17/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -248,7 +248,7 @@ proc slashdot:auton {nick uhost hand chan text} {
   if {$slashdot(autonews) == 0} {
     set slashdot(autonews) 1;  slashdot:update
     putlog "\[Slashdot\] Autonews turned on."
-    putserv "PRIVMSG $chan :\001ACTION has turned the slashdot.org news announcer on..\001"
+    putserv "PRIVMSG $chan :\001ACTION has turned the slashdot.org news announcer on.\001"
   } else {
     putserv "NOTICE $nick :My news announcer is already on!"
   }
