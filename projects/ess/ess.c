@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.39 2003-11-08 17:46:26 peter Exp $
+ * $Id: ess.c,v 1.40 2003-11-09 16:27:45 peter Exp $
  */
 
 #include <sys/types.h>
@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.5-beta"
+#define VERSION		"0.3.5"
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define CONNECT_TIMEOUT	3	/* seconds when connect will timeout */
 #define BANNER_TIMEOUT	1	/* seconds after last banner recv    */
@@ -325,19 +325,18 @@ size_t
 readln(int fd, char *line, size_t len)
 {
 	ssize_t	b, i = 0;
-	char	temp[1];
+	char	temp;
 
 	do {
-		if ((b = recv(fd, temp, 1, 0)) < 0) {
+		if ((b = recv(fd, &temp, 1, 0)) < 0)
 			return b;
-		} else if (b == 0)
+		else if (b == 0)
 			break;
-		if (temp[0] != 0)
-			line[i] = temp[0];
-	} while (++i < len && temp[0] != '\n');
+		*line++ = temp;
+	} while (++i < len && temp != '\n');
 
 	if (i > 0)
-		line[i] = '\0';
+		*line = '\0';
 
 	return i;
 }

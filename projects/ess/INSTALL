@@ -1,0 +1,14 @@
+Easy Service Scanner v0.3.5 by Peter Postma <peter@webdeveloping.nl>
+
+To compile the program:
+# make
+
+You can specify -DIPV4_DEFAULT to use IPv4 only by default.
+See the Makefile for an example.
+If you're on Solaris then you must uncomment the LIBS line in the Makefile
+before doing make.
+
+If you want to install the program then do:
+# make install
+
+See manpage ess(1) for documention.

@@ -1,0 +1,112 @@
+.\" $Id: ess.1,v 1.1 2003-11-09 16:27:45 peter Exp $
+.\"
+.TH "ESS" "1" "November 09, 2003" "ess 0\.3\.5"
+.SH NAME
+.B ess
+\- Easy Service Scanner
+.SH SYNOPSIS
+.B ess
+[\-46abfinqrvV]
+.IR hostname/ip
+.IR port/service
+.SH DESCRIPTION
+.I ess
+is a simple program for testing network services/daemons.
+.PP
+It features IPv6 support, banner grabbing, anonymous ftp scan,
+ident scanning, open\-relay test and supports round robin dns entry's.
+.SH OPTIONS
+.TP 8
+.B \-4
+Force the use of IPv4 only.
+.TP
+.B \-6
+Force the use of IPv6 only.
+.TP
+.B \-a
+When the supplied hostname resolves to multiple addresses then scan
+all of them.
+.TP
+.B \-b
+Gets the banner from an open port. Special characters will be translated so
+you can read them. If you use this option twice then special characters
+will not be translated.
+.TP
+.B \-f
+Anonymous FTP scan, checks if the FTP server allows anonymous logins.
+You don't have to specify a port here as port 21 will be used by default. You
+may override this by specifying another port.
+.TP
+.B \-i
+Ident scan, queries ident/auth (port 113) and tries to get the identity of
+the service we're connecting to. This will not work when the server or client
+is behind a NAT router.
+.TP
+.B \-n
+If you've compiled
+.I ess
+with -DRESOLVE:
+Don't try to resolve addresses to names.
+Compiled without -DRESOLVE:
+Try resolve addresses to names.
+.TP
+.B \-q
+Be quiet. Don't output anything to stdout.
+.TP
+.B \-r
+Mail relay test. Performs a simple test to check for open\-relay.
+If you use this option twice then
+.I ess
+will perform an extensive check (20 tests).
+You don't have to specify a port here as port 25 will be used by default. You
+may override this by specifying another port.
+.TP
+.B \-v
+Be verbose. It's use is recommended, especially with the FTP (\-f) and
+open-relay (\-r) tests.
+.TP
+.B \-V
+Outputs the version number.
+.SH EXIT CODES
+The program returns several exit codes which might make it useful to
+integrate in shell scripts or automated tasks. Here are the codes:
+.TP 10
+.B 0
+Port is open (or service access allowed).
+.TP
+.B 1
+Port is closed (or service access denied).
+.TP
+.B 2
+Request timed out (or unable to login at the service).
+.TP
+.B 64
+Invalid arguments/flags.
+.TP
+.B 65
+Invalid combination of flags.
+.TP
+.B 70
+Unknown error (this should never happen).
+.TP
+.B 99
+Code when option \-V is used.
+.TP
+.B 128
+Bad address/service or some other error which causes
+the address/name resolve functions to fail.
+.TP
+.B 255
+Eror in socket operation (send, recv, getsockname, etc...)
+or malloc failure.
+.SH AUTHOR
+.I ess
+is written by Peter Postma
+.B <peter@pointless.nl>
+.SH DOWNLOAD
+You can download
+.I ess
+here:
+.B http://www.pointless.nl/~peter/projects/ess/
+.SH BUGS
+If you find any bugs then please report them to me.
