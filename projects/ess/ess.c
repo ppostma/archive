@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.49 2004-09-04 16:24:04 peter Exp $
+ * $Id: ess.c,v 1.50 2004-09-04 16:24:38 peter Exp $
  */
 
 #include <sys/types.h>
@@ -960,7 +960,7 @@ usage(const char *progname)
 "  -r          Mail Relay test, performs a test to check for open-relay.\n"
 "              Use twice for an extensive open-relay test.\n"
 "  -t timeout  Specify a timeout, used when connecting to a service.\n"
-"  -v          Be verbose. It's use is recommended.\n",
+"  -v          Be verbose. Its use is recommended.\n",
 	progname);
 
 	exit(64);
