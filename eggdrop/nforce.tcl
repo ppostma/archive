@@ -1,9 +1,11 @@
-# $Id: nforce.tcl,v 1.2 2004-08-25 15:11:49 peter Exp $
+# $Id: nforce.tcl,v 1.3 2004-09-05 01:16:27 peter Exp $
 
 # Nforce.nl release script for the eggdrop
-# version 1.1, 25/08/2004, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 05/09/2004, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.2: (05/09/2004)
+#  - Fixed a typo, found by JAFO <jafo at wondernet dot nu>.
 # 1.1: (25/08/2004)
 #  - translated to english.
 # 1.0: (14/08/2004) [first version]
@@ -104,7 +106,7 @@ set nforce(log) 1
 
 ### Begin Tcl code ###
 
-set nforce(version) "1.1"
+set nforce(version) "1.2"
 
 if {[catch { package require http } err]} {
   putlog "\[NFOrce\] Cannot load [file tail [info script]]: Problem loading the http package: $err"
@@ -296,7 +298,7 @@ proc nforce:update {} {
       } else {
         set dest $nforce(announcechan)
       }
-      for {set i 0} {$i < $nforce(announcema)} {incr i} {
+      for {set i 0} {$i < $nforce(announcemax)} {incr i} {
         if {![info exists nforcedata(nfo,$i)]} { break }
         if {$nforcedata(nfo,$i) == $nforce(lastitem)} { break }
         foreach chan [split $dest] {
