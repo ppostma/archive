@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.43 2004-02-21 16:07:31 peter Exp $
+ * $Id: ess.c,v 1.44 2004-02-21 16:21:37 peter Exp $
  */
 
 #include <sys/types.h>
@@ -31,38 +31,39 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.6-beta"
+#define BANNER_SIZE	2048	/* max receive size for banner */
+#define BANNER_TIMEOUT	1000	/* milliseconds after last banner recv */
+#define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts */
+
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
-#define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts	*/
-#define BANNER_TIMEOUT	1000	/* milliseconds after last banner recv	*/
-#define BANNER_SIZE	2048	/* max receive size for banner		*/
+#define VERSION		"0.3.6-beta"
 
-int	 tconnect(int, struct sockaddr *, socklen_t, long);
-size_t	 readln(int, char *, size_t);
-size_t	 readall(int);
-int	 readcode(int);
-char	*get_af(int);
-char	*get_addr(struct sockaddr *, socklen_t, int);
-char	*get_serv(char *, int);
-void	 banner_scan(int, u_short);
-int	 ident_scan(char *, int, u_short, u_short, char *, size_t);
-int	 ftp_scan(int, char *);
-int	 relay_scan(int, char *, char *, int);
-void	 usage(char *);
-void	 fatal(int);
+static int	   tconnect(int, struct sockaddr *, socklen_t, long);
+static size_t	   readln(int, char *, size_t);
+static size_t	   readall(int);
+static int	   readcode(int);
+static const char *get_af(int);
+static const char *get_addr(struct sockaddr *, socklen_t, int);
+static const char *get_serv(char *, int);
+static void	   banner_scan(int, u_short);
+static int	   ident_scan(char *, int, u_short, u_short, char *, size_t);
+static int	   ftp_scan(int, char *);
+static int	   relay_scan(int, char *, char *, int);
+static void	   usage(char *);
+static void	   fatal(int);
 
-int	 verbose_flag = 0;
+static int verbose_flag = 0;
 
 #ifdef IPV4_DEFAULT
-int	 IPv4or6 = AF_INET;
+static int IPv4or6 = AF_INET;
 #else
-int	 IPv4or6 = AF_UNSPEC;
+static int IPv4or6 = AF_UNSPEC;
 #endif
 
 #ifdef RESOLVE
-int	 resolve_flag = 1;
+static int resolve_flag = 1;
 #else
-int	 resolve_flag = 0;
+static int resolve_flag = 0;
 #endif
 
 int
@@ -113,7 +114,7 @@ main(int argc, char *argv[])
 			ident_flag = 1;
 			break;
 		case 'n':
-			resolve_flag = (resolve_flag) ? 0 : 1;
+			resolve_flag = resolve_flag ? 0 : 1;
 			break;
 		case 'q':
 			if (verbose_flag) {
@@ -152,8 +153,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	host = argv[0];
-	if (argc < 2 && (port == NULL || host == NULL))
+	if (argc < 2 && (port == NULL || host == NULL)) {
 		usage(progname);
+		/* NOTREACHED */
+	}
 
 	if (port == NULL || argv[1] != NULL)
 		port = argv[1];
@@ -323,9 +326,9 @@ print_results:
 
 /*
  * tconnect - connect() with timeout
- * returns 0: ok, 1: refused, 2: timed out
+ * returns 0: ok, 1: refused, 2: timeout
  */
-int
+static int
 tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 {
 	struct timeval tv;
@@ -347,7 +350,7 @@ tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 			tv.tv_usec = timeout % 1000;
 			FD_ZERO(&fds);
 			FD_SET(sock, &fds);
-			if (select(sock+1, NULL, &fds, NULL, &tv) > 0) {
+			if (select(sock + 1, NULL, &fds, NULL, &tv) > 0) {
 				optlen = sizeof(int);
 				if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
 				    (void *)&val, &optlen) < 0) {
@@ -368,7 +371,7 @@ tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 	return ret;
 }
 
-size_t
+static size_t
 readln(int fd, char *line, size_t len)
 {
 	ssize_t	b, i = 0;
@@ -388,7 +391,7 @@ readln(int fd, char *line, size_t len)
 	return i;
 }
 
-size_t
+static size_t
 readall(int fd)
 {
 	char	response[1024];
@@ -407,7 +410,7 @@ readall(int fd)
 	return count;
 }
 
-int
+static int
 readcode(int fd)
 {
 	char	response[1024];
@@ -431,7 +434,7 @@ readcode(int fd)
 	return -1;
 }
 
-char *
+static const char *
 get_af(int af)
 {
 	switch (af) {
@@ -445,7 +448,7 @@ get_af(int af)
 	return "?";
 }
 
-char *
+static const char *
 get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 {
 	struct sockaddr_storage	ss;
@@ -453,20 +456,20 @@ get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 
 	memcpy(&ss, addr, (size_t)len);
 	if (getnameinfo((struct sockaddr *)&ss, len, host,
-	    sizeof(host), NULL, 0, (resolve) ? 0 : NI_NUMERICHOST) == 0)
+	    sizeof(host), NULL, 0, resolve ? 0 : NI_NUMERICHOST) == 0)
 		return host;
 
 	return "?";
 }
 
-char *
+static const char *
 get_serv(char *port, int resolve)
 {
 	struct servent	*serv;
 	static char	 buf[NI_MAXSERV];
 	unsigned int	 i;
 
-	for (i=0; i<(strlen(port)); i++)
+	for (i = 0; i < (strlen(port)); i++)
 		if (isalpha((int)port[i]) != 0)
 			goto name;
 
@@ -486,7 +489,7 @@ name:
 	return buf;
 }
 
-void
+static void
 banner_scan(int sock, u_short port)
 {
 	struct timeval	 tv;
@@ -538,9 +541,9 @@ banner_scan(int sock, u_short port)
 	return;
 }
 
-int
+static int
 ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
-	   char *owner, size_t len)
+    char *owner, size_t len)
 {
 	struct addrinfo	 hints, *res;
 	char		*temp, *p;
@@ -591,7 +594,7 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 	return 0;
 }
 
-int
+static int
 ftp_scan(int sock, char *name)
 {
 	char	request[1024];
@@ -635,13 +638,13 @@ ftp_scan(int sock, char *name)
 	return 2;
 }
 
-int
+static int
 relay_scan(int sock, char *host, char *ip, int flag)
 {
 	char	 request[1024];
 	struct	 scans {
-	    char	from[128];
-	    char	rcpt[128];
+	    char  from[128];
+	    char  rcpt[128];
 	};
 	struct	 scans	s[20];
 	int	 i, n = 1;
@@ -708,8 +711,7 @@ relay_scan(int sock, char *host, char *ip, int flag)
 		return 2;
 
 	/* Do requested tests */
-	for (i=0; i<n; i++) {
-
+	for (i = 0; i < n; i++) {
 		if (verbose_flag)
 			printf("\nRelay test %d\n", i+1);
 
@@ -746,7 +748,7 @@ relay_scan(int sock, char *host, char *ip, int flag)
 	return 1;
 }
 
-void
+static void
 usage(char *progname)
 {
 	fprintf(stderr,
@@ -773,7 +775,7 @@ usage(char *progname)
 	exit(64);
 }
 
-void
+static void
 fatal(int errornum)
 {
 	fprintf(stderr, "Fatal error: ");
