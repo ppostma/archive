@@ -1,4 +1,4 @@
-# $Id: tclbot.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
+# $Id: tclbot.tcl,v 1.3 2003-08-02 23:50:50 peter Exp $
 
 #
 # Copyright (c) 2003 Peter Postma <peter@webdeveloping.nl>
@@ -249,9 +249,9 @@ proc handleirc {line} {
 
 # Reload configuration/modules/scripts
 proc reload {} {
-	global argv
+	global conf
 	uplevel #0 {
-		if {[catch { source [lindex $argv 0] } err]} {
+		if {[catch { source $conf } err]} {
 			log "Error while reloading: $err"
 		}
 	}
