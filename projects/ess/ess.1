@@ -1,6 +1,6 @@
-.\" $Id: ess.1,v 1.1 2003-11-09 16:27:45 peter Exp $
+.\" $Id: ess.1,v 1.2 2003-11-30 19:21:47 peter Exp $
 .\"
-.TH "ESS" "1" "November 09, 2003" "ess 0\.3\.5"
+.TH "ESS" "1" "November 24, 2003" "ess 0\.3\.6\-beta"
 .SH NAME
 .B ess
 \- Easy Service Scanner
@@ -11,7 +11,7 @@
 .IR port/service
 .SH DESCRIPTION
 .I ess
-is a simple program for testing network services/daemons.
+is a simple program for testing TCP network services/daemons.
 .PP
 It features IPv6 support, banner grabbing, anonymous ftp scan,
 ident scanning, open\-relay test and supports round robin dns entry's.
@@ -28,19 +28,18 @@ When the supplied hostname resolves to multiple addresses then scan
 all of them.
 .TP
 .B \-b
-Gets the banner from an open port. Special characters will be translated so
-you can read them. If you use this option twice then special characters
-will not be translated.
+Get the banner from an open port.
+Special characters will be translated so you can read them.
 .TP
 .B \-f
 Anonymous FTP scan, checks if the FTP server allows anonymous logins.
-You don't have to specify a port here as port 21 will be used by default. You
-may override this by specifying another port.
+You don't have to specify a port here as port 21 will be used by default.
+You may override this by specifying another port.
 .TP
 .B \-i
 Ident scan, queries ident/auth (port 113) and tries to get the identity of
-the service we're connecting to. This will not work when the server or client
-is behind a NAT router.
+the service we're connecting to.
+This will not work when the server or client is behind a NAT router.
 .TP
 .B \-n
 If you've compiled
@@ -51,25 +50,29 @@ Compiled without -DRESOLVE:
 Try resolve addresses to names.
 .TP
 .B \-q
-Be quiet. Don't output anything to stdout.
+Be quiet.
+Don't output anything to stdout.
 .TP
 .B \-r
-Mail relay test. Performs a simple test to check for open\-relay.
+Mail relay test.
+Performs a simple test to check for open\-relay.
 If you use this option twice then
 .I ess
 will perform an extensive check (20 tests).
-You don't have to specify a port here as port 25 will be used by default. You
-may override this by specifying another port.
+You don't have to specify a port here as port 25 will be used by default.
+You may override this by specifying another port.
 .TP
 .B \-v
-Be verbose. It's use is recommended, especially with the FTP (\-f) and
+Be verbose.
+It's use is recommended, especially with the FTP (\-f) and
 open-relay (\-r) tests.
 .TP
 .B \-V
 Outputs the version number.
 .SH EXIT CODES
 The program returns several exit codes which might make it useful to
-integrate in shell scripts or automated tasks. Here are the codes:
+integrate in shell scripts or automated tasks.
+Here are the codes:
 .TP 10
 .B 0
 Port is open (or service access allowed).
@@ -107,6 +110,6 @@ is written by Peter Postma
 You can download
 .I ess
 here:
-.B http://www.pointless.nl/~peter/projects/ess/
+.B http://pointless.nl/~peter/projects/ess/
 .SH BUGS
 If you find any bugs then please report them to me.

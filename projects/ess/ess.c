@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.41 2003-11-14 21:24:29 peter Exp $
+ * $Id: ess.c,v 1.42 2003-11-30 19:21:47 peter Exp $
  */
 
 #include <sys/types.h>
@@ -26,68 +26,66 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.5"
+#define VERSION		"0.3.6-beta"
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
-#define CONNECT_TIMEOUT	3	/* seconds when connect will timeout */
-#define BANNER_TIMEOUT	1	/* seconds after last banner recv    */
-#define BANNER_SIZE	2048	/* max recv size for banner	     */
+#define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts	*/
+#define BANNER_TIMEOUT	1000	/* milliseconds after last banner recv	*/
+#define BANNER_SIZE	2048	/* max receive size for banner		*/
 
+int	 tconnect(int, struct sockaddr *, socklen_t, long);
 size_t	 readln(int, char *, size_t);
 size_t	 readall(int);
 int	 readcode(int);
 char	*get_af(int);
 char	*get_addr(struct sockaddr *, socklen_t, int);
-char	*get_serv(char *);
-void	 banner_scan(u_short);
+char	*get_serv(char *, int);
+void	 banner_scan(int, u_short);
 int	 ident_scan(char *, int, u_short, u_short, char *, size_t);
-int	 ftp_scan(char *);
-int	 relay_scan(char *, char *);
-void	 timeout_handler(int);
+int	 ftp_scan(int, char *);
+int	 relay_scan(int, char *, char *, int);
 void	 usage(char *);
 void	 fatal(int);
 
-int	ssock, isock;
-int	timedout = 0;
-int	verbose_flag = 0;
-int	banner_flag = 0;
-int	relay_flag = 0;
-int	quiet_flag = 0;
+int	 verbose_flag = 0;
 
 #ifdef IPV4_DEFAULT
-int	IPv4or6 = AF_INET;
+int	 IPv4or6 = AF_INET;
 #else
-int	IPv4or6 = AF_UNSPEC;
+int	 IPv4or6 = AF_UNSPEC;
 #endif
 
 #ifdef RESOLVE
-int	resolve_flag = 1;
+int	 resolve_flag = 1;
 #else
-int	resolve_flag = 0;
+int	 resolve_flag = 0;
 #endif
 
 int
 main(int argc, char *argv[])
 {
 	struct sockaddr_storage	ss;
-	struct addrinfo	 hints, *res, *ai;
-	struct servent	*serv;
+	struct addrinfo	*res, *ai, hints;
 	char		*progname;
 	char		*host = NULL;
 	char		*port = NULL;
 	char		 ip[NI_MAXHOST];
 	char		 name[NI_MAXHOST];
-	char		 sbuf[NI_MAXSERV];
+	char		 portnr[NI_MAXSERV];
+	char		 service[NI_MAXSERV];
 	char		 result[128], owner[128];
 	int		 ch, err, ret = 70;
+	int		 ssock = -1;
 	int		 all_flag = 0;
 	int		 ftp_flag = 0;
 	int		 ident_flag = 0;
+	int		 relay_flag = 0;
+	int		 quiet_flag = 0;
+	int		 banner_flag = 0;
 	u_short		 remoteport, localport;
 	socklen_t	 len;
 
@@ -105,7 +103,7 @@ main(int argc, char *argv[])
 			all_flag = 1;
 			break;
 		case 'b':
-			banner_flag++;
+			banner_flag = 1;
 			break;
 		case 'f':
 			ftp_flag = 1;
@@ -160,14 +158,11 @@ main(int argc, char *argv[])
 	if (port == NULL || argv[1] != NULL)
 		port = argv[1];
 
-	signal(SIGALRM, &timeout_handler);
-
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = IPv4or6;
 	hints.ai_socktype = SOCK_STREAM;
 
-	err = getaddrinfo(host, port, &hints, &res);
-	if (err)
+	if ((err = getaddrinfo(host, port, &hints, &res)))
 		fatal(err);
 
 	if (res->ai_next != NULL && !all_flag && !quiet_flag)
@@ -177,11 +172,6 @@ main(int argc, char *argv[])
 	for (ai = res; ai != NULL; ai = ai->ai_next) {
 		if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
 			continue;
-		ssock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (ssock < 0) {
-			perror("socket");
-			continue;
-		}
 		if (verbose_flag) {
 			strncpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0),
 			    sizeof(ip));
@@ -190,47 +180,46 @@ main(int argc, char *argv[])
 				    ai->ai_addrlen, 1), sizeof(name));
 				printf("Trying %s", name);
 				if (strcmp(ip, name) != 0)
-					printf(" (%s)...", ip);
+					printf(" (%s)... ", ip);
 				else
-					printf("...");
+					printf("... ");
 			} else
-				printf("Trying %s...", ip);
+				printf("Trying %s... ", ip);
 			fflush(stdout);
 		}
-		alarm(CONNECT_TIMEOUT);
-		if (connect(ssock, ai->ai_addr, ai->ai_addrlen) < 0) {
+		ssock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (ssock < 0) {
+			perror("socket");
+			continue;
+		}
+		ret = tconnect(ssock, ai->ai_addr, ai->ai_addrlen,
+		    CONNECT_TIMEOUT);
+		if (ret != 0) {		/* not open? */
 			if (verbose_flag)
-				printf(" connection failed!\n");
-			if (timedout) {
-				strcpy(result, "no response");
-				timedout = 0;
-				ret = 2;
-			} else {
+				printf("connection failed!\n");
+			switch (ret) {
+			case 1:
 				strcpy(result, "closed");
-				ret = 1;
+				break;
+			case 2:
+				strcpy(result, "no response");
+				break;
 			}
 			goto print_results;
 		}
-		alarm(0);
-		ret = 0;
 		if (verbose_flag)
-			printf(" connection successful!\n");
+			printf("connection successful!\n");
 		if (ident_flag) {
 			len = sizeof(ss);
 			if (getsockname(ssock,(struct sockaddr *)&ss,&len) <0) {
 				perror("getsockname");
 				exit(255);
 			}
-			err = getnameinfo((struct sockaddr *)&ss, len, NULL, 0,
-			    sbuf, sizeof(sbuf), NI_NUMERICSERV);
-			if (err)
+			if ((err = getnameinfo((struct sockaddr *)&ss, len,
+			    NULL, 0, service, sizeof(service), NI_NUMERICSERV)))
 				fatal(err);
-			serv = getservbyname(port, "tcp");
-			if (serv != NULL)
-				remoteport = ntohs(serv->s_port);
-			else
-				remoteport = atoi(port);
-			localport = atoi(sbuf);
+			localport = atoi(service);
+			remoteport = atoi(get_serv(port, 0));
 			strncpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0),
 			    sizeof(ip));
 			memset(&owner, 0, sizeof(owner));
@@ -249,7 +238,7 @@ main(int argc, char *argv[])
 				break;
 			}
 		} else if (ftp_flag) {
-			ret = ftp_scan("anonymous");
+			ret = ftp_scan(ssock, "anonymous");
 			switch (ret) {
 			case 0:
 				strcpy(result, "anonymous login allowed!");
@@ -272,9 +261,9 @@ main(int argc, char *argv[])
 					    ai->ai_addrlen, 1), sizeof(name));
 				else
 					strncpy(name, host, sizeof(name));
-				ret = relay_scan(name, ip);
+				ret = relay_scan(ssock, name, ip, relay_flag);
 			} else
-				ret = relay_scan(NULL, NULL);
+				ret = relay_scan(ssock, NULL, NULL, relay_flag);
 
 			switch (ret) {
 			case 0:
@@ -295,20 +284,31 @@ main(int argc, char *argv[])
 			strcpy(result, "open");
 
 print_results:
-		/* Print af, address, port, and result */
 		if (!quiet_flag) {
-			printf("%s host (%s) ", get_af(ai->ai_family),
-			   get_addr(ai->ai_addr, ai->ai_addrlen, resolve_flag));
-			printf("port %s -> %s\n", get_serv(port), result);
+			/* Print address family */
+			printf("%s host ", get_af(ai->ai_family));
+
+			/* Print address/hostname */
+			printf("(%s) ", get_addr(ai->ai_addr, ai->ai_addrlen,
+			    resolve_flag));
+
+			/* Get port and service */
+			strncpy(portnr, get_serv(port, 0), sizeof(portnr));
+			strncpy(service, get_serv(port, 1), sizeof(service));
+
+			/* Print port number */
+			printf("port %s ", portnr);
+
+			/* Print service if available */
+			if (strcmp(portnr, service) != 0)
+				printf("(%s) ", service);
+
+			/* Print result */
+			printf("-> %s\n", result);
 
 			/* Print banner at last */
-			if (banner_flag && ret == 0) {
-				serv = getservbyname(port, "tcp");
-				if (serv != NULL)
-					banner_scan(ntohs(serv->s_port));
-				else
-					banner_scan(atoi(port));
-			}
+			if (banner_flag && ret == 0)
+				banner_scan(ssock, atoi(get_serv(port, 0)));
 		}
 
 		if (!all_flag)
@@ -318,6 +318,53 @@ print_results:
 	close(ssock);
 	freeaddrinfo(res);
 
+	return ret;
+}
+
+/*
+ * tconnect - connect() with timeout
+ * returns 0: ok, 1: refused, 2: timed out
+ */
+int
+tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
+{
+	struct timeval tv;
+	int flags, val, optlen;
+	int ret = 0;
+	fd_set fds;
+
+	if ((flags = fcntl(sock, F_GETFL, 0)) < 0) {
+		perror("fcntl(F_GETFL)");
+		exit(255);
+	}
+	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
+		perror("fcntl(F_SETFL)");
+		exit(255);
+	}
+	if (connect(sock, addr, len) < 0) {
+		if (errno == EINPROGRESS) {
+			tv.tv_sec = timeout / 1000;
+			tv.tv_usec = timeout % 1000;
+			FD_ZERO(&fds);
+			FD_SET(sock, &fds);
+			if (select(sock+1, NULL, &fds, NULL, &tv) > 0) {
+				optlen = sizeof(int);
+				if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
+				    (void *)&val, &optlen) < 0) {
+					perror("getsockopt");
+					exit(255);
+				}
+				if (val)
+					ret = 1;
+			} else
+				ret = 2;
+		} else
+			ret = 1;
+	}
+	if (fcntl(sock, F_SETFL, flags) < 0) {
+		perror("fcntl(F_SETFL)");
+		exit(255);
+	}
 	return ret;
 }
 
@@ -411,7 +458,7 @@ get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 }
 
 char *
-get_serv(char *port)
+get_serv(char *port, int resolve)
 {
 	struct servent	*serv;
 	static char	 buf[NI_MAXSERV];
@@ -422,23 +469,23 @@ get_serv(char *port)
 			goto name;
 
 	serv = getservbyport(htons(atoi(port)), "tcp");
-	if (serv != NULL)
-		snprintf(buf, sizeof(buf), "%s (%s)", port, serv->s_name);
+	if (serv != NULL && resolve)
+		snprintf(buf, sizeof(buf), "%s", serv->s_name);
 	else
 		snprintf(buf, sizeof(buf), "%s", port);
 	return buf;
 
 name:
 	serv = getservbyname(port, "tcp");
-	if (serv != NULL)
-		snprintf(buf, sizeof(buf), "%u (%s)", ntohs(serv->s_port),port);
+	if (serv != NULL && !resolve)
+		snprintf(buf, sizeof(buf), "%u", ntohs(serv->s_port));
 	else
 		snprintf(buf, sizeof(buf), "%s", port);
 	return buf;
 }
 
 void
-banner_scan(u_short port)
+banner_scan(int sock, u_short port)
 {
 	struct timeval	 tv;
 	fd_set		 read_fds;
@@ -446,11 +493,11 @@ banner_scan(u_short port)
 	int		 count;
 	char		 ch;
 
-	tv.tv_sec = BANNER_TIMEOUT;
-	tv.tv_usec = 0;
+	tv.tv_sec = BANNER_TIMEOUT / 1000;
+	tv.tv_usec = BANNER_TIMEOUT % 1000;
 
 	FD_ZERO(&read_fds);
-	FD_SET(ssock, &read_fds);
+	FD_SET(sock, &read_fds);
 
 	if ((buf = (char *)malloc(BANNER_SIZE)) == NULL) {
 		perror("malloc");
@@ -458,21 +505,15 @@ banner_scan(u_short port)
 	}
 
 	if (port == 80)
-		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
+		send(sock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
 
 	for (;;) {
-		select(ssock+1, &read_fds, NULL, NULL, &tv);
-		if (!FD_ISSET(ssock, &read_fds))
-			goto cleanup;
-		count = recv(ssock, buf, BANNER_SIZE, 0);
-		if (count < 1)
-			goto cleanup;
+		select(sock+1, &read_fds, NULL, NULL, &tv);
+		if (!FD_ISSET(sock, &read_fds))
+			break;
+		if ((count = recv(sock, buf, BANNER_SIZE, 0)) < 1)
+			break;
 		buf[count] = '\0';
-		if (banner_flag > 1) {
-			printf("%s", buf);
-			fflush(stdout);
-			continue;
-		}
 		save = buf;
 		while ((ch = *save++) != '\0' && count-- > 0) {
 			if (ch == '\r')
@@ -491,7 +532,6 @@ banner_scan(u_short port)
 		fflush(stdout);
 	}
 
-cleanup:
 	free(buf);
 	return;
 }
@@ -503,33 +543,27 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 	struct addrinfo	 hints, *res;
 	char		*temp, *p;
 	char		 request[16], response[1024];
-	int		 err, bytes;
+	int		 isock, err, bytes;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = ai_family;
 	hints.ai_socktype = SOCK_STREAM;
 
-	err = getaddrinfo(ip, "113", &hints, &res);
-	if (err)
+	if ((err = getaddrinfo(ip, "113", &hints, &res)))
 		fatal(err);
-	if (res->ai_next != NULL)
-		return 1;
 
 	isock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (isock < 0)
 		return 2;
 
-	alarm(CONNECT_TIMEOUT);
-	if (connect(isock, res->ai_addr, res->ai_addrlen) < 0) {
+	if (tconnect(isock,res->ai_addr,res->ai_addrlen,CONNECT_TIMEOUT) != 0) {
 		close(isock);
 		return 2;
 	}
-	alarm(0);
 
 	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
 	send(isock, request, strlen(request), 0); 
-	bytes = recv(isock, response, sizeof(response), 0);
-	if (bytes < 0)
+	if ((bytes = recv(isock, response, sizeof(response), 0)) < 0)
 		return 255;
 	else if (bytes == 0)
 		return 1;
@@ -540,8 +574,10 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 	response[bytes] = '\0';
 
 	temp = strrchr(response, ':');
+	if (temp == NULL)
+		return 1;
 	while (*(++temp) == ' ')
-		;
+		continue;
 
 	if ((p = strchr(temp, '\r')))
 		*p = '\0';
@@ -554,21 +590,21 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 }
 
 int
-ftp_scan(char *name)
+ftp_scan(int sock, char *name)
 {
-	char	 request[1024];
-	int	 code;
+	char	request[1024];
+	int	code;
 
 	/* Read ftp banner */
-	(void)readall(ssock);
+	(void)readall(sock);
 
 	/* Send USER command */
 	snprintf(request, sizeof(request), "USER %s\r\n", name);
-	send(ssock, request, strlen(request), 0);
+	send(sock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
 
-	code = readcode(ssock);
+	code = readcode(sock);
 
 	/* User not logged in reply */
 	if (code == 530)
@@ -579,12 +615,12 @@ ftp_scan(char *name)
 		return 2;
 
 	/* Send PASS command */
-	strcpy(request, "PASS anonymous@moo.com\r\n");
-	send(ssock, request, strlen(request), 0);
+	strcpy(request, "PASS anonymous@pointless.nl\r\n");
+	send(sock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
 
-	code = readcode(ssock); 
+	code = readcode(sock); 
 
 	/* User not logged in reply */
 	if (code == 530)
@@ -598,7 +634,7 @@ ftp_scan(char *name)
 }
 
 int
-relay_scan(char *host, char *ip)
+relay_scan(int sock, char *host, char *ip, int flag)
 {
 	char	 request[1024];
 	struct	 scans {
@@ -608,7 +644,7 @@ relay_scan(char *host, char *ip)
 	struct	 scans	s[20];
 	int	 i, n = 1;
 
-	if (relay_flag > 1)
+	if (flag > 1)
 		n = sizeof(s) / sizeof(struct scans);
 
 	/*
@@ -659,14 +695,14 @@ relay_scan(char *host, char *ip)
 	strcpy (s[19].rcpt, "<test@pointless.nl>");
 
 	/* Read banner */
-	(void)readall(ssock);
+	(void)readall(sock);
 
 	/* Send HELO, quit if return code is not 250 */
 	strcpy(request, "HELO www.pointless.nl\r\n");
-	send(ssock, request, strlen(request), 0);
+	send(sock, request, strlen(request), 0);
 	if (verbose_flag)
 		printf(">>> %s", request);
-	if (readcode(ssock) != 250)
+	if (readcode(sock) != 250)
 		return 2;
 
 	/* Do requested tests */
@@ -676,29 +712,29 @@ relay_scan(char *host, char *ip)
 			printf("\nRelay test %d\n", i+1);
 
 		/* Reset */
-		strcpy(request, "RSET\n");
-		send(ssock, request, strlen(request), 0);
+		strcpy(request, "RSET\r\n");
+		send(sock, request, strlen(request), 0);
 		if (verbose_flag)
 	                printf(">>> %s", request);
-		(void)readall(ssock);
+		(void)readall(sock);
 
 		/* Send MAIL FROM */
 		snprintf(request, sizeof(request), "MAIL FROM: %s\r\n",
 		   s[i].from);
-		send(ssock, request, strlen(request), 0);
+		send(sock, request, strlen(request), 0);
 		if (verbose_flag)
 			printf(">>> %s", request);
-		(void)readall(ssock);
+		(void)readall(sock);
 
 		/* Send RCPT TO */
 		snprintf(request, sizeof(request), "RCPT TO: %s\r\n",
 		   s[i].rcpt);
-		send(ssock, request, strlen(request), 0);
+		send(sock, request, strlen(request), 0);
 		if (verbose_flag)
 			printf(">>> %s", request);
 
 		/* 250 Ok = relay accepted */
-		if (readcode(ssock) == 250)
+		if (readcode(sock) == 250)
 			return 0;
 
 		if (n > 1)
@@ -706,13 +742,6 @@ relay_scan(char *host, char *ip)
 	}
 
 	return 1;
-}
-
-void
-timeout_handler(int s)
-{
-	timedout = 1;
-	close(ssock);
 }
 
 void
@@ -724,8 +753,7 @@ usage(char *progname)
 "  -4      Force the use of IPv4 only.\n"
 "  -6      Force the use of IPv6 only.\n"
 "  -a      When resolved to multiple addresses, scan them all.\n"
-"  -b      Grab the banner from an open port.  If you specify this\n"
-"          option twice then special characters won't be translated.\n"
+"  -b      Grab the banner from an open port.\n"
 "  -f      Anonymous FTP scan, checks if the server allows anonymous logins.\n"
 "  -i      Ident scan, queries ident/auth (port 113) and tries to get the\n"
 "          identity of the service we're connecting to.\n"
@@ -779,6 +807,9 @@ fatal(int errornum)
 		break;
 	case EAI_SYSTEM:
 		fprintf(stderr, "A system error occurred.\n");
+		break;
+	case EAI_NODATA:
+		fprintf(stderr, "No address associated with hostname.\n");
 		break;
 	default:
 		fprintf(stderr, "%s\n", gai_strerror(errornum));
