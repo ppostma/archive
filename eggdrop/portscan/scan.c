@@ -1,10 +1,10 @@
-/* $Id: scan.c,v 1.4 2003-03-30 16:24:38 peter Exp $ */
+/* $Id: scan.c,v 1.5 2003-04-03 09:44:46 peter Exp $ */
 
 /*
  * scan.c - very simple portscanner for IPv4 & IPv6
  *
  * scans a port and returns the status of the scanned port.
- * syntax: scan [-b] <host/ip> <port/service>
+ * syntax: scan [-6] [-b] <host/ip> <port/service>
  *
  * by Peter Postma <peter@webdeveloping.nl>
  */
@@ -24,10 +24,51 @@
 
 #define HTTP_REQUEST "HEAD / HTTP/1.0\n\n"
 
-#define TIMEOUT 2500000			/* 2500 milli-seconds */
+#define ARGC	5000			/* Symbolic values */
+#define SOCKET	6000
+
+#define TIMEOUT	2500000			/* 2500 milli-seconds */
 
 int sockid;				/* socket() */
 int timedout = 0;
+
+static void fail(int errnum)
+{
+	printf("FAILED ");
+	
+	switch (errnum) {
+	case ARGC:
+		printf("(Syntax: scan host/ip port/service)\n");
+		break;
+	case SOCKET:
+		printf("(Problem building socket)\n");
+		break;
+	case EAI_SYSTEM:
+		printf("(A system error occurred)\n");
+		break;
+	case EAI_FAIL:
+		printf("(A non-recoverable error occurred)\n");
+		break;
+	case EAI_MEMORY:
+		printf("(There was a memory allocation failure)\n");
+		break;
+	case EAI_AGAIN:
+		printf("(The name could not be resolved at this time)\n");
+		break;
+	case EAI_NONAME:
+		printf("(The name does not resolve for the supplied parameters)\n");
+		break;
+	case EAI_SERVICE:
+		printf("(Unknown service name)\n");
+		break;
+	case EAI_SOCKTYPE:
+		printf("(Unsupported socket type)\n");
+		break;
+	default:
+		printf("(%s)\n", gai_strerror(errnum));
+	}
+	exit(0);
+}
 
 static void grab_banner(int port)
 {
@@ -74,7 +115,7 @@ int main(int argc, char *argv[])
 
 	/* Need a hostname/ip and a port/service */
 	if (argc != 2)
-		exit(0);
+		fail(ARGC);
 
 	port = atoi(argv[1]);
 
@@ -85,17 +126,13 @@ int main(int argc, char *argv[])
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = (v6) ? AF_INET6 : AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
-	if ((error = getaddrinfo(argv[0], argv[1], &hints, &res)) != 0) {
-		printf("FAILED (%s)\n", gai_strerror(error));
-		exit(0);
-	}
+	if ((error = getaddrinfo(argv[0], argv[1], &hints, &res)) != 0)
+		fail(error);
 
 	/* Build the socket */
 	sockid = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (sockid < 0) {
-		printf("FAILED (error building socket)\n");
-		exit(0);
-	}
+	if (sockid < 0)
+		fail(SOCKET);
 
 	/* Alarm call after X seconds */
 	ualarm(TIMEOUT, 0);
