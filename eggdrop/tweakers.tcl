@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.3 2003-05-17 15:29:12 peter Exp $
+# $Id: tweakers.tcl,v 1.4 2003-05-17 15:33:03 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -88,7 +88,7 @@ set tnet(layout) "\[%bT.Net%b\] (%cat) %tit - http://tweakers.net/nieuws/%id"
 set tnet(autonews) 1
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
-set tnet(autonewschan) "#blaatmode"
+set tnet(autonewschan) "#kanaal1 #kanaal2"
 
 # om de hoeveel minuten checken of er nieuws is? [minimaal 5]
 # zet dit niet te laag, het zal load/verkeer op de servers vergroten.
