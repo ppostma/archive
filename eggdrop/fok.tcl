@@ -1,10 +1,10 @@
-# $Id: fok.tcl,v 1.32 2003-08-18 20:36:43 peter Exp $
+# $Id: fok.tcl,v 1.33 2003-08-24 13:54:40 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
-# version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 24/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 2.0: (??/??/????)
+# 2.0: (24/08/2003)
 #  - de manier van het updaten is wat veranderd.
 #    de fok(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.

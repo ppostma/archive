@@ -1,10 +1,10 @@
-# $Id: slashdot.tcl,v 1.31 2003-08-18 20:36:43 peter Exp $
+# $Id: slashdot.tcl,v 1.32 2003-08-24 13:54:41 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 2.0: (??/??/????)
+# 2.0: (24/08/2003)
 #  - changed the update method somewhat.
 #    the slashdot(updates) it now also being used by the triggers
 #    to check how long to cache the data.
