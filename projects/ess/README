@@ -1,8 +1,9 @@
-Easy Service Scanner v0.3.4 by Peter Postma <peter@webdeveloping.nl>
+Easy Service Scanner v0.3.5-beta by Peter Postma <peter@webdeveloping.nl>
 
 This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
 mail relaying test and it has support for round robin dns entry's.
+This program does NOT require root privileges!
 
 
 To compile the program:
@@ -25,7 +26,7 @@ Options:
   -f      Anonymous FTP scan, checks if the server allows anonymous logins.
   -i      Ident scan, queries ident/auth (port 113) and tries to get the
           identity of the service we're connecting to.
-  -n      Don't try to resolve addresses.
+  -n      Don't try to resolve addresses to names.
   -q      Be quiet. Don't output anything to stdout.
   -r      Mail Relay test, performs a simple test to check for open-relay.
           Use twice for an extensive open-relay test.
