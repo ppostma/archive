@@ -1,40 +1,75 @@
-# $Id: gamer.tcl,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $
+# $Id: gamer.tcl,v 1.2 2003-05-17 15:57:05 peter Exp $
 
-# gamer.tcl / gamer.nl Nieuws script voor een eggdrop
-# version 1.5 / 13/10/2002 / door Peter Postma <peter@webdeveloping.nl>
+# gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
+# version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
-# Changelog: zelfde script als tweakers.tcl, dit script is van versie 1.5 
-#            geconverteerd naar gamer.tcl.
+# Changelog:
+# 1.6: (17/05/03) [bugfixes]
+#  - fix memory leak!!! (ongebruikte variabelen unsetten en 
+#    de belangrijkste: de ::http::cleanup functie!
+#  - veel kleine TCL changes/fixes
+# 1.5: (12/10/02) [features/changes]
+#  - extra check in de getdata procedure (voor HTTP errors zoals 404, etc..)
+#  - triggers/functie toegevoegd om de aankondiger aan en uit te zetten.
+#  - stukjes code netter en beter geschreven.
+#  - meer gebruiksvriendelijke error en log berichten.
+# 1.4a: (09/10/02) [bugfixes]
+#  - bugje gefixed met het & teken. regsub zet &amp; om naar %titamp; 
+#    ik heb geen idee waarom, maar de output is iig gefixed :-)  
+#  - wat fouten gefixed in de getdata procedure. checks werken nu helemaal ok.
+#  - timer opnieuw instellen wanneer er een http error is, is gefixed.
+# 1.4: (08/10/02) [features/changes]
+#  - methode om berichten te sturen is nu in te stellen.
+#  - check op timestamp ipv. id ! (dit had ik eerder moeten bedenken >:) 
+#  - extra layout opties toegevoegd.
+#  - updates minimaal 300 seconden!
+#  - checkt of gamer.nl down is. als dit niet wordt gecheckt dan
+#    blijft het script hangen en moet de bot opnieuw gestart worden.
+# 1.3: (06/10/02) [features/changes]
+#  - triggers in te stellen.
+#  - kanalen in te stellen waar de triggers gebruikt mogen worden.
+#  - layout in te stellen.
+#  - automatisch nieuws naar het kanaal sturen (kanalen in te stellen).
+#  - automatische updates in te stellen (om de hoeveel seconden).
+# 1.2: (03/10/02) [rewrote 1.1]
+#  - helemaal opnieuw geschreven.
+#  - betere code (regexp, regsub, http)
+# 1.1: (21/08/02) [first version]
+#  - eerste (goed werkende) versie. 
+#  - script had alleen triggers, verder nog helemaal niets :-)
 #
-# Dit script heeft alltools.tcl nodig! Zorg dat deze is geladen in het
-# eggdrop configuratie bestand. Dit script gebruikt ook http.tcl.
-# Oudere TCL versies kunnen deze nog niet (goed) gebruiken.
-# U heeft dus minimaal TCL versie 8.2 ? nodig.
+# Dit script maakt gebruik van een functie uit alltools.tcl.
+# Zorg ervoor dat alltools.tcl geladen wordt in je eggdrop configuratie!
+#
+# Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
+# Zet http.tcl *niet* in je eggdrop configuratie!
+#
+# Het gamer.tcl script werkt het best met TCL versies vanaf 8.2.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
-#
+# 
 # Pas aub. de configuratie hieronder aan:
 
 ### Configuratie instellingen ###
 
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
-set gmr_flag "-|-"
+set gamer(flags) "-|-"
 
 # kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
-set gmr_nopub "" 
+set gamer(nopub) "" 
 
 # de triggers: [scheiden met een spatie]
-set gmr_triggers "!gamer"
+set gamer(triggers) "!gamer"
 
-# stuur berichten public of private wanneer er een trigger wordt gebruikt?
+# stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
-# 1 = Public message
-# 2 = Private notice
+# 1 = Public message 
+# 2 = Private notice 
 # 3 = Public notice
-set gmr_method 1
+set gamer(method) 1
 
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
-set gmr_headlines 2
+set gamer(headlines) 2
 
 # hieronder kun je de layout aanpassen:
 # %tyd = tijd
@@ -44,34 +79,34 @@ set gmr_headlines 2
 # %rea = aantal reacties
 # %b   = bold (dikgedrukte) tekst
 # %u   = underlined (onderstreepte) tekst
-set gmr_layout "\[%bGamer.nl%b\] %tit - http://gamer.nl/nieuws/%id"
+set gamer(layout) "\[%bGamer.nl%b\] %tit - http://gamer.nl/nieuws/%id"
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set gmr_autonews 1
+set gamer(autonews) 1
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
-set gmr_autonews_chan "#HDM #n00b"
+set gamer(autonewschan) "#kanaal1 #kanaal2"
 
-# om de hoeveel seconden checken of er nieuws is? (zet dit niet te laag, 
-# het zal load/verkeer op de servers vergroten, 300 is wel ok).
-set gmr_updates 900
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# zet dit niet te laag, het zal load/verkeer op de servers vergroten.
+set gamer(updates) 5
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
 # updates hoog hebt staan (bv. langer dan een uur).
-set gmr_automax 3
+set gamer(automax) 3
 
 # trigger om het autonews aan te zetten. [string]
-set gmr_auton_trig "!gameron"
+set gamer(autontrigger) "!gameron"
 
 # trigger om het autonews uit te zetten. [string]
-set gmr_autoff_trig "!gameroff"
+set gamer(autofftrigger) "!gameroff"
 
 # benodigde flags om de autonews[on/off] triggers te gebruiken [default=master]
-set gmr_auto_trig_flag "m|m"
+set gamer(autotriggerflag) "m|m"
 
 # log extra informatie (debug) naar de partyline? [0=nee / 1=ja]
-set gmr_log 1
+set gamer(log) 1
 
 ### Eind configuratie instellingen ###
 
@@ -79,33 +114,35 @@ set gmr_log 1
 
 ### Begin TCL code ###
 
-set gmr_version "1.5"
+set gamer(version) "1.6"
 
 package require http
 
-for {set i 0} {$i < [llength $gmr_triggers]} {incr i} {
-  bind pub $gmr_flag [lindex $gmr_triggers $i] gmr:pub
-  if {$gmr_log} { putlog "\[Gamer.nl\] Trigger [lindex $gmr_triggers $i] added." }
+for {set i 0} {$i < [llength $gamer(triggers)]} {incr i} {
+  bind pub $gamer(flags) [lindex $gamer(triggers) $i] gamer:pub
+  if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger [lindex $gamer(triggers) $i] added." }
 }
+unset i
 
-bind pub $gmr_auto_trig_flag $gmr_autoff_trig gmr:autoff
-bind pub $gmr_auto_trig_flag $gmr_auton_trig gmr:auton
+bind pub $gamer(autotriggerflag) $gamer(autofftrigger) gamer:autoff
+bind pub $gamer(autotriggerflag) $gamer(autontrigger) gamer:auton
 
-proc gmr:getdata {} {
-  global gmr_id gmr_titel gmr_tijd gmr_auteur gmr_reac gmr_log gmr_ts
+proc gamer:getdata {} {
+  global gamer gamerdata
 
-  if {$gmr_log} { putlog "\[Gamer.nl\] Updating data..." }
+  if {$gamer(log)} { putlog "\[Gamer.nl\] Updating data..." }
+  if {[info exists gamerdata]} { unset gamerdata }
 
   set url "http://www.gamer.nl/newstracker.xml"
   set page [::http::config -useragent "Mozilla"]
-  
+
   # check of connecten goed gaat
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
-    putlog "\[Gamer.nl\] Problem! Error: $msg"
+    putlog "\[Gamer.nl\] Problem: $msg"
     return -1
   }
-
-  # dit is voor errors zoals 'timeout'..
+  
+  # dit is voor errors zoals 'timeout'.. 
   if {[::http::status $page] != "ok"} {
     putlog "\[Gamer.nl\] Problem: [::http::status $page]"
     return -1
@@ -116,124 +153,146 @@ proc gmr:getdata {} {
     putlog "\[Gamer.nl\] Problem: [::http::code $page]"
     return -1
   }
- 
+
   set lines [split [::http::data $page] \n]
   set count 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
-    regexp "<id>(.*?)</id>" $line trash gmr_id($count)
-    regexp "<title>(.*?)</title>" $line trash gmr_titel($count)
-    regexp "<author>(.*?)</author>" $line trash gmr_auteur($count)
-    regexp "<time>(.*?)</time>" $line trash gmr_tijd($count)
-    regexp "<unix_timestamp>(.*?)</unix_timestamp>" $line trash gmr_ts($count)
-    if {[regexp "<comments>(.*?)</comments>" $line trash gmr_reac($count)]} { incr count }
+    regexp "<id>(.*?)</id>" $line trash gamerdata(id,$count)
+    regexp "<title>(.*?)</title>" $line trash gamerdata(titel,$count)
+    regexp "<author>(.*?)</author>" $line trash gamerdata(auteur,$count)
+    regexp "<time>(.*?)</time>" $line trash gamerdata(tijd,$count)
+    regexp "<unix_timestamp>(.*?)</unix_timestamp>" $line trash gamerdata(ts,$count)
+    if {[regexp "<comments>(.*?)</comments>" $line trash gamerdata(reac,$count)]} { incr count }
   }
+  ::http::cleanup $page
+
+  unset url page msg count lines
+  if {[info exists line]} { unset line }
+  if {[info exists trash]} { unset trash }
+
   return 0
 }
 
-proc gmr:pub {nick uhost hand chan text} {
-  global lastbind gmr_log gmr_nopub gmr_headlines gmr_method
-  if {[lsearch -exact $gmr_nopub [string tolower $chan]] >= 0} { return 0 }  
+proc gamer:pub {nick uhost hand chan text} {
+  global lastbind gamer gamerdata
+  if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {$gmr_log} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
+  if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[gmr:getdata] != -1} {
-    for {set i 0} {$i < $gmr_headlines} {incr i} { gmr:put $chan $nick $i $gmr_method }
+  if {[gamer:getdata] != -1} {
+    for {set i 0} {$i < $gamer(headlines)} {incr i} { gamer:put $chan $nick $i $gamer(method) }
+    unset i
   } else {
     putserv "NOTICE $nick :\[Gamer.nl\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
+  if {[info exists gamerdata]} { unset gamerdata }
 }
 
-proc gmr:put {chan nick which method} {
-  global gmr_id gmr_titel gmr_reac gmr_auteur gmr_tijd gmr_layout
-  set outchan $gmr_layout
-  regsub -all "%tyd" $outchan $gmr_tijd($which) outchan
-  regsub -all "%id"  $outchan $gmr_id($which) outchan
-  regsub -all "%rea" $outchan $gmr_reac($which) outchan
-  regsub -all "%aut" $outchan $gmr_auteur($which) outchan
-  regsub -all "%tit" $outchan $gmr_titel($which) outchan
+proc gamer:put {chan nick which method} {
+  global gamer gamerdata
+
+  set outchan $gamer(layout)
+  regsub -all "%tyd" $outchan $gamerdata(tijd,$which) outchan
+  regsub -all "%id"  $outchan $gamerdata(id,$which) outchan
+  regsub -all "%rea" $outchan $gamerdata(reac,$which) outchan
+  regsub -all "%aut" $outchan $gamerdata(auteur,$which) outchan
+  regsub -all "%tit" $outchan $gamerdata(titel,$which) outchan
   # waarom TCL er %titamp; van maakt weet ik niet, maar zo los ik het iig op:
   regsub -all "%titamp;" $outchan "\\\&" outchan
   regsub -all "&amp;" $outchan "\\\&" outchan
   regsub -all "%b"   $outchan "\002" outchan
   regsub -all "%u"   $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" }
+    0 { putserv "PRIVMSG $nick :$outchan" } 
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
+  unset outchan
 }
 
-proc gmr:update {} {
-  global gmr_ts gmr_updates gmr_lastitem gmr_log gmr_autonews_chan gmr_automax
+proc gamer:update {} {
+  global gamer gamerdata gamer_lastitem
 
-  if {[gmr:getdata] != -1} {
+  if {[gamer:getdata] != -1} {
 
-    if {![info exists gmr_lastitem]} { 
-      set gmr_lastitem $gmr_ts(0) 
-      if {$gmr_log} { putlog "\[Gamer.nl\] Last news item timestamp set to $gmr_ts(0)" }
-    } else {
-      if {$gmr_log} { putlog "\[Gamer.nl\] Last news item timestamp is $gmr_ts(0)" }
+    if {![info exists gamerdata(ts,0)]} {
+      putlog "\[Gamer.nl\] Er iets iets fout gegaan tijdens het updaten..."
+      return -1
     }
 
-    if {$gmr_ts(0) > $gmr_lastitem} {
-      if {$gmr_log} { putlog "\[Gamer.nl\] There's news!" }
-      for {set i 0} {$i < $gmr_automax} {incr i} {
-        if {$gmr_ts($i) == $gmr_lastitem} { break }
-        foreach chan [split $gmr_autonews_chan] { gmr:put $chan $chan $i 1 }
+    if {![info exists gamer_lastitem]} {
+      set gamer_lastitem $gamerdata(ts,0)
+      if {$gamer(log)} { putlog "\[Gamer.nl\] Last news item timestamp set to $gamerdata(ts,0)" }
+    } else {
+      if {$gamer(log)} { putlog "\[Gamer.nl\] Last news item timestamp is $gamerdata(ts,0)" }
+    }
+
+    if {$gamerdata(ts,0) > $gamer_lastitem} {
+      if {$gamer(log)} { putlog "\[Gamer.nl\] There's news!" }
+      for {set i 0} {$i < $gamer(automax)} {incr i} {
+        if {$gamerdata(ts,0) == $gamer_lastitem} { break }
+        foreach chan [split $gamer(autonewschan)] { gamer:put $chan $chan $i 1 }
+        unset chan
       }
+      unset i
     } else {
-      if {$gmr_log} { putlog "\[Gamer.nl\] No news." } 
+      if {$gamer(log)} { putlog "\[Gamer.nl\] No news." } 
     }
 
-    set gmr_lastitem $gmr_ts(0)
+    set gamer_lastitem $gamerdata(ts,0)
   }
 
-  if {$gmr_updates < 300} {
-    utimer 300 gmr:update
+  if {$gamer(updates) < 5} { 
+    timer 5 gamer:update
   } else {
-    utimer $gmr_updates gmr:update
+    timer $gamer(updates) gamer:update
   }
+  if {[info exists gamerdata]} { unset gamerdata }
+
+  return 0
 }
 
-proc gmr:autoff {nick uhost hand chan text} {
-  global lastbind gmr_log gmr_nopub gmr_autonews gmr_lastitem
-  if {[lsearch -exact $gmr_nopub [string tolower $chan]] >= 0} { return 0 }
+proc gamer:autoff {nick uhost hand chan text} {
+  global lastbind gamer gamer_lastitem
+  if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$gmr_log} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
+  if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$gmr_autonews == 1} {
-    set gmr_autonews 0;  unset gmr_lastitem
-    set killtimer [utimerexists "gmr:update"]
-    if {$killtimer != ""} { killutimer $killtimer }
+  if {$gamer(autonews) == 1} {
+    set gamer(autonews) 0;  unset gamer_lastitem
+    set whichtimer [timerexists "gamer:update"]
+    if {$whichtimer != ""} { killtimer $whichtimer }
+    unset whichtimer
     putlog "\[Gamer.nl\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn gamer.nl nieuws aankondiger uitgezet.\001"
   } else {
-    putserv "NOTICE $nick :Mijn gamer.nl nieuws aankondiger staat al uit!"
+    putserv "NOTICE $nick :Mijn gamer.nl nieuws aankondiger staat al uit."
   }
 }
 
-proc gmr:auton {nick uhost hand chan text} {
-  global lastbind gmr_log gmr_nopub gmr_autonews gmr_lastitem
-  if {[lsearch -exact $gmr_nopub [string tolower $chan]] >= 0} { return 0 }
+proc gamer:auton {nick uhost hand chan text} {
+  global lastbind gamer
+  if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$gmr_log} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
+  if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$gmr_autonews == 0} {
-    set gmr_autonews 1;  gmr:update
+  if {$gamer(autonews) == 0} {
+    set gamer(autonews) 1;  gamer:update
     putlog "\[Gamer.nl\] Autonews turned on."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn gamer.nl nieuws aankondiger aangezet.\001"
   } else {
-    putserv "NOTICE $nick :Mijn gamer.nl nieuws aankondiger staat al aan!"
+    putserv "NOTICE $nick :Mijn gamer.nl nieuws aankondiger staat al aan."
   }
 }
 
-set killtimer [utimerexists "gmr:update"]
-if {$killtimer != ""} { killutimer $killtimer }
+set whichtimer [timerexists "gamer:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+unset whichtimer
 
-if {$gmr_autonews == 1} { gmr:update }
+if {$gamer(autonews) == 1} { gamer:update }
 
-putlog "\[Gamer.nl\] Nieuws script versie $gmr_version: Loaded!"
+putlog "\[Gamer.nl\] Nieuws script versie $gamer(version): Loaded!"
