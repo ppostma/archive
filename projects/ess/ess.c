@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.24 2003-09-29 19:52:32 peter Exp $
+ * $Id: ess.c,v 1.25 2003-10-11 00:58:41 peter Exp $
  */
 
 #include <sys/types.h>
@@ -310,7 +310,7 @@ readall(int fd)
 	size_t	b, count = 0;
 
         do {
-                if ((b = readln(ssock, response, sizeof(response))) > 0)
+                if ((b = readln(fd, response, sizeof(response))) > 0)
 			count += b;
                 if (verbose_flag)
                         printf("<<< %s", response);
@@ -326,7 +326,7 @@ readcode(int fd)
 	char	code[4];
 
 	do {
-		(void)readln(ssock, response, sizeof(response));
+		(void)readln(fd, response, sizeof(response));
 		if (verbose_flag)
 			printf("<<< %s", response);
 	} while (response[3] == '-');
