@@ -1,7 +1,7 @@
-# $Id: ports.tcl,v 1.5 2003-08-02 14:21:06 peter Exp $
+# $Id: ports.tcl,v 1.6 2003-08-02 14:31:22 peter Exp $
 
 # FreeBSD Ports search script for the eggdrop
-# version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.2, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 0.2: (04/07/2003)
@@ -50,14 +50,20 @@ set ports(method) 1
 
 ### Begin Tcl code ###
 
-if {$ports(info) == "web"} { package require http }
-
 set ports(version) 0.2
+
+if {$ports(info) == "web"} {
+  if {[catch { package require http } err]} {
+    putlog "Cannot load [file tail [info script]]: Problem loading the http package: $err"
+    return 1
+  }
+}
 
 if {[info tclversion] < 8.1} {
   putlog "Cannot load [file tail [info script]]: You need at least Tcl version 8.1 and you have Tcl version [info tclversion]."
   return 1
 }
+
 
 for {set i 0} {$i < [llength $ports(triggers)]} {incr i} {
   bind pub $ports(flags) [lindex $ports(triggers) $i] pub:ports

@@ -1,7 +1,7 @@
-# $Id: di.tcl,v 1.8 2003-08-02 14:21:05 peter Exp $
+# $Id: di.tcl,v 1.9 2003-08-02 14:31:22 peter Exp $
 
 # Digitally Imported Radio info script for the eggdrop
-# version 0.3, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.3, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 0.2: (04/07/2003)
@@ -53,9 +53,12 @@ set di(layout) "\[%bDI%b %chantitle\] %tracktitle, playing since %since"
 
 ### Begin Tcl code ###
 
-package require http
-
 set di(version) 0.3
+
+if {[catch { package require http } err]} {
+  putlog "Cannot load [file tail [info script]]: Problem loading the http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.1} {
   putlog "Cannot load [file tail [info script]]: You need at least Tcl version 8.1 and you have Tcl version [info tclversion]."
