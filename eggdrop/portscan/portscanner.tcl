@@ -1,7 +1,7 @@
-# $Id: portscanner.tcl,v 1.4 2003-05-17 16:25:33 peter Exp $
+# $Id: portscanner.tcl,v 1.5 2003-06-22 12:28:08 peter Exp $
 
-# portscanner.tcl / portscanner script for an eggdrop 
-# version 0.4beta / 30/03/2003 / by Peter Postma <peter@webdeveloping.nl>
+# Portscan script for an eggdrop 
+# version 0.4, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Use like this:
 #  !portscan localhost        (scans localhost)
@@ -9,8 +9,8 @@
 #  !portscan -b localhost 22  (shows the banner on port 22 from localhost)
 #  !portscan6 localhost       (scans localhost using IPv6)
 #
-# original idea & script: SilverSliver <silversliver2000@hotmail.com>
-# improvements, bugfixes & banner grabbing: Peter <peter@webdeveloping.nl>
+# Original idea & script: SilverSliver <silversliver2000@hotmail.com>
+# Improvements, bugfixes & banner grabbing: Peter <peter@webdeveloping.nl>
 
 ### Configuration
 
