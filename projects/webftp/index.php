@@ -1,5 +1,5 @@
 <?
-  # $Id: index.php,v 1.2 2003-08-01 21:48:47 peter Exp $
+  # $Id: index.php,v 1.3 2003-10-11 17:22:09 peter Exp $
   #
   # WebFTP client - index
   #
@@ -14,17 +14,19 @@
 
   $ftp = new FTP_Client();
 
-  if (isset($_POST['login']) || isset($_COOKIE['login'])) {
+  session_start();
 
-    $username = (isset($_COOKIE['username'])) ? $_COOKIE['username']
-                                              : $_POST['username'];
-    $password = (isset($_COOKIE['password'])) ? $_COOKIE['password']
-                                              : $_POST['password'];
+  if (isset($_POST['login']) || isset($_SESSION['login'])) {
+
+    $username = (isset($_SESSION['username'])) ? $_SESSION['username']
+                                               : $_POST['username'];
+    $password = (isset($_SESSION['password'])) ? $_SESSION['password']
+                                               : $_POST['password'];
 
     /* If the user is allowed to change the server then do so */
     if ($change) {
-      $server = (isset($_COOKIE['server'])) ? $_COOKIE['server']
-                                            : $_POST['server']; 
+      $server = (isset($_SESSION['server'])) ? $_SESSION['server']
+                                             : $_POST['server']; 
     }
 
     /* Connect to server with username and pass */
@@ -54,6 +56,9 @@
     
     } elseif (isset($_POST['logout'])) {
       /* Logout */
+
+      session_unset();
+      session_destroy();
 
       $ftp->logout();
       require_once('login.php');

@@ -39,6 +39,9 @@ If you've problems with uploading files >2MB then change the setting
 
 4. History:
 
+v0.x (11/10/2003)
+ - use session instead of cookies
+
 v0.8 (09/03/2003)
  - added: set temporary file directory
  - added: set timeout for cookies
@@ -54,4 +57,4 @@ v0.6 (03/08/2001)
  - first release, very poor written code.
 
 
-$Id: README,v 1.6 2003-08-01 21:48:47 peter Exp $
+$Id: README,v 1.7 2003-10-11 17:22:09 peter Exp $

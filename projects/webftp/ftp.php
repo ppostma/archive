@@ -1,5 +1,5 @@
 <?
-  # $Id: ftp.php,v 1.3 2003-08-01 21:48:47 peter Exp $
+  # $Id: ftp.php,v 1.4 2003-10-11 17:22:09 peter Exp $
   #
   # WebFTP client - ftp class
   #
@@ -17,8 +17,6 @@
 
     function open($server, $username, $password)
     {
-      global $cookie_timeout;
-
       $this->id   = @ftp_connect($server);
       $this->conn = @ftp_login($this->id, $username, $password);
 
@@ -29,12 +27,10 @@
 
       if (!$this->id || !$this->conn) return false;
 
-      if (!isset($cookie_timeout)) $cookie_timeout = 300;
-
-      setcookie("login",    "yeah",    time() + $cookie_timeout);
-      setcookie("server",   $server,   time() + $cookie_timeout);
-      setcookie("username", $username, time() + $cookie_timeout);
-      setcookie("password", $password, time() + $cookie_timeout);
+      $_SESSION['login']    = "Y";
+      $_SESSION['server']   = $server;
+      $_SESSION['username'] = $username;
+      $_SESSION['password'] = $password;
 
       return true;
     }
@@ -152,10 +148,6 @@
     function logout()
     {
       $this->quit();
-      setcookie("login",    "");
-      setcookie("server",   "");
-      setcookie("username", "");
-      setcookie("password", "");
     }
   }
 

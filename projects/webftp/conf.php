@@ -1,5 +1,5 @@
 <?
-  # $Id: conf.php,v 1.5 2003-08-01 21:48:47 peter Exp $
+  # $Id: conf.php,v 1.6 2003-10-11 17:22:09 peter Exp $
   #
   # WebFTP client - configuration
   #
@@ -12,9 +12,6 @@
 
   /* temporary file directory for downloads */
   $temp_dir = "/tmp";
-
-  /* timeout of the cookie in seconds */
-  $cookie_timeout = 300;
 
   /* you should not change this */
   $tempfile = "file1";
