@@ -1,7 +1,7 @@
-# $Id: slashdot.tcl,v 1.27 2003-08-02 14:27:55 peter Exp $
+# $Id: slashdot.tcl,v 1.28 2003-08-07 18:09:33 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -10,6 +10,7 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
+#  - autonews /amsg optie toegevoegd.
 #  - script works with Tcl 8.0 now.
 # 1.9: (04/07/2003) [changes]
 #  - check for correct Tcl version & alltools.tcl
@@ -89,6 +90,7 @@ set slashdot(updates) 60
 set slashdot(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
+# use "*" to send news to all channels (/amsg).
 set slashdot(autonewschan) "#channel1 #channel2"
 
 # max. amount of messages which will be displayed meanwhile automatic updates.
@@ -283,7 +285,11 @@ proc slashdot:update {} {
       for {set i 0} {$i < $slashdot(automax)} {incr i} {
         if {![info exists slashdotdata(time,$i)]} { break }
         if {$slashdotdata(time,$i) == $slashdot(lastitem)} { break }
-        foreach chan [split $slashdot(autonewschan)] { slashdot:put $chan $chan $i 1 }
+        if {[regexp {^\*$} $slashdot(autonewschan)]} {
+          foreach chan [split [channels]] { slashdot:put $chan $chan $i 1 }
+        } else {
+          foreach chan [split $slashdot(autonewschan)] { slashdot:put $chan $chan $i 1 }
+        }
       }
     } else {
       if {$slashdot(log)} { putlog "\[Slashdot\] No news." } 

@@ -1,7 +1,7 @@
-# $Id: gamer.tcl,v 1.29 2003-08-02 14:27:55 peter Exp $
+# $Id: gamer.tcl,v 1.30 2003-08-07 18:09:33 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 2.0, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 07/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -10,6 +10,7 @@
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
 #  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
+#  - autonews /amsg optie toegevoegd.
 #  - script werkt nu ook met Tcl 8.0.
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede Tcl versie & alltools.tcl
@@ -118,6 +119,7 @@ set gamer(updates) 5
 set gamer(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
+# gebruik "*" om het nieuws naar alle kanalen te sturen (/amsg).
 set gamer(autonewschan) "#kanaal1 #kanaal2"
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
@@ -310,7 +312,11 @@ proc gamer:update {} {
       for {set i 0} {$i < $gamer(automax)} {incr i} {
         if {![info exists gamerdata(ts,$i)]} { break }
         if {$gamerdata(ts,$i) == $gamer(lastitem)} { break }
-        foreach chan [split $gamer(autonewschan)] { gamer:put $chan $chan $i 1 }
+        if {[regexp {^\*$} $gamer(autonewschan)]} {
+          foreach chan [split [channels]] { gamer:put $chan $chan $i 1 }
+        } else {
+          foreach chan [split $gamer(autonewschan)] { gamer:put $chan $chan $i 1 }
+        }
       }
     } else {
       if {$gamer(log)} { putlog "\[Gamer.nl\] No news." } 

@@ -1,7 +1,7 @@
-# $Id: osnews.tcl,v 1.25 2003-08-02 14:27:55 peter Exp $
+# $Id: osnews.tcl,v 1.26 2003-08-07 18:09:33 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
-# version 1.4, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -10,6 +10,7 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
+#  - autonews /amsg optie toegevoegd.
 #  - script works with Tcl 8.0 now.
 # 1.3: (04/07/2003) [changes]
 #  - check for correct Tcl version & alltools.tcl
@@ -85,6 +86,7 @@ set osnews(updates) 60
 set osnews(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
+# use "*" to send news to all channels (/amsg).
 set osnews(autonewschan) "#channel1"
 
 # max. amount of messages which will be displayed meanwhile automatic updates.
@@ -275,7 +277,11 @@ proc osnews:update {} {
       for {set i 0} {$i < $osnews(automax)} {incr i} {
         if {![info exists osnewsdata(link,$i)]} { break }
         if {$osnewsdata(link,$i) == $osnews(lastitem)} { break }
-        foreach chan [split $osnews(autonewschan)] { osnews:put $chan $chan $i 1 }
+        if {[regexp {^\*$} $osnews(autonewschan)]} {
+          foreach chan [split [channels]] { osnews:put $chan $chan $i 1 }
+        } else {
+          foreach chan [split $osnews(autonewschan)] { osnews:put $chan $chan $i 1 }
+        }
       }
     } else {
       if {$osnews(log)} { putlog "\[OSnews\] No news." } 

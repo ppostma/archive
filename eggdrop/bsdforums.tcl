@@ -1,7 +1,7 @@
-# $Id: bsdforums.tcl,v 1.17 2003-08-02 14:27:55 peter Exp $
+# $Id: bsdforums.tcl,v 1.18 2003-08-07 18:09:33 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
-# version 1.2, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -10,6 +10,7 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
+#  - autonews /amsg optie toegevoegd.
 #  - script works with Tcl 8.0 now.
 # 1.1: (04/07/2003)
 #  - check for correct Tcl version & alltools.tcl
@@ -79,6 +80,7 @@ set bsdforums(updates) 120
 set bsdforums(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
+# use "*" to send news to all channels (/amsg).
 set bsdforums(autonewschan) "#channel1"
 
 # max. amount of messages which will be displayed meanwhile automatic updates.
@@ -269,7 +271,11 @@ proc bsdforums:update {} {
       for {set i 0} {$i < $bsdforums(automax)} {incr i} {
         if {![info exists bsdforumsdata(link,$i)]} { break }
         if {$bsdforumsdata(link,$i) == $bsdforums(lastitem)} { break }
-        foreach chan [split $bsdforums(autonewschan)] { bsdforums:put $chan $chan $i 1 }
+        if {[regexp {^\*$} $bsdforums(autonewschan)]} {
+          foreach chan [split [channels]] { bsdforums:put $chan $chan $i 1 }
+        } else {
+          foreach chan [split $bsdforums(autonewschan)] { bsdforums:put $chan $chan $i 1 }
+        }
       }
     } else {
       if {$bsdforums(log)} { putlog "\[BSDForums\] No news." } 

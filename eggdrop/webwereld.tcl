@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.15 2003-08-02 14:27:55 peter Exp $
+# $Id: webwereld.tcl,v 1.16 2003-08-07 18:09:33 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 07/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -10,6 +10,7 @@
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
 #  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
+#  - autonews /amsg optie toegevoegd.
 #  - script werkt nu ook met Tcl 8.0.
 # 1.0: (04/07/2003)
 #  - eerste versie, gebaseerd op tweakers.tcl v1.9
@@ -75,6 +76,7 @@ set webw(updates) 30
 set webw(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
+# gebruik "*" om het nieuws naar alle kanalen te sturen (/amsg).
 set webw(autonewschan) "#kanaal1 #kanaal2"
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
@@ -267,7 +269,11 @@ proc webw:update {} {
       for {set i 0} {$i < $webw(automax)} {incr i} {
         if {![info exists webwdata(link,$i)]} { break }
         if {$webwdata(link,$i) == $webw(lastitem)} { break }
-        foreach chan [split $webw(autonewschan)] { webw:put $chan $chan $i 1 }
+        if {[regexp {^\*$} $webw(autonewschan)]} {
+          foreach chan [split [channels]] { webw:put $chan $chan $i 1 }
+        } else {
+          foreach chan [split $webw(autonewschan)] { webw:put $chan $chan $i 1 }
+        }
       }
     } else {
       if {$webw(log)} { putlog "\[WebWereld\] No news." } 
