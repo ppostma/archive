@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.45 2004-03-05 15:48:11 peter Exp $
+ * $Id: ess.c,v 1.46 2004-03-05 15:49:55 peter Exp $
  */
 
 #include <sys/types.h>
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 			break;
 		case 'V':
 			errx(99, "Easy Service Scan v%s by Peter Postma "
-				 "<peter@webdeveloping.nl>\n", VERSION);
+				 "<peter@webdeveloping.nl>", VERSION);
 			/* NOTREACHED */
 		case 'h':
 		case '?':
