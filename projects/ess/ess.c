@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.1 2003-07-19 18:42:35 peter Exp $
+ * $Id: ess.c,v 1.2 2003-08-03 15:01:22 peter Exp $
  */
 
 #include <sys/types.h>
@@ -31,11 +31,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#define	HTTP_REQUEST	"HEAD / HTTP/1.0\n\n"
-#define	TIMEOUT		3	/* seconds */
+#define VERSION		"0.3.2-beta"
+#define HTTP_REQUEST	"HEAD / HTTP/1.0\n\n"
+#define TIMEOUT		3	/* seconds */
 
 const char	*progname;
 
+size_t	 readln(int, char *);
 char	*get_af(int);
 char	*get_addr(struct sockaddr *, size_t);
 char	*get_serv(char *);
@@ -68,20 +70,23 @@ main(argc, argv)
 	char	*argv[];
 {
 	struct sockaddr_storage	ss;
-	struct addrinfo	hints, *res, *ai;
-	int		ch, err, ret;
-	int		all_flag = 0;
-	int		banner_flag = 0;
-	int		ftp_flag = 0;
-	int		ident_flag = 0;
-	int		relay_flag = 0;
-	char 		*host, *port;
-	char		sbuf[NI_MAXSERV], owner[128];
-	socklen_t	len;
+	struct addrinfo	 hints, *res, *ai;
+	struct servent	*serv;
+	char		*host = NULL;
+	char		*port = NULL;
+	int		 ch, err, ret, tport;
+	int		 all_flag = 0;
+	int		 banner_flag = 0;
+	int		 ftp_flag = 0;
+	int		 ident_flag = 0;
+	int		 relay_flag = 0;
+	char		 sbuf[NI_MAXSERV];
+	char		 owner[128];
+	socklen_t	 len;
 
 	progname = argv[0];
 
-	while ((ch = getopt(argc, argv, "46abfinr")) != -1) {
+	while ((ch = getopt(argc, argv, "46abfinrv")) != -1) {
 		switch (ch) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -97,6 +102,7 @@ main(argc, argv)
 			break;
 		case 'f':
 			ftp_flag = 1;
+			port = "21";
 			break;
 		case 'i':
 			ident_flag = 1;
@@ -106,20 +112,27 @@ main(argc, argv)
 			break;
 		case 'r':
 			relay_flag = 1;
+			port = "25";
 			break;
+		case 'v':
+			fprintf(stderr, "Service Scan v%s by Peter Postma "
+					"<peter@webdeveloping.nl>\n", VERSION);
+			exit(1);
 		case '?':
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 2)
+	if (argc < 2 && port == NULL)
 		usage();
 
 	host = argv[0];
-	port = argv[1];
+	if (port == NULL || argv[1] != NULL)
+		port = argv[1];
 
 	signal(SIGALRM, &timeout_handler);
 
@@ -168,8 +181,13 @@ main(argc, argv)
 			    sbuf, sizeof(sbuf), NI_NUMERICSERV);
 			if (err)
 				error(err);
+			serv = getservbyname(port, "tcp");
+			if (serv != NULL)
+				tport = ntohs(serv->s_port);
+			else
+				tport = atoi(port);
 			strncpy(owner, ident_scan(host, ai->ai_family,
-			    atoi(port), atoi(sbuf)), sizeof(owner));
+			    tport, atoi(sbuf)), sizeof(owner));
 			printf("owner: %s\n", owner);
 		} else if (ftp_flag) {
 			ret = ftp_scan("ftp");
@@ -211,6 +229,30 @@ main(argc, argv)
 	freeaddrinfo(res);
 
 	return 0;
+}
+
+size_t
+readln(fd, line)
+	int	 fd;
+	char	*line;
+{
+	size_t	b;
+	int	i; 
+	char	temp[1];
+
+	for (i=0; ; i++) {
+		if ((b = read(fd, temp, 1)) < 0) {
+			perror("read");
+			return 0;
+		}
+		if (temp[0] != 0)
+			line[i] = temp[0];
+		if (b == 0 || temp[0] == '\n')
+			break;
+	}
+	line[i] = '\0';
+
+	return i;
 }
 
 char *
@@ -325,10 +367,11 @@ ident_scan(host, ai_family, remoteport, localport)
 	close(isock);
 	freeaddrinfo(res);
 
-	response[bytes - 1] = '\0';
+	response[--bytes] = '\0';
+
 	owner = strrchr(response, ':');
-	if (*(++owner) == ' ')
-		owner++;
+	while (*(++owner) == ' ')
+		;
 
 	return owner;
 }
@@ -360,7 +403,7 @@ ftp_scan(name)
 
 	snprintf(request, sizeof(request), "USER %s\n", name);
 	write(ssock, request, strlen(request));
-	while (read(ssock, response, sizeof(response)) > 0) {
+	while (readln(ssock, response)) {
 		if (strstr(response, "530 ")) {	/* User not logged in */
 			ret = 0;
 			break;
@@ -387,11 +430,11 @@ relay_scan(helo)
 	if (strstr(response, "250 ") == 0)
 		return -1;
 
-	strncpy(request, "MAIL FROM: relaytest@localhost\n", sizeof(request));
+	strcpy(request, "MAIL FROM:<spamtest@pointless.nl>\n");
 	write(ssock, request, strlen(request));
 	read(ssock, response, sizeof(response));
 
-	strncpy(request, "RCPT TO: replaytest@pointless.nl\n", sizeof(request));
+	strcpy(request, "RCPT TO:<replaytest@pointless.nl>\n");
 	write(ssock, request, strlen(request));
 	read(ssock, response, sizeof(response));
 
@@ -424,7 +467,8 @@ usage(void)
 "  -i      Ident scan, queries ident/auth (port 113) and asks about the\n"
 "          identity of the service we're connecting to.\n"
 "  -n      Don't try to resolve addresses.\n"
-"  -r      Mail Relay test, performs a simple test to check for open-relay.\n\n",
+"  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
+"  -v      Show version information.\n\n",
 	progname);
 
 	exit(1);
