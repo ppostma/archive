@@ -1,9 +1,14 @@
-# $Id: gamer.tcl,v 1.17 2003-07-04 13:49:09 peter Exp $
+# $Id: gamer.tcl,v 1.18 2003-07-07 17:36:16 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 1.9, 04/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 2.0: (??/??/????)
+#  - de manier van het updaten is wat veranderd.
+#    de gamer(updates) setting wordt nu ook door de triggers gebruikt
+#    om te checken hoe lang de data gecached moet worden.
+#  - proxy configuratie toegevoegd.
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -66,6 +71,10 @@
 
 ### Configuratie instellingen ###
 
+# maak gebruik van een http proxy om de gegevens op te halen?
+# stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
+set gamer(proxy) ""
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set gamer(flags) "-|-"
 
@@ -77,7 +86,7 @@ set gamer(triggers) "!gamer"
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
 # voor geen flood protectie: zet 't op 0
-set gamer(antiflood) 60
+set gamer(antiflood) 10
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -89,7 +98,11 @@ set gamer(method) 1
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
 set gamer(headlines) 2
 
-# hieronder kun je de layout aanpassen:
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set gamer(updates) 5
+
+# hieronder kun je de layout aanpassen voor de output:
 # %tyd = tijd
 # %tit = titel
 # %aut = auteur / schrijver
@@ -104,10 +117,6 @@ set gamer(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set gamer(autonewschan) "#kanaal1 #kanaal2"
-
-# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
-# zet dit niet te laag, het zal load/verkeer op de servers vergroten.
-set gamer(updates) 10
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
@@ -134,7 +143,7 @@ set gamer(log) 1
 
 package require http
 
-set gamer(version) "1.9"
+set gamer(version) "2.0"
 
 if {[info tclversion] < 8.1} {
   putlog "\[Gamer.nl\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
@@ -167,6 +176,15 @@ proc gamer:getdata {} {
   set url "http://www.gamer.nl/newstracker.xml"
   set page [::http::config -useragent "Mozilla"]
 
+  if {$gamer(proxy) != ""} {
+    if {![regexp {(.+):([0-9].*?)} $gamer(proxy) t proxyhost proxyport]} {
+      putlog "\[Gamer.nl\] Wrong proxy configuration ($gamer(proxy))"
+      return -1
+    }
+    set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
+    catch { unset proxyhost proxyport }
+  }
+
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[Gamer.nl\] Problem: $msg"
     return -1
@@ -198,6 +216,8 @@ proc gamer:getdata {} {
     if {[regexp "<comments>(.*?)</comments>" $line trash gamerdata(reac,$count)]} { incr count }
   }
 
+  set gamer(lastupdate) [clock seconds]
+
   catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
@@ -214,22 +234,29 @@ proc gamer:pub {nick uhost hand chan text} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $gamer(antiflood) - $verschil] seconden..."
       return 0
     }
-    catch { unset verschil }
   }
   set gamer(floodprot) [clock seconds]
 
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[gamer:getdata] != -1} {
+  set ret 0
+  if {[info exists gamer(lastupdate)]} {
+    if {[expr [clock seconds] - $gamer(lastupdate)] > [expr $gamer(updates) * 60]} {
+      set ret [gamer:getdata]
+    }
+  } elseif {![info exists gamerdata(id,0)]} {
+    set ret [gamer:getdata]
+  }
+
+  if {$ret != -1} {
     for {set i 0} {$i < $gamer(headlines)} {incr i} {
       if {![info exists gamerdata(id,$i)]} { break }
       gamer:put $chan $nick $i $gamer(method)
     }
-    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Gamer.nl\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  if {[info exists gamerdata]} { unset gamerdata }
+  catch { unset ret verschil i }
 }
 
 proc gamer:put {chan nick which method} {
@@ -294,7 +321,6 @@ proc gamer:update {} {
   } else {
     timer $gamer(updates) gamer:update
   }
-  if {[info exists gamerdata]} { unset gamerdata }
 
   return 0
 }

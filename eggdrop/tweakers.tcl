@@ -1,9 +1,14 @@
-# $Id: tweakers.tcl,v 1.19 2003-07-04 13:49:09 peter Exp $
+# $Id: tweakers.tcl,v 1.20 2003-07-07 17:36:16 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
-# version 1.9, 04/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 2.0: (??/??/????)
+#  - de manier van het updaten is wat veranderd.
+#    de tnet(updates) setting wordt nu ook door de triggers gebruikt
+#    om te checken hoe lang de data gecached moet worden.
+#  - proxy configuratie toegevoegd.
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -66,6 +71,10 @@
 
 ### Configuratie instellingen ###
 
+# maak gebruik van een http proxy om de gegevens op te halen?
+# stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
+set tnet(proxy) ""
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set tnet(flags) "-|-"
 
@@ -77,7 +86,7 @@ set tnet(triggers) "!tnet !tweakers"
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
 # voor geen flood protectie: zet 't op 0
-set tnet(antiflood) 60
+set tnet(antiflood) 10
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -89,7 +98,11 @@ set tnet(method) 1
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
 set tnet(headlines) 2
 
-# hieronder kun je de layout aanpassen:
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set tnet(updates) 5
+
+# hieronder kun je de layout aanpassen voor de output:
 # %tyd = tijd
 # %cat = categorie
 # %tit = titel
@@ -107,10 +120,6 @@ set tnet(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set tnet(autonewschan) "#kanaal1 #kanaal2"
-
-# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
-# zet dit niet te laag, het zal load/verkeer op de servers vergroten.
-set tnet(updates) 5
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
@@ -137,7 +146,7 @@ set tnet(log) 1
 
 package require http
 
-set tnet(version) "1.9"
+set tnet(version) "2.0"
 
 if {[info tclversion] < 8.1} {
   putlog "\[T.Net\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
@@ -169,6 +178,15 @@ proc tnet:getdata {} {
 
   set url "http://www.tweakers.net/turbotracker.dsp"
   set page [::http::config -useragent "Mozilla"]
+
+  if {$tnet(proxy) != ""} {
+    if {![regexp {(.+):([0-9].*?)} $tnet(proxy) t proxyhost proxyport]} {
+      putlog "\[T.Net\] Wrong proxy configuration ($tnet(proxy))"
+      return -1
+    }
+    set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
+    catch { unset proxyhost proxyport }
+  }
 
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[T.Net\] Problem: $msg"
@@ -204,6 +222,8 @@ proc tnet:getdata {} {
     if {[regexp "<reacties>(.*?)</reacties>" $line trash tnetdata(reac,$count)]} { incr count }
   }
 
+  set tnet(lastupdate) [clock seconds]
+
   catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
@@ -220,22 +240,29 @@ proc tnet:pub {nick uhost hand chan text} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $tnet(antiflood) - $verschil] seconden..."
       return 0
     }
-    catch { unset verschil }
   }
   set tnet(floodprot) [clock seconds]
 
   if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[tnet:getdata] != -1} {
+  set ret 0
+  if {[info exists tnet(lastupdate)]} {
+    if {[expr [clock seconds] - $tnet(lastupdate)] > [expr $tnet(updates) * 60]} {
+      set ret [tnet:getdata]
+    }
+  } elseif {![info exists tnetdata(ts,0)]} {
+    set ret [tnet:getdata]
+  }
+
+  if {$ret != -1} {
     for {set i 0} {$i < $tnet(headlines)} {incr i} { 
       if {![info exists tnetdata(ts,$i)]} { break }
       tnet:put $chan $nick $i $tnet(method)
     }
-    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[T.Net\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  if {[info exists tnetdata]} { unset tnetdata }
+  catch { unset ret verschil i }
 }
 
 proc tnet:put {chan nick which method} {
@@ -304,7 +331,6 @@ proc tnet:update {} {
   } else {
     timer $tnet(updates) tnet:update
   }
-  if {[info exists tnetdata]} { unset tnetdata }
 
   return 0
 }

@@ -1,9 +1,14 @@
-# $Id: fok.tcl,v 1.17 2003-07-04 13:49:09 peter Exp $
+# $Id: fok.tcl,v 1.18 2003-07-07 17:36:16 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
-# version 1.9, 04/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 2.0: (??/??/????)
+#  - de manier van het updaten is wat veranderd.
+#    de fok(updates) setting wordt nu ook door de triggers gebruikt
+#    om te checken hoe lang de data gecached moet worden.
+#  - proxy configuratie toegevoegd.
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -66,6 +71,10 @@
 
 ### Configuratie instellingen ###
 
+# maak gebruik van een http proxy om de gegevens op te halen?
+# stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
+set fok(proxy) ""
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set fok(flags) "-|-"
 
@@ -77,7 +86,7 @@ set fok(triggers) "!fok fok!"
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
 # voor geen flood protectie: zet 't op 0
-set fok(antiflood) 60
+set fok(antiflood) 10
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -89,7 +98,11 @@ set fok(method) 1
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
 set fok(headlines) 2
 
-# hieronder kun je de layout aanpassen:
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set fok(updates) 5
+
+# hieronder kun je de layout aanpassen voor de output:
 # %tyd = tijd
 # %tit = titel
 # %id  = id (wordt gebruikt in de nieuws url)
@@ -103,10 +116,6 @@ set fok(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set fok(autonewschan) "#kanaal1 #kanaal2"
-
-# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
-# zet dit niet te laag, het zal load/verkeer op de servers vergroten.
-set fok(updates) 5
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
@@ -133,7 +142,7 @@ set fok(log) 1
 
 package require http
 
-set fok(version) "1.9"
+set fok(version) "2.0"
 
 if {[info tclversion] < 8.1} {
   putlog "\[Fok!\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
@@ -166,6 +175,15 @@ proc fok:getdata {} {
   set url "http://www.athena.fokzine.net/~danny/remote.xml"
   set page [::http::config -useragent "Mozilla"]
 
+  if {$fok(proxy) != ""} {
+    if {![regexp {(.+):([0-9].*?)} $fok(proxy) t proxyhost proxyport]} {
+      putlog "\[Fok!\] Wrong proxy configuration ($fok(proxy))"
+      return -1
+    }
+    set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
+    catch { unset proxyhost proxyport }
+  }
+
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[Fok!\] Problem: $msg"
     return -1
@@ -196,6 +214,8 @@ proc fok:getdata {} {
     if {[regexp "<reacties>(.*?)</reacties>" $line trash fokdata(reac,$count)]} { incr count }
   }
 
+  set fok(lastupdate) [clock seconds]
+
   catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
@@ -212,22 +232,29 @@ proc fok:pub {nick uhost hand chan text} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $fok(antiflood) - $verschil] seconden..."
       return 0
     }
-    catch { unset verschil }
   }
   set fok(floodprot) [clock seconds]
 
   if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[fok:getdata] != -1} {
+  set ret 0
+  if {[info exists fok(lastupdate)]} {
+    if {[expr [clock seconds] - $fok(lastupdate)] > [expr $fok(updates) * 60]} {
+      set ret [fok:getdata]
+    }
+  } elseif {![info exists fokdata(id,0)]} {
+    set ret [fok:getdata]
+  }
+
+  if {$ret != -1} {
     for {set i 0} {$i < $fok(headlines)} {incr i} {
       if {![info exists fokdata(id,$i)]} { break }
       fok:put $chan $nick $i $fok(method)
     }
-    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Fok!\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  if {[info exists fokdata]} { unset fokdata }
+  catch { unset ret verschil i }
 }
 
 proc fok:put {chan nick which method} {
@@ -291,7 +318,6 @@ proc fok:update {} {
   } else {
     timer $fok(updates) fok:update
   }
-  if {[info exists fokdata]} { unset fokdata }
 
   return 0
 }

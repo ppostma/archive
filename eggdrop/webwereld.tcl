@@ -1,11 +1,16 @@
-# $Id: webwereld.tcl,v 1.4 2003-07-04 13:49:09 peter Exp $
+# $Id: webwereld.tcl,v 1.5 2003-07-07 17:36:17 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.0, 04/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.1: (??/??/????)
+#  - de manier van het updaten is wat veranderd.
+#    de webw(updates) setting wordt nu ook door de triggers gebruikt
+#    om te checken hoe lang de data gecached moet worden.
+#  - proxy configuratie toegevoegd.
 # 1.0: (04/07/2003)
-#   - eerste versie, gebaseerd op tweakers.tcl v1.9
+#  - eerste versie, gebaseerd op tweakers.tcl v1.9
 #
 # Dit script maakt gebruik van een functie uit alltools.tcl.
 # Zorg ervoor dat alltools.tcl geladen wordt in je eggdrop configuratie!
@@ -25,6 +30,10 @@
 
 ### Configuratie instellingen ###
 
+# maak gebruik van een http proxy om de gegevens op te halen?
+# stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
+set webw(proxy) ""
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set webw(flags) "-|-"
 
@@ -36,7 +45,7 @@ set webw(triggers) "!webwereld !ww"
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
 # voor geen flood protectie: zet 't op 0
-set webw(antiflood) 60
+set webw(antiflood) 10
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -48,7 +57,11 @@ set webw(method) 1
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
 set webw(headlines) 2
 
-# hieronder kun je de layout aanpassen:
+# om de hoeveel minuten checken of er nieuws is? [minimaal 30]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set webw(updates) 30
+
+# hieronder kun je de layout aanpassen voor de output:
 # %title = titel van artikel
 # %link  = url/link naar artikel
 # %descr = description, beschrijving
@@ -61,10 +74,6 @@ set webw(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set webw(autonewschan) "#kanaal1 #kanaal2"
-
-# om de hoeveel minuten checken of er nieuws is? [minimaal 30]
-# zet dit niet te laag, het zal load/verkeer op de servers vergroten.
-set webw(updates) 30
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
@@ -91,7 +100,7 @@ set webw(log) 1
 
 package require http
 
-set webw(version) "1.0"
+set webw(version) "1.1"
 
 if {[info tclversion] < 8.1} {
   putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
@@ -123,6 +132,15 @@ proc webw:getdata {} {
 
   set url "http://www.webwereld.nl/rss/trillian.rss"
   set page [::http::config -useragent "Mozilla"]
+
+  if {$webw(proxy) != ""} {
+    if {![regexp {(.+):([0-9].*?)} $webw(proxy) t proxyhost proxyport]} {
+      putlog "\[WebWereld\] Wrong proxy configuration ($webw(proxy))"
+      return -1
+    }
+    set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
+    catch { unset proxyhost proxyport }
+  }
 
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[WebWereld\] Problem: $msg"
@@ -157,6 +175,8 @@ proc webw:getdata {} {
     }
   }
 
+  set webw(lastupdate) [clock seconds]
+
   catch { ::http::cleanup $page }
   catch { unset url page msg lines count item line trash }
 
@@ -173,22 +193,29 @@ proc webw:pub {nick uhost hand chan text} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $webw(antiflood) - $verschil] seconden..."
       return 0
     }
-    catch { unset verschil }
   }
   set webw(floodprot) [clock seconds]
 
   if {$webw(log)} { putlog "\[WebWereld\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[webw:getdata] != -1} {
+  set ret 0
+  if {[info exists webw(lastupdate)]} {
+    if {[expr [clock seconds] - $webw(lastupdate)] > [expr $webw(updates) * 60]} {
+      set ret [webw:getdata]
+    }
+  } elseif {![info exists webwdata(link,0)]} {
+    set ret [webw:getdata]
+  }
+
+  if {$ret != -1} {
     for {set i 0} {$i < $webw(headlines)} {incr i} { 
       if {![info exists webwdata(link,$i)]} { break }
       webw:put $chan $nick $i $webw(method)
     }
-    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[WebWereld\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  if {[info exists webwdata]} { unset webwdata }
+  catch { unset ret verschil i }
 }
 
 proc webw:put {chan nick which method} {
@@ -251,7 +278,6 @@ proc webw:update {} {
   } else {
     timer $webw(updates) webw:update
   }
-  if {[info exists webwdata]} { unset webwdata }
 
   return 0
 }

@@ -1,9 +1,14 @@
-# $Id: clanbase.tcl,v 1.16 2003-07-04 13:49:09 peter Exp $
+# $Id: clanbase.tcl,v 1.17 2003-07-07 17:36:16 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
-# version 1.3, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.4: (??/??/????)
+#  - changed the update method somewhat.
+#    the cb(updates) it now also being used by the triggers
+#    to check how long to cache the data.
+#  - proxy configuration added.
 # 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -36,6 +41,10 @@
 
 ### Configuration settings ###
 
+# make use of a http proxy the get the data?
+# enter the info like: "host.isp.com:port" or let it empty for no proxy
+set cb(proxy) ""
+
 # flags needed to use the trigger [default=everyone]
 set cb(flags) "-|-"
 
@@ -47,7 +56,7 @@ set cb(triggers) "!cb !clanbase"
 
 # flood protection: seconds between use of the triggers
 # to disable: set it to 0
-set cb(antiflood) 60
+set cb(antiflood) 10
 
 # method to send the messages:
 # 0 = Private message
@@ -59,7 +68,11 @@ set cb(method) 1
 # display n headlines when a trigger is used [> 1]
 set cb(headlines) 2
 
-# below you can change the layout:
+# check for news after n minutes? [min. 30]
+# this value is being used by the trigger and the autonews.
+set cb(updates) 120
+
+# below you can change the layout of the output:
 # %title = title from article
 # %link  = link to cb's news item
 # %b   = bold text
@@ -71,10 +84,6 @@ set cb(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
 set cb(autonewschan) "#channel"
-
-# check for news after n minutes? [min. 30]
-# don't set this to low!
-set cb(updates) 120
 
 # max. amount of messages which will be displayed meanwhile automatic updates.
 # with this setting you can prevent channel flooding if the updates are high
@@ -101,7 +110,7 @@ set cb(log) 1
 
 package require http
 
-set cb(version) "1.3"
+set cb(version) "1.4"
 
 if {[info tclversion] < 8.1} {
   putlog "\[Clanbase\] Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
@@ -133,6 +142,15 @@ proc cb:getdata {} {
 
   set url "http://www.clanbase.com/rss.php"
   set page [::http::config -useragent "Mozilla"]
+
+  if {$cb(proxy) != ""} {
+    if {![regexp {(.+):([0-9].*?)} $cb(proxy) t proxyhost proxyport]} {
+      putlog "\[Clanbase\] Wrong proxy configuration ($cb(proxy))"
+      return -1
+    }
+    set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
+    catch { unset proxyhost proxyport }
+  }
 
   if {[catch {set page [::http::geturl $url -timeout 30000]} msg]} {
     putlog "\[Clanbase\] Problem: $msg"
@@ -166,6 +184,8 @@ proc cb:getdata {} {
     }
   }
 
+  set cb(lastupdate) [clock seconds]
+
   catch { ::http::cleanup $page }
   catch { unset url page msg lines count item line trash}
 
@@ -182,22 +202,29 @@ proc cb:pub {nick uhost hand chan text} {
       putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $cb(antiflood) - $diff] seconds..."
       return 0
     }
-    catch { unset diff }
   }
   set cb(floodprot) [clock seconds]
 
   if {$cb(log)} { putlog "\[Clanbase\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[cb:getdata] != -1} {
+  set ret 0
+  if {[info exists cb(lastupdate)]} {
+    if {[expr [clock seconds] - $cb(lastupdate)] > [expr $cb(updates) * 60]} {
+      set ret [cb:getdata]
+    }
+  } elseif {![info exists cbdata(title,0)]} {
+    set ret [cb:getdata]
+  }
+
+  if {$ret != -1} {
     for {set i 0} {$i < $cb(headlines)} {incr i} {
       if {![info exists cbdata(title,$i)]} { break }
       cb:put $chan $nick $i $cb(method)
     }
-    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Clanbase\] Something went wrong while updating."
   }
-  if {[info exists cbdata]} { unset cbdata }
+  catch { unset ret diff i }
 }
 
 proc cb:put {chan nick which method} {
@@ -259,7 +286,6 @@ proc cb:update {} {
   } else {
     timer $cb(updates) cb:update
   }
-  if {[info exists cbdata]} { unset cbdata }
 
   return 0
 }

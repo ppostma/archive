@@ -1,9 +1,14 @@
-# $Id: osnews.tcl,v 1.15 2003-07-04 13:49:09 peter Exp $
+# $Id: osnews.tcl,v 1.16 2003-07-07 17:36:16 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
-# version 1.3, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.4: (??/??/????)
+#  - changed the update method somewhat.
+#    the osnews(updates) it now also being used by the triggers
+#    to check how long to cache the data.
+#  - proxy configuration added.
 # 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -36,6 +41,10 @@
 
 ### Configuration settings ###
 
+# make use of a http proxy the get the data?
+# enter the info like: "host.isp.com:port" or let it empty for no proxy
+set osnews(proxy) ""
+
 # flags needed to use the trigger [default=everyone]
 set osnews(flags) "-|-"
 
@@ -47,7 +56,7 @@ set osnews(triggers) "!osnews"
 
 # flood protection: seconds between use of the triggers
 # to disable: set it to 0
-set osnews(antiflood) 60
+set osnews(antiflood) 10
 
 # method to send the messages:
 # 0 = Private message
@@ -59,7 +68,11 @@ set osnews(method) 1
 # display n headlines when a trigger is used [> 1]
 set osnews(headlines) 2
 
-# below you can change the layout:
+# check for news after n minutes? [min. 30]
+# this value is being used by the trigger and the autonews.
+set osnews(updates) 60
+
+# below you can change the layout of the output:
 # %title = titel of article
 # %link  = link to article
 # %b   = bold text
@@ -71,10 +84,6 @@ set osnews(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
 set osnews(autonewschan) "#channel1"
-
-# check for news after n minutes? [min. 30]
-# don't set this to low!
-set osnews(updates) 60
 
 # max. amount of messages which will be displayed meanwhile automatic updates.
 # with this setting you can prevent channel flooding if the updates are high
@@ -101,7 +110,7 @@ set osnews(log) 1
 
 package require http
 
-set osnews(version) "1.3"
+set osnews(version) "1.4"
 
 if {[info tclversion] < 8.1} {
   putlog "\[OSNews\] Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
@@ -133,6 +142,15 @@ proc osnews:getdata {} {
 
   set url "http://www.osnews.com/files/recent.rdf"
   set page [::http::config -useragent "Mozilla"]
+
+  if {$osnews(proxy) != ""} {
+    if {![regexp {(.+):([0-9].*?)} $osnews(proxy) t proxyhost proxyport]} {
+      putlog "\[Clanbase\] Wrong proxy configuration ($osnews(proxy))"
+      return -1
+    }
+    set page [::http::config -proxyhost $proxyhost -proxyport $proxyport]
+    catch { unset proxyhost proxyport }
+  }
 
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[OSnews\] Problem: $msg"
@@ -166,6 +184,8 @@ proc osnews:getdata {} {
     }
   }
 
+  set osnews(lastupdate) [clock seconds]
+
   catch { ::http::cleanup $page }
   catch { unset url page msg lines count item line trash }
 
@@ -182,22 +202,29 @@ proc osnews:pub {nick uhost hand chan text} {
       putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $osnews(antiflood) - $diff] seconds..."
       return 0
     }
-    catch { unset diff }
   }
   set osnews(floodprot) [clock seconds]
 
   if {$osnews(log)} { putlog "\[OSnews\] Trigger: $lastbind in $chan by $nick" }
 
-  if {[osnews:getdata] != -1} {
+  set ret 0
+  if {[info exists osnews(lastupdate)]} {
+    if {[expr [clock seconds] - $osnews(lastupdate)] > [expr $osnews(updates) * 60]} {
+      set ret [osnews:getdata]
+    }
+  } elseif {![info exists osnewsbdata(title,0)]} {
+    set ret [osnews:getdata]
+  }
+
+  if {$ret != -1} {
     for {set i 0} {$i < $osnews(headlines)} {incr i} {
       if {![info exists osnewsdata(title,$i)]} { break }
       osnews:put $chan $nick $i $osnews(method)
     }
-    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[OSnews\] Something went wrong while updating."
   }
-  if {[info exists osnewsdata]} { unset osnewsdata }
+  catch { unset ret diff i }
 }
 
 proc osnews:put {chan nick which method} {
@@ -259,7 +286,6 @@ proc osnews:update {} {
   } else {
     timer $osnews(updates) osnews:update
   }
-  if {[info exists osnewsdata]} { unset osnewsdata }
 
   return 0
 }
