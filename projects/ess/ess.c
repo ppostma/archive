@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.21 2003-08-22 01:11:37 peter Exp $
+ * $Id: ess.c,v 1.22 2003-08-22 08:59:37 peter Exp $
  */
 
 #include <sys/types.h>
@@ -79,7 +79,6 @@ main(argc, argv)
 	char		*host = NULL;
 	char		*port = NULL;
 	char		 ip[NI_MAXHOST];
-	char		 tmp[NI_MAXHOST];
 	char		 name[NI_MAXHOST];
 	char		 sbuf[NI_MAXSERV];
 	char		 result[128];
@@ -240,9 +239,8 @@ main(argc, argv)
 		} else if (relay_flag) {
 			if (relay_flag > 1) {
 				strcpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
-				strcpy(tmp, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
 				if (strcmp(ip, host) == 0)
-					strcpy(name, tmp);
+					strcpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
 				else
 					strcpy(name, host);
 				ret = relay_scan(name, ip);
