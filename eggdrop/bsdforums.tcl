@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.21 2003-08-18 20:36:43 peter Exp $
+# $Id: bsdforums.tcl,v 1.22 2003-08-20 18:44:16 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -243,6 +243,7 @@ proc bsdforums:put {chan nick which method} {
   set outchan $bsdforums(layout)
   regsub -all "%title" $outchan $bsdforumsdata(title,$which) outchan
   regsub -all "%link"  $outchan $bsdforumsdata(link,$which) outchan
+  regsub -all "&amp;amp;" $outchan "\\&" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b"   $outchan "\002" outchan
