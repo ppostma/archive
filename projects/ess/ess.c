@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.38 2003-11-06 22:41:45 peter Exp $
+ * $Id: ess.c,v 1.39 2003-11-08 17:46:26 peter Exp $
  */
 
 #include <sys/types.h>
@@ -185,13 +185,16 @@ main(int argc, char *argv[])
 		if (verbose_flag) {
 			strncpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0),
 			    sizeof(ip));
-			strncpy(name, get_addr(ai->ai_addr, ai->ai_addrlen, 1),
-			    sizeof(name));
-			printf("Trying %s", name);
-			if (strcmp(ip, name) != 0)
-				printf(" (%s)...", ip);
-			else
-				printf("...");
+			if (resolve_flag) {
+				strncpy(name, get_addr(ai->ai_addr,
+				    ai->ai_addrlen, 1), sizeof(name));
+				printf("Trying %s", name);
+				if (strcmp(ip, name) != 0)
+					printf(" (%s)...", ip);
+				else
+					printf("...");
+			} else
+				printf("Trying %s...", ip);
 			fflush(stdout);
 		}
 		alarm(CONNECT_TIMEOUT);
@@ -566,9 +569,15 @@ ftp_scan(char *name)
 	if (verbose_flag)
 		printf(">>> %s", request);
 
+	code = readcode(ssock);
+
 	/* User not logged in reply */
-	if (readcode(ssock) == 530)
+	if (code == 530)
 		return 1;
+
+	/* Problem? */
+	if (code < 0)
+		return 2;
 
 	/* Send PASS command */
 	strcpy(request, "PASS anonymous@moo.com\r\n");
@@ -724,7 +733,7 @@ usage(char *progname)
 #ifdef RESOLVE
 "  -n      Don't try to resolve addresses to names.\n"
 #else
-"  -n      Don't try to resolve names to addresses.\n"
+"  -n      Try to resolve addresses to names.\n"
 #endif
 "  -q      Be quiet. Don't output anything to stdout.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
