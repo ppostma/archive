@@ -13,9 +13,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.18 2003-10-16 14:26:54 peter Exp $
+ * $Id: playlist.cc,v 1.19 2003-10-16 17:20:54 peter Exp $
  */
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -32,7 +33,6 @@
 
 using namespace std;
 
-long stol(string s);		// string to long
 string itos(int i);		// int to string
 string time2texts(long time);
 string time2textl(long time);
@@ -101,7 +101,7 @@ void Playlist::Output()
 	for (long i=1; i; i++) {
 		cout << i << ". " << list->track;
 		if (list->time.size() != 0)
-			cout << " (" << time2texts(stol(list->time)) << ")";
+			cout << " (" << time2texts(atol(list->time.c_str())) << ")";
 		cout << BR << endl;
 
 		if (list->next == NULL) break;
@@ -138,17 +138,6 @@ void Playlist::PrintFooter()
 "</div>\n"
 "</body>\n"
 "</html>\n";
-}
-
-long stol(string s)
-{
-	stringstream	ss;
-	long		l;
-
-	ss << s;
-	ss >> l;
-
-	return l;
 }
 
 string itos(int i)
@@ -260,7 +249,7 @@ int main(int argc, char *argv[])
 				continue;
 
 			time  = temp.substr(pos1+1, (pos2 - pos1) - 1);
-			if (stol(time) < 0)	// Ignore negative values
+			if (atol(time.c_str()) < 0)   // Ignore negative values
 				time.erase();
 
 			track = temp.substr(pos2+1, temp.length());
@@ -292,7 +281,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (time.size() != 0)
-			totaltime += stol(time);
+			totaltime += atol(time.c_str());
 		else
 			unknownlength++;
 
