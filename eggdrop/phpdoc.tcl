@@ -1,18 +1,18 @@
-# $Id: phpdoc.tcl,v 1.4 2003-08-02 14:21:06 peter Exp $
+# $Id: phpdoc.tcl,v 1.5 2003-08-02 23:34:16 peter Exp $
 
 # PHP Doc for the eggdrop
-# version 0.3, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4, 03/08/2003, by Peter Postma <peter@webdeveloping.nl>
 
 ### Configuration settings ###
+
+# the triggers: [seperate with spaces]
+set phpdoc(triggers) "!php !phpdoc"
 
 # flags needed to use the triggers
 set phpdoc(flags) "-|-"
 
 # channels where the bot doesn't responds to triggers (seperate with spaces)
 set phpdoc(nopub) ""
-
-# the triggers: [seperate with spaces]
-set phpdoc(triggers) "!php !phpdoc"
 
 # flood protection: seconds between use of the triggers
 # to disable: set it to 0
@@ -48,19 +48,19 @@ set phpdoc(file) "/usr/home/peter/eggdrop/scripts/my/funcsummary.txt"
 
 ### Begin Tcl code ###
 
-set phpdoc(version) 0.3
+set phpdoc(version) 0.4
 
 if {[info tclversion] < 8.1} {
   putlog "Cannot load [file tail [info script]]: You need at least Tcl version 8.1 and you have Tcl version [info tclversion]."
   return 1
 }
 
-for {set i 0} {$i < [llength $phpdoc(triggers)]} {incr i} {
-  bind pub $phpdoc(flags) [lindex $phpdoc(triggers) $i] pub:phpdoc
+foreach trigger [split $phpdoc(triggers)] {
+  bind pub $phpdoc(flags) $trigger phpdoc:pub
 }
-catch { unset i }
+catch { unset trigger }
 
-proc pub:phpdoc {nick uhost hand chan text} {
+proc phpdoc:pub {nick uhost hand chan text} {
   global lastbind phpdoc
 
   if {[lsearch -exact $phpdoc(nopub) [string tolower $chan]] >= 0} { return 0 }
@@ -82,7 +82,7 @@ proc pub:phpdoc {nick uhost hand chan text} {
 
   set input [string trim [lindex $text 0]]
 
-  switch -- $phpdoc(method) {
+  switch $phpdoc(method) {
     0 { set method "PRIVMSG $nick" }
     1 { set method "PRIVMSG $chan" }
     2 { set method "NOTICE $nick" }
