@@ -1,72 +1,59 @@
-# $Id: portscanner.tcl,v 1.2 2003-03-21 01:33:48 peter Exp $
+# $Id: portscanner.tcl,v 1.3 2003-03-30 15:40:31 peter Exp $
 
 # portscanner.tcl / portscanner script for an eggdrop 
-# version 0.3.5 / 21/03/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 0.4beta / 30/03/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
-# dit script gebruikt scan.c (door Peter & Sliver) om een host te scannen.
-# extra optie is banner grabbing. deze gebruikt banner.c (door Peter) om 
-# de banner op een bepaalde poort te laten zien. 
-# typ 'make' om de scan programma's te compileren.
+# Use like this:
+#  !portscan localhost        (scans localhost)
+#  !portscan localhost 80     (scans port 80 on localhost)
+#  !portscan -b localhost 22  (shows the banner on port 22 from localhost)
+#  !portscan6 localhost       (scans localhost using IPv6)
 #
-# pas de onderstaande variabelen aan voor het juiste path van de proggies. 
-# de variabele ports kan je ook aanpassen om het aantal poorten die gescant
-# moeten worden aan te passen. maak deze niet te groot, op "stealth" hosts kan
-# het scannen dan erg lang duren.
-#
-# gebruik in IRC: '!portscan <host/ip> <port>'. gebruik de optie '-v' 
-# om de banners te grabben, dus: '!portscan -v <host/ip> <port>'.
-#
-# VB: !portscan localhost       (scant localhost)
-#     !portscan localhost 80    (scant poort 80 op localhost)
-#     !portscan -v localhost 22 (laat de banner zien op poort 22 van localhost)
-#
-# origineel idee en script: SilverSliver <silversliver2000@hotmail.com>
-# verbeteringen, bugfixes en banner grabbing: Peter <peter@webdeveloping.nl>
+# original idea & script: SilverSliver <silversliver2000@hotmail.com>
+# improvements, bugfixes & banner grabbing: Peter <peter@webdeveloping.nl>
 
+### Configuration
 
-# volledige path naar de scan programma's
-set scanprog    "/usr/local/eggdrop/scripts/my/portscan/scan"
-set scanprog6   "/usr/local/eggdrop/scripts/my/portscan/scan6"
-set bannerprog  "/usr/local/eggdrop/scripts/my/portscan/banner"
-set bannerprog6 "/usr/local/eggdrop/scripts/my/portscan/banner6"
+# Full path to the scan progra
+set scanprog "/usr/home/peter/eggdrop/scripts/my/pscan/scan"
 
-# benodigde flags om te scannen
+# Flags needed to use the command
 set scan_flags "f|f"
 
-# poorten die gescant worden
+# Scan which ports?
 set scan_ports "21 22 23 25 37 53 79 80 110 111 113 135 137 139 143 443 445 587 1080 1214 2049 3306 8080"
 
-# channels waar de bot niet reageerd op triggers (scheiden met spatie)
+# Channels where the command is disabled (seperate with spaces)
 set scan_nopub ""
 
-# de triggers
+# The commands/triggers
 set scan_trigger "!portscan"
 set scan6_trigger "!portscan6"
+
+### End Configuration
 
 
 bind pub $scan_flags $scan_trigger pub:portscan
 bind pub $scan_flags $scan6_trigger pub:portscan
 
-set portscan_version "0.3.5"
+set portscan_version "0.4beta"
 
 proc pub:portscan {nick uhost hand chan text} {
-  global lastbind scanprog scanprog6 bannerprog bannerprog6 scan_ports scan_nopub scan6_trigger
+  global lastbind scanprog scan_ports scan_nopub scan6_trigger
 
-  if {[lsearch -exact $scan_nopub [string tolower $chan]] >= 0} {return 0}
+  if {[lsearch -exact $scan_nopub [string tolower $chan]] >= 0} { return 0 }
 
   if {[string length [lindex $text 0]] == 0} {
-    putquick "NOTICE $nick :* syntax: $lastbind <host/ip> \[port\]"
+    putquick "NOTICE $nick :* Syntax: $lastbind \[-b\] <host/ip> \[port\]"
     return 0
   }
- 
-  foreach char {">" "<" "|" "&"} {
-    if [string match "*$char*" $text] {
-      putquick "NOTICE $nick :* error: invalid input characters"
-      return 0
-    } 
+
+  if {[regexp \[^\[:alnum:\]\[:space:\]\.\:\-\] $text]} {
+    putquick "NOTICE $nick :* Error: Invalid characters!"
+    return 0
   }
 
-  if {[lindex $text 0] == "-v"} {
+  if {[lindex $text 0] == "-v" || [lindex $text 0] == "-b"} {
     set host [lindex $text 1]
     set port [lindex $text 2]
   } else {
@@ -74,68 +61,80 @@ proc pub:portscan {nick uhost hand chan text} {
     set port [lindex $text 1]
   }
 
-  if {$lastbind == $scan6_trigger} {
-    set scanipv $scanprog6
-    set banneripv $bannerprog6
-  } else {
-    set scanipv $scanprog
-    set banneripv $bannerprog
-  }
-
   if {[string length $port] == 0} {
- 
+
     set open 0
     set closed 0
-    set stealth 0    
+    set stealth 0
 
     putquick "PRIVMSG $chan :* start scanning $host"
 
     for {set i 0} {$i < [llength $scan_ports]} {incr i} {
 
-      catch {exec $scanipv $host [lindex $scan_ports $i]} status
+      if {$lastbind == $scan6_trigger} {
+        catch {exec $scanprog -6 $host [lindex $scan_ports $i]} status
+      } else {
+        catch {exec $scanprog $host [lindex $scan_ports $i]} status
+      }
 
-      if {$status == "Error resolving hostname"} {
-        putquick "PRIVMSG $chan :* error resolving hostname..."
+      if {[regexp "^FAILED.+\[\(\](.*?)\[\)\]$" $status foo error]} {
+        putquick "PRIVMSG $chan :* error: $error"
         return 0
       }
 
-      if {$status == "closed"} {
+      if {[regexp "^CLOSED.*$" $status]} {
         incr closed
-      } elseif {$status == "stealth"} {
+      } elseif {[regexp "^TIMEOUT.*$" $status]} {
         incr stealth
-      } else {
+      } elseif {[regexp "^OPEN.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
         incr open
-        putquick "PRIVMSG $chan :* $status"
-      } 
-    }  
-  
+        putquick "PRIVMSG $chan :* [lindex $scan_ports $i] ($strport)"
+      } else {
+        putquick "PRIVMSG $chan :* hmmm... this shouldn't happen...quitting."
+        return 0
+      }
+    }
+
     putquick "PRIVMSG $chan :* done! [llength $scan_ports] ports scanned. (open: $open, closed: $closed, stealth: $stealth)"
   } else {
+
     if {$lastbind == $scan6_trigger} {
       putquick "PRIVMSG $chan :* start scanning \[$host\]:$port"
+      catch {exec $scanprog -6 $host $port} status
     } else {
       putquick "PRIVMSG $chan :* start scanning $host:$port"   
+      catch {exec $scanprog $host $port} status
     }
- 
-    catch {exec $scanipv $host $port} status
 
-    if {$status == "Error resolving hostname"} {
-      putquick "PRIVMSG $chan :* error resolving hostname..."
+    if {[regexp "^FAILED.+\[\(\](.*?)\[\)\]$" $status foo error]} {
+      putquick "PRIVMSG $chan :* error: $error"
       return 0
     }
 
-    if {$status == "closed"} {
-      putquick "PRIVMSG $chan :* port $port is CLOSED"    
-    } elseif {$status == "stealth"} {
-      putquick "PRIVMSG $chan :* no response from port $port (STEALTH)"
-    } else {
-      if {[lindex $text 0] == "-v"} {
-        set pf [open "| $banneripv $host $port" r]
-        while {[gets $pf line] >= 0} { putquick "PRIVMSG $chan :* $line" }
+    if {[regexp "^CLOSED.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
+      putquick "PRIVMSG $chan :* port $port ($strport) is CLOSED"
+    } elseif {[regexp "^TIMEOUT.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
+      putquick "PRIVMSG $chan :* no response from port $port ($strport)"
+    } elseif {[regexp "^OPEN.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
+      if {[lindex $text 0] == "-v" || [lindex $text 0] == "-b"} {
+        if {$lastbind == $scan6_trigger} {
+          set pf [open "| $scanprog -6b $host $port" r]
+        } else {
+          set pf [open "| $scanprog -b $host $port" r]
+        }
+        while {[gets $pf line] >= 0} {
+          if {[regexp "^NOBANNER.+\[\(\](.*?)\[\)\].*$" $line foo strport]} {
+            putquick "PRIVMSG $chan :* no banner on port $port ($strport) ?"
+            return 0
+          }
+          putquick "PRIVMSG $chan :* $line"
+        }
         close $pf
       } else {
-        putquick "PRIVMSG $chan :* port $port is OPEN ($status)"
+        putquick "PRIVMSG $chan :* port $port ($strport) is OPEN"
       }
+    } else {
+      putquick "PRIVMSG $chan :* hmmm... something went wrong... :/"
     }
   }
 }
