@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.17 2003-08-16 15:57:38 peter Exp $
+ * $Id: ess.c,v 1.18 2003-08-16 16:13:25 peter Exp $
  */
 
 #include <sys/types.h>
@@ -290,8 +290,7 @@ readln(fd, line, len)
 	char	*line;
 	size_t	 len;
 {
-	size_t	b;
-	int	i = 0;
+	size_t	b, i = 0;
 	char	temp[1];
 
 	do {
@@ -387,7 +386,7 @@ get_serv(port)
 {
 	struct servent	*service;
 	static char	 buf[NI_MAXSERV];
-	int		 i;
+	unsigned int	 i;
 
 	for (i=0; i<(strlen(port)); i++)
 		if (isalpha((int)port[i]) != 0)
