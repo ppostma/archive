@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: playlist.cc,v 1.1 2003-05-09 16:50:12 peter Exp $
+ * $Id: playlist.cc,v 1.2 2003-05-10 23:40:41 peter Exp $
  */
 
 #include <stdlib.h>
@@ -34,6 +34,15 @@
 #include <string>
 
 using namespace std;
+
+class playlist {
+  public:
+	string track;
+	string time;
+
+	playlist *next;
+	playlist() { next = NULL; }
+};
 
 static void usage(char *argv0)
 {
@@ -52,19 +61,25 @@ static void print_header(void)
 "  <style type=\"text/css\">\n"
 "  <!--\n"
 "    body,td { background: #000040; font-family: Verdana, Helvetica, Arial; color: #FFFFFF; font-size: 10pt; }\n"
-"    table { margin: auto; }\n"
 "  //-->\n"
 "  </style>\n"
 "</head>\n"
 "<body>\n"
 "<div style='color: #FFBF00; font-size: 14pt;'>\n"
 "<b>My Playlist</b>\n"
-"</div>\n";
+"</div>\n"
+"<table border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n"
+"<tr>\n"
+"<td style='width: 20px;'></td>\n"
+"<td>\n";
 }
 
 static void print_footer(void)
 {
 	cout <<
+"</td>\n"
+"</tr>\n"
+"</table>\n"
 "</body>\n"
 "</html>\n";
 }
@@ -137,6 +152,8 @@ int main(int argc, char *argv[])
 	long			totaltracks = 0;
 	long			unknownlength = 0;
 	bool			extinfo = false;
+	playlist		*head = NULL;
+	playlist		*tail;
 
 	if (argc != 2)
 		usage(argv[0]);
@@ -144,17 +161,20 @@ int main(int argc, char *argv[])
 	ifstream input(argv[1], ios::in);
 	if (!input) {
 		cerr << "Cannot open file '" << argv[1] << "'." << endl;
-		return (1);
+		exit(1);
 	}
 
 	getline(input, temp);
 	if (temp != "#EXTM3U") {
 		cerr << "Not an m3u playlist file." << endl;
-		return (1);
+		input.close();
+		exit(1);
 	}
 
-	print_header();
-	cout << "<p>\n";
+	// first element is a dummy
+	tail = new playlist;
+	tail->next = head;
+	head = tail;
 
 	while (getline(input, temp)) {
 		if (temp.empty())
@@ -196,37 +216,61 @@ int main(int argc, char *argv[])
 				track = temp.substr(pos1+1, (pos2 - pos1) - 1);
 		}
 
+		tail = head;
+		while (tail->next != NULL) tail = tail->next;
+
+		tail->next = new playlist;
+		if (tail->next == NULL) {
+			cerr << endl << "Fatal: Can't reserve memory" << endl;
+			exit(1);
+		}
+		tail->next->track = track;
+		tail->next->time  = time2texts(atol(time.c_str()));
+
 		if (time.size() != 0)
 			totaltime += atol(time.c_str());
 		else
 			unknownlength++;
 
 		totaltracks++;
-
-		cout << totaltracks << ". " << track;
-		if (time.size() != 0)
-			cout << " (" << time2texts(atoi(time.c_str())) << ")";
-
-		cout << "<br />" << endl;
 	}
 
 	input.close();
 
-	cout << "</p>\n<p>\n";
-
-	cout << totaltracks << " tracks in playlist, average track length: ";
-	cout << time2texts(totaltime / (totaltracks - unknownlength)) << endl;
-
-	if (unknownlength > 0) {
-		cout << "<br />\n";
-		cout << unknownlength << " track";
-		cout << ((unknownlength > 1) ? "s" : "");
-		cout << " of unknown length" << endl;
+	if (totaltracks < 1) {
+		cerr << "No tracks in the playlist." << endl;
+		exit(1);
 	}
 
-	cout << "<br />\n";
+	print_header();
+
+	cout << "<p>\n";
+
+	cout << totaltracks << " tracks in playlist, average track length: ";
+	cout << time2texts(totaltime / (totaltracks - unknownlength));
+	cout << "<br />" << endl;
+
+	if (unknownlength > 0) {
+		cout << unknownlength << " track";
+		cout << ((unknownlength > 1) ? "s" : "");
+		cout << " of unknown length" << "<br />" << endl;
+	}
+
 	cout << "Playlist length: " << time2textl(totaltime) << endl;
 	cout << "</p>\n";
+
+	tail = head;
+	tail = tail->next;	// skip dummy
+
+	for (long i=1; i; i++) {
+		cout << i << ". " << tail->track;
+		if (time.size() != 0)
+			cout << " (" << tail->time << ")";
+		cout << "<br />" << endl;
+
+		if (tail->next == NULL) break;
+		tail = tail->next;
+	}
 
 	print_footer();
 
