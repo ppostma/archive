@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.4 2003-08-03 19:29:57 peter Exp $
+ * $Id: ess.c,v 1.5 2003-08-06 17:36:06 peter Exp $
  */
 
 #include <sys/types.h>
@@ -37,7 +37,7 @@
 
 const char	*progname;
 
-size_t	 readln(int, char *);
+size_t	 readln(int, char *, size_t);
 char	*get_af(int);
 char	*get_addr(struct sockaddr *, size_t);
 char	*get_serv(char *);
@@ -51,6 +51,8 @@ void	 error(int);
 
 int	ssock, isock;
 int	timedout = 0;
+int	verbose_flag = 0;
+int	relay_flag = 0;
 
 #ifdef IPV4_DEFAULT
 int	IPv4or6 = AF_INET;
@@ -75,19 +77,18 @@ main(argc, argv)
 	char		*host = NULL;
 	char		*port = NULL;
 	char		 sbuf[NI_MAXSERV];
-	char		 owner[128];
+	char		 result[512];
 	int		 ch, err, ret;
 	int		 all_flag = 0;
 	int		 banner_flag = 0;
 	int		 ftp_flag = 0;
 	int		 ident_flag = 0;
-	int		 relay_flag = 0;
 	u_short		 tport;
 	socklen_t	 len;
 
 	progname = argv[0];
 
-	while ((ch = getopt(argc, argv, "46abfinrv")) != -1) {
+	while ((ch = getopt(argc, argv, "46abfinrvV")) != -1) {
 		switch (ch) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -112,10 +113,13 @@ main(argc, argv)
 			resolve_flag = (resolve_flag) ? 0 : 1;
 			break;
 		case 'r':
-			relay_flag = 1;
+			relay_flag++;
 			port = "25";
 			break;
 		case 'v':
+			verbose_flag = 1;
+			break;
+		case 'V':
 			fprintf(stderr, "Service Scan v%s by Peter Postma "
 					"<peter@webdeveloping.nl>\n", VERSION);
 			exit(1);
@@ -155,21 +159,14 @@ main(argc, argv)
 			perror("socket");
 			continue;
 		}
-		printf("%s host (%s) ", get_af(ai->ai_family),
-		    get_addr(ai->ai_addr, ai->ai_addrlen));
-		printf("port %s -> ", get_serv(port));
 		alarm(TIMEOUT);
 		if (connect(ssock, ai->ai_addr, ai->ai_addrlen) < 0) {
 			if (timedout) {
-				printf("no response\n");
+				strcpy(result, "no response");
 				timedout = 0;
 			} else
-				printf("closed\n");
-			/* This is ugly, but it helps with indenting */
-			if (all_flag)
-				continue;
-			else
-				break;
+				strcpy(result, "closed");
+			goto print_results;
 		}
 		alarm(0);
 		if (ident_flag) {
@@ -187,42 +184,51 @@ main(argc, argv)
 				tport = ntohs(serv->s_port);
 			else
 				tport = atoi(port);
-			strncpy(owner, ident_scan(host, ai->ai_family,
-			    tport, atoi(sbuf)), sizeof(owner));
-			printf("owner: %s\n", owner);
+			snprintf(result, sizeof(result), "owner: %s",
+			   ident_scan(host, ai->ai_family, tport, atoi(sbuf)));
 		} else if (ftp_flag) {
 			ret = ftp_scan("ftp");
 			if (ret <= 0)
 				ftp_scan("anonymous");
 			switch (ret) {
 			case -1:
-				printf("could not login.\n");
+				strcpy(result, "could not login.");
 				break;
 			case  0:
-				printf("anonymous login denied!\n");
+				strcpy(result, "anonymous login denied!");
 				break;
 			case  1:
-				printf("anonymous login accepted!\n");
+				strcpy(result, "anonymous login accepted!");
 				break;
 			}
 		} else if (relay_flag) {
-			ret = relay_scan("localhost");
+			ret = relay_scan("www.pointless.nl");
 			switch (ret) {
 			case -1:
-				printf("could not login.\n");
+				strcpy(result, "could not login.");
 				break;
 			case  0:
-				printf("relay access denied!\n");
+				strcpy(result, "relay access denied!");
 				break;
 			case  1:
-				printf("relay access accepted!\n");
+				strcpy(result, "relay access accepted!");
 				break;
 			}
 		} else if (banner_flag) {
-			printf("banner:\n\n");
-			printf("%s", banner_scan(atoi(port)));
+			strcpy(result, "banner:\n");
 		} else
-			printf("open\n");
+			strcpy(result, "open");
+
+print_results:
+		/* Print af, address, port, and result */
+		printf("%s host (%s) ", get_af(ai->ai_family),
+		    get_addr(ai->ai_addr, ai->ai_addrlen));
+		printf("port %s -> %s\n", get_serv(port), result);
+
+		/* Print banner at last */
+		if (banner_flag)
+			printf("%s", banner_scan(atoi(port)));
+
 		if (!all_flag)
 			break;
 	}
@@ -233,25 +239,26 @@ main(argc, argv)
 }
 
 size_t
-readln(fd, line)
+readln(fd, line, len)
 	int	 fd;
 	char	*line;
+	size_t	 len;
 {
 	size_t	b;
-	int	i;
+	int	i = 0;
 	char	temp[1];
 
-	for (i=0; ; i++) {
+	do {
 		if ((b = read(fd, temp, 1)) < 0) {
-			perror("read");
-			return 0;
-		}
+			return b;
+		} else if (b == 0)
+			break;
 		if (temp[0] != 0)
 			line[i] = temp[0];
-		if (b == 0 || temp[0] == '\n')
-			break;
-	}
-	line[i] = '\0';
+	} while (++i < len && temp[0] != '\n');
+
+	if (i > 0)
+		line[i] = '\0';
 
 	return i;
 }
@@ -404,7 +411,9 @@ ftp_scan(name)
 
 	snprintf(request, sizeof(request), "USER %s\n", name);
 	write(ssock, request, strlen(request));
-	while (readln(ssock, response)) {
+	while (readln(ssock, response, sizeof(response)) > 0) {
+		if (verbose_flag)
+			printf("<<< %s", response);
 		if (strstr(response, "530 ")) {	/* User not logged in */
 			ret = 0;
 			break;
@@ -418,28 +427,56 @@ ftp_scan(name)
 }
 
 int
-relay_scan(helo)
-	char	*helo;
+relay_scan(host)
+	char	*host;
 {
 	char	request[1024], response[1024];
 
-	read(ssock, response, sizeof(response));
+	/* Read banner */
+	(void)readln(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf("<<< %s", response);
 
-	snprintf(request, sizeof(request), "HELO %s\n", helo);
+	/* Send HELO, quit if return code is not 250 */
+	strcpy(request, "HELO www.pointless.nl\n");
 	write(ssock, request, strlen(request));
-	read(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf(">>> %s", request);
+	(void)readln(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf("<<< %s", response);
 	if (strstr(response, "250 ") == 0)
 		return -1;
 
-	strcpy(request, "MAIL FROM:<spamtest@pointless.nl>\n");
+	/* Reset */
+	strcpy(request, "RSET\n");
 	write(ssock, request, strlen(request));
-	read(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf(">>> %s", request);
+	(void)readln(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf("<<< %s", response);
 
-	strcpy(request, "RCPT TO:<replaytest@pointless.nl>\n");
+	/* Send MAIL FROM */
+	strcpy(request, "MAIL FROM: <test@pointless.nl>\n");
 	write(ssock, request, strlen(request));
-	read(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf(">>> %s", request);
+	(void)readln(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf("<<< %s", response);
 
-	if (strstr(response, "250 "))	/* Ok status */
+	/* Send RCPT TO */
+	strcpy(request, "RCPT TO: <test@pointless.nl>\n");
+	write(ssock, request, strlen(request));
+	if (verbose_flag)
+		printf(">>> %s", request);
+	(void)readln(ssock, response, sizeof(response));
+	if (verbose_flag)
+		printf("<<< %s", response);
+
+	/* 250 Ok = relay accepted */
+	if (strstr(response, "250 "))
 		return 1;
 
 	return 0;
@@ -463,13 +500,12 @@ usage(void)
 "  -6      Force the use of IPv6 only.\n"
 "  -a      When resolved to multiple addresses, scan them all.\n"
 "  -b      Grab the banner from an open port.\n"
-"  -f      Anonymous FTP scan, tries to login with the anonymous ftp\n"
-"          account and returns the result.\n"
-"  -i      Ident scan, queries ident/auth (port 113) and asks about the\n"
+"  -f      Anonymous FTP scan, checks if the server allows anonymous logins.\n"
+"  -i      Ident scan, queries ident/auth (port 113) and tries to get the\n"
 "          identity of the service we're connecting to.\n"
 "  -n      Don't try to resolve addresses.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
-"  -v      Show version information.\n\n",
+"  -v      Be verbose. It's use is recommended.\n"
 	progname);
 
 	exit(1);
