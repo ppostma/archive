@@ -1,4 +1,4 @@
-# $Id: portscanner.tcl,v 1.8 2003-07-03 16:54:46 peter Exp $
+# $Id: portscanner.tcl,v 1.9 2003-07-03 21:24:56 peter Exp $
 
 # Portscan script for an eggdrop 
 # version 0.4.2, 03/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -12,7 +12,7 @@
 # Original idea & script: SilverSliver <silversliver2000@hotmail.com>
 # Improvements, bugfixes & banner grabbing: Peter <peter@webdeveloping.nl>
 
-### Configuration
+### Configuration ###
 
 # Full path to the scan program
 set scan(program) "/usr/home/peter/eggdrop/scripts/my/portscan/scan"
@@ -30,7 +30,7 @@ set scan(nopub) ""
 set scan(trigger) "!portscan"
 set scan(trigger6) "!portscan6"
 
-### End Configuration
+### End Configuration ###
 
 
 bind pub $scan(flags) $scan(trigger) pub:portscan
