@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.7 2003-07-08 21:31:33 peter Exp $
+# $Id: qstat.tcl,v 1.8 2003-07-09 01:47:16 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 04/07/2003 
 # 
@@ -32,22 +32,19 @@
 #    - added configurable method to send messages
 #
 # Installation steps:
-# 1) Easiest way of installing: put all Qstat related files (players.qstat, 
-#    server.qstat, qstat.tcl, qstat (executable)) into _ONE_ directory.
-#    A good choice would be something like: /home/name/eggdrop/qstat 
-#    or c:/windrop/qstat
-# 2) Download the Qstat program from www.qstat.org and install it
-#    to some directory on your system. 
-# 3) Change the option "set pathqstat "/home/peter/AI/scripts/my/qstat" 
-#    and set it to the path where the Qstat related files are installed.
-# 4) Make sure the path you've just set also contains the files:
-#    players.qstat & server.qstat. If not, copy them to that directory.
-# 5) Optionally change some other configuration settings below.
-# 6) Edit your eggdrop's configuration file and add the qstat.tcl script. 
+# 1) Put all Qstat related files (players.qstat, server.qstat, qstat.tcl)
+#    into _ONE_ directory. A good choice would be something like:
+#    /home/name/eggdrop/qstat or c:/windrop/scripts/qstat.
+# 2) Download the Qstat program from www.qstat.org and install the executable 
+#    to the directory with the other qstat files (see step 1).
+# 3) Change the option "set qstat(path) "/home/ai/scripts/my/qstat" and
+#    set it to the path where the Qstat related files are installed. 
+# 4) Optionally change some other configuration settings below.
+# 5) Edit your eggdrop's configuration file and add the qstat.tcl script. 
 #    If you don't how to do this, please RTFM :)
-# 7) Rehash
-# 8) Typ !qstat in the channel for a command list.
-# 9) Have fun :)
+# 6) Rehash
+# 7) Typ !qstat in a channel for a command list.
+# 8) Have fun :)
 #
 
 ### Configuration settings ###
