@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.2 2003-05-17 15:57:05 peter Exp $
+# $Id: gamer.tcl,v 1.3 2003-05-17 20:39:15 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
