@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.17 2003-10-14 15:10:03 peter Exp $
+ * $Id: playlist.cc,v 1.18 2003-10-16 14:26:54 peter Exp $
  */
 
 #include <fstream>
@@ -48,14 +48,13 @@ class PlaylistEntry {
 
 class Playlist {
   private:
-	PlaylistEntry *head;
+	PlaylistEntry *head, *tail;
 
   public:
 	Playlist();
 	~Playlist();
 
 	bool Append(string track, string time);
-	bool Insert(string track, string time);
 	void Output();
 	void PrintHeader();
 	void PrintFooter();
@@ -63,13 +62,11 @@ class Playlist {
 
 Playlist::Playlist()
 {
-	head = NULL;
+	head = tail = NULL;
 }
 
 Playlist::~Playlist()
 {
-	PlaylistEntry *tail;
-
 	while (head != NULL) {
 		tail = head;
 		head = head->next;
@@ -77,54 +74,38 @@ Playlist::~Playlist()
 	}
 }
 
-bool Playlist::Insert(string track, string time)
+bool Playlist::Append(string track, string time)
 {
-	PlaylistEntry *tail;
-	tail = new PlaylistEntry;
+	if (tail != NULL) {
+		tail->next = new PlaylistEntry;
+		tail = tail->next;
+	} else
+		head = tail = new PlaylistEntry;
 
 	if (tail == NULL) return false;
 
 	tail->track = track;
 	tail->time  = time;
-	tail->next  = head;
-	head = tail;
-
-	return true;
-}
-
-bool Playlist::Append(string track, string time)
-{
-	PlaylistEntry *tail = head;
-
-	if (tail == NULL) return Insert(track, time);
-
-	while (tail->next != NULL) tail = tail->next;
-
-	tail->next = new PlaylistEntry;
-	if (tail->next == NULL) return false;
-
-	tail->next->track = track;
-	tail->next->time  = time;
 
 	return true;
 }
 
 void Playlist::Output()
 {
-	PlaylistEntry *tail = head;
+	PlaylistEntry *list = head;
 
 	cout << DIV_LISTFILES << "Playlist files:" << DIV_CLOSE << endl;
 	cout << HR << endl;
 	cout << DIV_LIST << endl;
 
 	for (long i=1; i; i++) {
-		cout << i << ". " << tail->track;
-		if (tail->time.size() != 0)
-			cout << " (" << time2texts(stol(tail->time)) << ")";
+		cout << i << ". " << list->track;
+		if (list->time.size() != 0)
+			cout << " (" << time2texts(stol(list->time)) << ")";
 		cout << BR << endl;
 
-		if (tail->next == NULL) break;
-		tail = tail->next;
+		if (list->next == NULL) break;
+		list = list->next;
 	}
 
 	cout << DIV_CLOSE << endl;
