@@ -1,7 +1,7 @@
-# $Id: fok.tcl,v 1.34 2004-02-27 20:35:44 peter Exp $
+# $Id: fok.tcl,v 1.35 2004-02-27 20:36:43 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
-# version 2.1, 27/02/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.1, 27/02/2004, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.1: (27/02/2004)
