@@ -1,11 +1,12 @@
-# $Id: dictionary.tcl,v 1.2 2003-06-22 12:20:51 peter Exp $
+# $Id: dictionary.tcl,v 1.3 2003-07-03 21:19:34 peter Exp $
 
 # Dictionary script for an eggdrop
-# version 0.8.4, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>    
+# version 0.8.4, 03/06/2003, by Peter Postma <peter@webdeveloping.nl>    
 #
 # Changelog:
 #  0.8.4: (??/??/????)
-#   - style changes.
+#   - fixed probs with string/lists using 'join' correctly,
+#   - lot of code/style changes.
 #  0.8.3: (24/08/2002)
 #   - code optimized.
 #  0.8.2: (18/08/2002)
@@ -29,195 +30,191 @@
 # Please change the variables below to configure this script.
 #
 
-### Configuration settings:
+### Configuration settings ###
 
 # flags needed to use the !explain and !what command
-set explain_flag "-|-"
+set dict(explain_flag) "-|-"
 
 # flags needed to use the !define and !learn command
-set learn_flag   "-|-"
+set dict(learn_flag) "-|-"
 
 # flags needed to use the !delword command
-set delete_flag  "m|m"
+set dict(delete_flag) "m|m"
 
 # flags needed to use the !deldict command
-set deldict_flag "n|n"
+set dict(deldict_flag) "n|n"
 
 # channels where the dictionary is disabled (seperate with spaces)
-set dict_nopub ""
+set dict(nopub) ""
 
 # prefix for the dictionary file (.dict should be ok)
-set dict_file ".dict"
+set dict(file) ".dict"
 
 # suffix to add behind the the word+explanation. 
-# %b = bold, %u = underline, %nick = user nick, %channel = which channel 
-set dict_suffix "- by %b%nick%b" 
-#set dict_suffix "- by %b%nick%b in %channel"
+# %b = bold, %u = underline, %nick = user nick, %chan = which channel
+set dict(suffix) "- by %b%nick%b" 
+#set dict(suffix) "- by %b%nick%b in %chan"
 
 # use a shared database for the channels, or create database for each channel?
 # set to 1: yes, shared database or 0: no, create database for each channel
-set dict_shared_db 1
+set dict(shared_db) 1
 
-### End Configuration settings
+### End Configuration settings ###
 
 
-### Begin TCL code (DO NOT CHANGE SOMETHING AFTER THIS LINE)
+### Begin TCL code ###
 
-set dictversion "0.8.4"
+set dict(version) "0.8.4"
 
-bind pub $learn_flag   "!learn"   pub:dict_learn
-bind pub $learn_flag   "!define"  pub:dict_learn
-bind pub $explain_flag "!what"    pub:dict_explain
-bind pub $explain_flag "!explain" pub:dict_explain
-bind pub $explain_flag "??"       pub:dict_explain
-bind pub $delete_flag  "!delword" pub:dict_delword
-bind pub $deldict_flag "!deldict" pub:dict_deldict
+bind pub $dict(learn_flag)   "!learn"   dict:learn
+bind pub $dict(learn_flag)   "!define"  dict:learn
+bind pub $dict(explain_flag) "!what"    dict:explain
+bind pub $dict(explain_flag) "!explain" dict:explain
+bind pub $dict(explain_flag) "??"       dict:explain
+bind pub $dict(delete_flag)  "!delword" dict:delword
+bind pub $dict(deldict_flag) "!deldict" dict:deldict
 
-proc pub:dict_learn {nick uhost hand chan text} {
-  global lastbind dict_nopub dict_file dict_suffix dict_shared_db
+proc dict:learn {nick uhost hand chan text} {
+  global lastbind dict
 
-  if {[lsearch -exact $dict_nopub [string tolower $chan]] >= 0} { return 0 }
+  if {[lsearch -exact $dict(nopub) [string tolower $chan]] >= 0} { return 0 }
   if {[string length [string trim [lindex $text 1]]] == 0} {
-    putquick "notice $nick :Syntax: $lastbind <keyword> <explanation>"
+    putquick "NOTICE $nick :Syntax: $lastbind <keyword> <explanation>"
     return 0
   }
 
-  if {$dict_shared_db} { 
-    set dict_dbfile "$dict_file"
+  if {$dict(shared_db)} { 
+    set dict(dbfile) "$dict(file)"
   } else {
-    set dict_dbfile "$dict_file$chan"
+    set dict(dbfile) "$dict(file)$chan"
   }
 
-  check_dict_file $dict_dbfile
+  dict:checkfile $dict(dbfile)
 
   set lword [lindex $text 0]
   set lexplain [lrange $text 1 end] 
 
-  set read_dict [open $dict_dbfile r]
-  while {[gets $read_dict line] >= 0} {
+  set fd [open $dict(dbfile) r]
+  while {[gets $fd line] >= 0} {
     if {[string match -nocase "\002$lword\002:*" $line]} {
       putquick "PRIVMSG $chan :$nick: I know \'$lword\' already."
-      close $read_dict
+      close $fd
       return 0
     } 
   }
-  close $read_dict
+  close $fd
   
-  set wword "\002$lword\002: $lexplain $dict_suffix"
+  set wword "\002$lword\002: [join $lexplain] $dict(suffix)"
   
   regsub -all "%b" $wword "\002" wword
-  regsub -all "%nick" $wword $nick wword
   regsub -all "%u" $wword "\037" wword
-  regsub -all "%channel" $wword $chan wword
+  regsub -all "%nick" $wword $nick wword
+  regsub -all "%chan" $wword $chan wword
 
-  set write_dict [open $dict_dbfile a]
-  puts $write_dict $wword
-  close $write_dict
+  set fd [open $dict(dbfile) a]
+  puts $fd $wword
+  close $fd
 
-  putquick "notice $nick :Okay, word \'$lword\' added!"
+  putquick "NOTICE $nick :Okay, word \'$lword\' added!"
   putlog "Word \'$lword\' in $chan added!"
 
   return 0
 }
 
-proc pub:dict_explain {nick uhost hand chan text} {
-  global lastbind dict_nopub dict_file dict_shared_db
+proc dict:explain {nick uhost hand chan text} {
+  global lastbind dict
 
-  if {[lsearch -exact $dict_nopub [string tolower $chan]] >= 0} { return 0 }
+  if {[lsearch -exact $dict(nopub) [string tolower $chan]] >= 0} { return 0 }
   if {[string length [string trim $text]] == 0} {
-    putquick "notice $nick :Syntax: $lastbind <keyword>"
+    putquick "NOTICE $nick :Syntax: $lastbind <keyword>"
     return 0
   }
 
-  if {$dict_shared_db} {
-    set dict_dbfile "$dict_file"
+  if {$dict(shared_db)} {
+    set dict(dbfile) "$dict(file)"
   } else {
-    set dict_dbfile "$dict_file$chan"
+    set dict(dbfile) "$dict(file)$chan"
   }
 
-  check_dict_file $dict_dbfile
+  dict:checkfile $dict(dbfile)
 
-  set eword [lindex $text 0]
-  regsub -all \\135 $eword {\]} mword
-  regsub -all \\133 $mword {\[} mword
+  set word [lindex $text 0]
   
-  set read_dict [open $dict_dbfile r]
-  while {[gets $read_dict line] >= 0} {
-    if {[string match -nocase "\002$mword\002:*" $line]} {
-      putquick "PRIVMSG $chan :[join $line]"
-      close $read_dict
+  set fd [open $dict(dbfile) r]
+  while {[gets $fd line] >= 0} {
+    if {[string match -nocase "\002$word\002:*" $line]} {
+      putquick "PRIVMSG $chan :$line"
+      close $fd
       return 0
     } 
   }
-  close $read_dict
+  close $fd
  
-  putquick "PRIVMSG $chan :$nick: I don\'t know what \'$eword\' means."
+  putquick "PRIVMSG $chan :$nick: I don\'t know what \'$word\' means."
 
   return 0
 }
 
-proc pub:dict_delword {nick uhost hand chan text} {
-  global lastbind dict_nopub dict_file dict_shared_db
+proc dict:delword {nick uhost hand chan text} {
+  global lastbind dict
 
-  if {[lsearch -exact $dict_nopub [string tolower $chan]] >= 0} { return 0 }
+  if {[lsearch -exact $dict(nopub) [string tolower $chan]] >= 0} { return 0 }
   if {[string length [string trim $text]] == 0} {
-    putquick "notice $nick :Syntax: $lastbind <keyword>"
+    putquick "NOTICE $nick :Syntax: $lastbind <keyword>"
     return 0
   }
 
-  if {$dict_shared_db} {
-    set dict_dbfile "$dict_file"
+  if {$dict(shared_db)} {
+    set dict(dbfile) "$dict(file)"
   } else {
-    set dict_dbfile "$dict_file$chan"
+    set dict(dbfile) "$dict(file)$chan"
   }
 
-  check_dict_file $dict_dbfile
+  dict:checkfile $dict(dbfile)
 
-  set dword [lindex $text 0]
-  regsub -all \\135 $dword {\]} mword
-  regsub -all \\133 $mword {\[} mword
+  set word [lindex $text 0]
 
-  set read_dict [open $dict_dbfile r]
-  set write_dict [open $dict_dbfile.tmp w]
+  set fdr [open $dict(dbfile) r]
+  set fdw [open $dict(dbfile).tmp w]
 
-  while {[gets $read_dict line] >= 0} {
-    if {![string match -nocase "\002$mword\002:*" $line]} { 
-      puts $write_dict $line 
+  while {[gets $fdr line] >= 0} {
+    if {![string match -nocase "\002$word\002:*" $line]} { 
+      puts $fdw $line 
     } else {
-      putquick "notice $nick :Word \'$dword\' deleted!"
-      putlog "Word \'$dword\' in $chan deleted!"
+      putquick "NOTICE $nick :Word \'$word\' deleted!"
+      putlog "Word \'$word\' in $chan deleted!"
     }
   }
   
-  close $write_dict
-  close $read_dict
+  close $fdw
+  close $fdr
   
-  file copy -force "$dict_dbfile.tmp" "$dict_dbfile"
-  file delete -force "$dict_dbfile.tmp"
+  file copy -force "$dict(dbfile).tmp" "$dict(dbfile)"
+  file delete -force "$dict(dbfile).tmp"
 }
 
-proc pub:dict_deldict {nick uhost hand chan text} {
-  global dict_nopub dict_file dict_shared_db
+proc dict:deldict {nick uhost hand chan text} {
+  global dict
 
-  if {[lsearch -exact $dict_nopub [string tolower $chan]] >= 0} { return 0 }
+  if {[lsearch -exact $dict(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$dict_shared_db} {
-    file delete -force $dict_file
-    putquick "notice $nick :Dictionary database file (shared) deleted!"
+  if {$dict(shared_db)} {
+    file delete -force $dict(file)
+    putquick "NOTICE $nick :Dictionary database file (shared) deleted!"
     putlog "Dictionary database file (shared) deleted!"
   } else {
-    file delete -force "$dict_file$chan"
-    putquick "notice $nick :Dictionary database file deleted!"
+    file delete -force "$dict(file)$chan"
+    putquick "NOTICE $nick :Dictionary database file deleted!"
     putlog "Dictionary database file deleted!"
   }
 }
 
-proc check_dict_file {dbfile} {
+proc dict:checkfile {dbfile} {
   if {![file exists $dbfile]} {
-    set write_dict [open $dbfile w]
-    close $write_dict
-    putlog "Dictionary database file created"
+    set fd [open $dbfile w]
+    close $fd
+    putlog "Dictionary database file created!"
   }
 }
 
-putlog "Dictionary version $dictversion loaded!"
+putlog "Dictionary version $dict(version) loaded!"
