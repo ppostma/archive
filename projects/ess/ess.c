@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.36 2003-11-05 18:00:36 peter Exp $
+ * $Id: ess.c,v 1.37 2003-11-06 19:34:22 peter Exp $
  */
 
 #include <sys/types.h>
@@ -299,8 +299,13 @@ print_results:
 			printf("port %s -> %s\n", get_serv(port), result);
 
 			/* Print banner at last */
-			if (banner_flag && ret == 0)
-				banner_scan(atoi(port));
+			if (banner_flag && ret == 0) {
+				serv = getservbyname(port, "tcp");
+				if (serv != NULL)
+					banner_scan(ntohs(serv->s_port));
+				else
+					banner_scan(atoi(port));
+			}
 		}
 
 		if (!all_flag)
