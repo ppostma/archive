@@ -1,11 +1,11 @@
-# $Id: calc.tcl,v 1.1 2003-03-19 16:24:42 peter Exp $
+# $Id: calc.tcl,v 1.2 2003-06-22 12:22:44 peter Exp $
 
-# calc.tcl / Calculator for an eggdrop
-# version 0.21 / 27/02/2003 / by Peter Postma <peter@webdeveloping.nl>
+# Calculator for an eggdrop
+# version 1.0, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
 
 bind pub -|- "!calc" pub:calc
 
-set calc_version "0.21"
+set calc_version "1.0"
 
 proc pub:calc {nick uhost hand chan text} {
   global lastbind
