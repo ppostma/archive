@@ -1,7 +1,7 @@
-# $Id: clanbase.tcl,v 1.20 2003-07-09 15:39:48 peter Exp $
+# $Id: clanbase.tcl,v 1.21 2003-07-10 08:35:32 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
-# version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -10,6 +10,7 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
+#  - script works with TCL 8.0 now.
 # 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -29,7 +30,7 @@
 # This script also uses http.tcl. You *don't* need to put http.tcl
 # your eggdrop configuration!
 #
-# You need at least TCL version 8.1 to get this script running!
+# You need at least TCL version 8.0 to get this script running!
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
@@ -71,7 +72,7 @@ set cb(headlines) 2
 
 # check for news after n minutes? [min. 30]
 # this value is being used by the trigger and the autonews.
-set cb(updates) 120
+set cb(updates) 60
 
 # below you can change the layout of the output:
 # %title = title from article
@@ -113,8 +114,8 @@ package require http
 
 set cb(version) "1.4"
 
-if {[info tclversion] < 8.1} {
-  putlog "\[Clanbase\] Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.0} {
+  putlog "\[Clanbase\] Cannot load [file tail [info script]]: You need at least TCL version 8.0 and you have TCL version [info tclversion]."
   return 1
 }
 
@@ -127,11 +128,11 @@ set whichtimer [timerexists "cb:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
 catch { unset whichtimer }
 
-for {set i 0} {$i < [llength $cb(triggers)]} {incr i} {
-  bind pub $cb(flags) [lindex $cb(triggers) $i] cb:pub
-  if {$cb(log)} { putlog "\[Clanbase\] Trigger [lindex $cb(triggers) $i] added." }
+foreach trigger [split $cb(triggers)] {
+  bind pub $cb(flags) $trigger cb:pub
+  if {$cb(log)} { putlog "\[Clanbase\] Trigger $trigger added." }
 }
-catch { unset i }
+catch { unset trigger }
 
 bind pub $cb(autotriggerflag) $cb(autofftrigger) cb:autoff
 bind pub $cb(autotriggerflag) $cb(autontrigger) cb:auton
@@ -145,7 +146,7 @@ proc cb:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$cb(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*?)} $cb(proxy) t proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9].*)} $cb(proxy) trash proxyhost proxyport]} {
       putlog "\[Clanbase\] Wrong proxy configuration ($cb(proxy))"
       return -1
     }
@@ -160,35 +161,34 @@ proc cb:getdata {} {
   
   if {[::http::status $page] != "ok"} {
     putlog "\[Clanbase\] Problem: [::http::status $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[Clanbase\] Problem: [::http::code $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {[info exists cbdata]} { unset cbdata }
 
-  set lines [split [::http::data $page] \n]
   set count 0
   set item 0
-
-  for {set i 0} {$i < [llength $lines]} {incr i} {
-    set line [lindex $lines $i]
+  foreach line [split [::http::data $page] \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
     if {$item == 1} {
-      regexp "<title>(.*?)</title>" $line trash cbdata(title,$count)
-      if {[regexp "<link>(.*?)</link>" $line trash cbdata(link,$count)]} { incr count }
+      regexp "<title>(.*)</title>" $line trash cbdata(title,$count)
+      if {[regexp "<link>(.*)</link>" $line trash cbdata(link,$count)]} { incr count }
     }
   }
 
   set cb(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg lines count item line trash}
+  catch { unset url page msg count item line trash}
 
   return 0
 }
@@ -238,7 +238,7 @@ proc cb:put {chan nick which method} {
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
   regsub -all "%u" $outchan "\037" outchan
-  switch -- $method {
+  switch $method {
     0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }

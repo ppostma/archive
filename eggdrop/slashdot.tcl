@@ -1,7 +1,7 @@
-# $Id: slashdot.tcl,v 1.21 2003-07-09 15:39:48 peter Exp $
+# $Id: slashdot.tcl,v 1.22 2003-07-10 08:35:32 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -10,6 +10,7 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
+#  - script works with TCL 8.0 now.
 # 1.9: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -29,7 +30,7 @@
 # This script also uses http.tcl. You *don't* need to put http.tcl
 # your eggdrop configuration!
 #
-# You need at least TCL version 8.1 to get this script running!
+# You need at least TCL version 8.0 to get this script running!
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
@@ -117,8 +118,8 @@ package require http
 
 set slashdot(version) "2.0"
 
-if {[info tclversion] < 8.1} {
-  putlog "\[Slashdot\] Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.0} {
+  putlog "\[Slashdot\] Cannot load [file tail [info script]]: You need at least TCL version 8.0 and you have TCL version [info tclversion]."
   return 1
 }
 
@@ -131,11 +132,11 @@ set whichtimer [timerexists "slashdot:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
 catch { unset whichtimer }
 
-for {set i 0} {$i < [llength $slashdot(triggers)]} {incr i} {
-  bind pub $slashdot(flags) [lindex $slashdot(triggers) $i] slashdot:pub
-  if {$slashdot(log)} { putlog "\[Slashdot\] Trigger [lindex $slashdot(triggers) $i] added." }
+foreach trigger [split $slashdot(triggers)] {
+  bind pub $slashdot(flags) $trigger slashdot:pub
+  if {$slashdot(log)} { putlog "\[Slashdot\] Trigger $trigger added." }
 }
-catch { unset i }
+catch { unset trigger }
 
 bind pub $slashdot(autotriggerflag) $slashdot(autofftrigger) slashdot:autoff
 bind pub $slashdot(autotriggerflag) $slashdot(autontrigger) slashdot:auton
@@ -149,7 +150,7 @@ proc slashdot:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$slashdot(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*?)} $slashdot(proxy) t proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9].*)} $slashdot(proxy) trash proxyhost proxyport]} {
       putlog "\[Slashdot\] Wrong proxy configuration ($slashdot(proxy))"
       return -1
     }
@@ -164,34 +165,33 @@ proc slashdot:getdata {} {
   
   if {[::http::status $page] != "ok"} {
     putlog "\[Slashdot\] Problem: [::http::status $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[Slashdot\] Problem: [::http::code $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {[info exists slashdotdata]} { unset slashdotdata }
 
-  set lines [split [::http::data $page] \n]
   set count 0
-
-  for {set i 0} {$i < [llength $lines]} {incr i} {
-    set line [lindex $lines $i]
+  foreach line [split [::http::data $page] \n] {
     regsub -all "\\&" $line "\\\\&" line
-    regexp "<title>(.*?)</title>" $line trash slashdotdata(title,$count)
-    regexp "<url>(.*?)</url>" $line trash slashdotdata(url,$count)
-    regexp "<time>(.*?)</time>" $line trash slashdotdata(time,$count)
-    regexp "<author>(.*?)</author>" $line trash slashdotdata(author,$count)
-    regexp "<comments>(.*?)</comments>" $line trash slashdotdata(comments,$count)
-    if {[regexp "<section>(.*?)</section>" $line trash slashdotdata(section,$count)]} { incr count }
+    regexp "<title>(.*)</title>" $line trash slashdotdata(title,$count)
+    regexp "<url>(.*)</url>" $line trash slashdotdata(url,$count)
+    regexp "<time>(.*)</time>" $line trash slashdotdata(time,$count)
+    regexp "<author>(.*)</author>" $line trash slashdotdata(author,$count)
+    regexp "<comments>(.*)</comments>" $line trash slashdotdata(comments,$count)
+    if {[regexp "<section>(.*)</section>" $line trash slashdotdata(section,$count)]} { incr count }
   }
 
   set slashdot(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg lines count line trash }
+  catch { unset url page msg count line trash }
 
   return 0
 }
@@ -246,7 +246,7 @@ proc slashdot:put {chan nick which method} {
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
   regsub -all "%u" $outchan "\037" outchan
-  switch -- $method {
+  switch $method {
     0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
