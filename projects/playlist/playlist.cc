@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.14 2003-10-13 02:55:31 peter Exp $
+ * $Id: playlist.cc,v 1.15 2003-10-13 03:05:59 peter Exp $
  */
 
 #include <stdlib.h>
@@ -29,7 +29,7 @@
 #define DIV_LISTFILES		"<div style='color: #FFBF00; font-size: 16pt;'>"
 #define DIV_LIST		"<div style='text-align: left; margin-left: 10px;'>"
 #define DIV_CLOSE		"</div>"
-#define HR			"<hr style='height: 1px; border-bottom: none;' />"
+#define HR			"<hr style='height: 1px;' />"
 #define BR			"<br />"
 
 using namespace std;
