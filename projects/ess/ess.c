@@ -13,10 +13,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.32 2003-11-02 19:10:58 peter Exp $
+ * $Id: ess.c,v 1.33 2003-11-04 15:57:29 peter Exp $
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -31,9 +32,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.5-beta"
-#define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
-#define TIMEOUT		3  /* seconds */
+#define VERSION			"0.3.5-beta"
+#define HTTP_REQUEST		"HEAD / HTTP/1.0\r\n\r\n"
+#define CONNECT_TIMEOUT		3	/* seconds when connect will timeout */
+#define BANNER_TIMEOUT		1	/* seconds after last banner recv */
 
 size_t	 readln(int, char *, size_t);
 size_t	 readall(int);
@@ -41,7 +43,7 @@ int	 readcode(int);
 char	*get_af(int);
 char	*get_addr(struct sockaddr *, socklen_t, int);
 char	*get_serv(char *);
-char	*banner_scan(u_short);
+void	 banner_scan(u_short);
 int	 ident_scan(char *, int, u_short, u_short, char *, size_t);
 int	 ftp_scan(char *);
 int	 relay_scan(char *, char *);
@@ -172,6 +174,8 @@ main(int argc, char *argv[])
 		       "Use option -a to scan them all.\n");
 
 	for (ai = res; ai != NULL; ai = ai->ai_next) {
+		if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+			continue;
 		ssock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (ssock < 0) {
 			perror("socket");
@@ -189,7 +193,7 @@ main(int argc, char *argv[])
 				printf("...");
 			fflush(stdout);
 		}
-		alarm(TIMEOUT);
+		alarm(CONNECT_TIMEOUT);
 		if (connect(ssock, ai->ai_addr, ai->ai_addrlen) < 0) {
 			if (verbose_flag)
 				printf(" connection failed!\n");
@@ -223,16 +227,21 @@ main(int argc, char *argv[])
 			else
 				remoteport = atoi(port);
 			localport = atoi(sbuf);
+			strncpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0),
+			    sizeof(ip));
 			memset(&owner, 0, sizeof(owner));
-			ret = ident_scan(host, ai->ai_family, remoteport,
+			ret = ident_scan(ip, ai->ai_family, remoteport,
 			    localport, owner, sizeof(owner));
-			strncpy(result, "owner: ", sizeof(result));
 			switch (ret) {
 			case 0:
-				strncat(result, owner, sizeof(result));
+				snprintf(result, sizeof(result),
+				    "owner: %s", owner);
 				break;
 			case 1:
-				strncat(result, "?", sizeof(result));
+				strcpy(result, "owner: ?");
+				break;
+			case 2:
+				strcpy(result, "cannot connect to identd!");
 				break;
 			}
 		} else if (ftp_flag) {
@@ -285,8 +294,8 @@ print_results:
 			printf("port %s -> %s\n", get_serv(port), result);
 
 			/* Print banner at last */
-			if (banner_flag)
-				printf("%s", banner_scan(atoi(port)));
+			if (banner_flag && ret == 0)
+				banner_scan(atoi(port));
 		}
 
 		if (!all_flag)
@@ -330,7 +339,10 @@ readall(int fd)
 			count += b;
 		if (verbose_flag)
 			printf("<<< %s", response);
-	} while (response[3] == '-');
+	} while (isdigit((int)response[0]) &&
+		 isdigit((int)response[1]) &&
+		 isdigit((int)response[2]) &&
+		 response[3] == '-');
 
 	return count;
 }
@@ -412,29 +424,41 @@ name:
 	return buf;
 }
 
-char *
+void
 banner_scan(u_short port)
 {
 	static char	buf[2048];
+	struct timeval	tv;
 	int		count;
+	fd_set		read_fds;
+
+	tv.tv_sec = BANNER_TIMEOUT;
+	tv.tv_usec = 0;
+
+	FD_ZERO(&read_fds);
+	FD_SET(ssock, &read_fds);
 
 	if (port == 80)
 		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
-	else
-		send(ssock, "", 0, 0);
 
-	count = recv(ssock, buf, sizeof(buf), 0);
-	buf[count] = '\0';
-
-	return buf;
+	for (;;) {
+		select(ssock+1, &read_fds, NULL, NULL, &tv);
+		if (!FD_ISSET(ssock, &read_fds))
+			return;
+		count = recv(ssock, buf, sizeof(buf), 0);
+		if (count < 1)
+			return;
+		buf[count] = '\0';
+		printf("%s", buf);
+		fflush(stdout);
+	}
 }
 
 int
-ident_scan(char *host, int ai_family, u_short remoteport, u_short localport,
+ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 	   char *owner, size_t len)
 {
-	struct addrinfo	 hints;
-	struct addrinfo *res, *ai;
+	struct addrinfo	 hints, *res;
 	char		*temp, *p;
 	char		 request[16], response[1024];
 	int		 err, bytes;
@@ -443,26 +467,23 @@ ident_scan(char *host, int ai_family, u_short remoteport, u_short localport,
 	hints.ai_family = ai_family;
 	hints.ai_socktype = SOCK_STREAM;
 
-	err = getaddrinfo(host, "113", &hints, &res);
+	err = getaddrinfo(ip, "113", &hints, &res);
 	if (err)
 		fatal(err);
-	for (ai = res; ai != NULL; ai = res->ai_next) {
-		isock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (isock < 0)
-			continue;
-		alarm(TIMEOUT);
-		if (connect(isock, ai->ai_addr, ai->ai_addrlen) < 0) {
-			isock = -1;
-			close(isock);
-			continue;
-		}
-		alarm(0);
-		break;
-	}
-	if (isock < 0) {
-		fprintf(stderr, "Cannot connect to ident!\n");
+	if (res->ai_next != NULL)
 		return 1;
+
+	isock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (isock < 0)
+		return 2;
+
+	alarm(CONNECT_TIMEOUT);
+	if (connect(isock, res->ai_addr, res->ai_addrlen) < 0) {
+		close(isock);
+		return 2;
 	}
+	alarm(0);
+
 	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
 	send(isock, request, strlen(request), 0); 
 	bytes = recv(isock, response, sizeof(response), 0);
