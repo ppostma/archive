@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: playlist.cc,v 1.4 2003-05-11 15:32:11 peter Exp $
+ * $Id: playlist.cc,v 1.5 2003-05-12 01:31:41 peter Exp $
  */
 
 #include <stdlib.h>
@@ -35,22 +35,94 @@
 
 using namespace std;
 
-class playlist {
+class PlaylistEntry {
   public:
 	string track;
 	string time;
 
-	playlist *next;
-	playlist() { next = NULL; }
+	PlaylistEntry *next;
+	PlaylistEntry() { next = NULL; }
 };
 
-static void usage(char *argv0)
+class Playlist {
+  private:
+	PlaylistEntry *head;
+
+  public:
+	Playlist();
+	~Playlist();
+
+	bool Append(string track, string time);
+	bool Insert(string track, string time);
+	void Output();
+	void PrintHeader();
+	void PrintFooter();
+};
+
+Playlist::Playlist()
 {
-	cerr << "Syntax: " << argv0 << " <m3u file>" << endl;
-	exit(1);
+	head = NULL;
 }
 
-static void print_header(void)
+Playlist::~Playlist()
+{
+	PlaylistEntry *tail;
+
+	while (head != NULL) {
+		tail = head;
+		head = head->next;
+		delete tail;
+	}
+}
+
+bool Playlist::Insert(string track, string time)
+{
+	PlaylistEntry *tail;
+	tail = new PlaylistEntry;
+
+	if (tail == NULL) return false;
+
+	tail->track = track;
+	tail->time  = time;
+	tail->next  = head;
+	head = tail;
+
+	return (true);
+}
+
+bool Playlist::Append(string track, string time)
+{
+	PlaylistEntry *tail = head;
+
+	if (tail == NULL) return Insert(track, time);
+
+	while (tail->next != NULL) tail = tail->next;
+
+	tail->next = new PlaylistEntry;
+	if (tail->next == NULL) return (false);
+
+	tail->next->track = track;
+	tail->next->time  = time;
+
+	return (true);
+}
+
+void Playlist::Output()
+{
+	PlaylistEntry *tail = head;
+
+	for (long i=1; i; i++) {
+		cout << i << ". " << tail->track;
+		if (tail->time.size() != 0)
+			cout << " (" << tail->time << ")";
+		cout << "<br />" << endl;
+
+		if (tail->next == NULL) break;
+		tail = tail->next;
+	}
+}
+
+void Playlist::PrintHeader()
 {
 	cout <<
 "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
@@ -74,7 +146,7 @@ static void print_header(void)
 "<td>\n";
 }
 
-static void print_footer(void)
+void Playlist::PrintFooter()
 {
 	cout <<
 "</td>\n"
@@ -152,11 +224,12 @@ int main(int argc, char *argv[])
 	long			totaltracks = 0;
 	long			unknownlength = 0;
 	bool			extinfo = false;
-	playlist		*head = NULL;
-	playlist		*tail;
+	Playlist		List;
 
-	if (argc != 2)
-		usage(argv[0]);
+	if (argc != 2) {
+		cerr << "Syntax: " << argv[0] << " <m3u file>" << endl;
+		exit(1);
+	}
 
 	ifstream input(argv[1], ios::in);
 	if (!input) {
@@ -170,11 +243,6 @@ int main(int argc, char *argv[])
 		input.close();
 		exit(1);
 	}
-
-	// first element is a dummy
-	tail = new playlist;
-	tail->next = head;
-	head = tail;
 
 	while (getline(input, temp)) {
 		if (temp.empty())
@@ -219,16 +287,11 @@ int main(int argc, char *argv[])
 				track = temp.substr(pos1+1, (pos2 - pos1) - 1);
 		}
 
-		tail = head;
-		while (tail->next != NULL) tail = tail->next;
-
-		tail->next = new playlist;
-		if (tail->next == NULL) {
-			cerr << endl << "Fatal: Can't reserve memory" << endl;
+		if (List.Append(track, time2texts(atol(time.c_str()))) == false) {
+			cerr << "Can't reserve memory!" << endl;
+			input.close();
 			exit(1);
 		}
-		tail->next->track = track;
-		tail->next->time  = time2texts(atol(time.c_str()));
 
 		if (time.size() != 0)
 			totaltime += atol(time.c_str());
@@ -245,10 +308,9 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	print_header();
+	List.PrintHeader();
 
 	cout << "<p>\n";
-
 	cout << totaltracks << " tracks in playlist, average track length: ";
 	cout << time2texts(totaltime / (totaltracks - unknownlength));
 	cout << "<br />" << endl;
@@ -262,20 +324,8 @@ int main(int argc, char *argv[])
 	cout << "Playlist length: " << time2textl(totaltime) << endl;
 	cout << "</p>\n";
 
-	tail = head;
-	tail = tail->next;	// skip dummy
-
-	for (long i=1; i; i++) {
-		cout << i << ". " << tail->track;
-		if (time.size() != 0)
-			cout << " (" << tail->time << ")";
-		cout << "<br />" << endl;
-
-		if (tail->next == NULL) break;
-		tail = tail->next;
-	}
-
-	print_footer();
+	List.Output();
+	List.PrintFooter();
 
 	return (0);
 }
