@@ -1,25 +1,28 @@
-# $Id: dictionary.tcl,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $
+# $Id: dictionary.tcl,v 1.2 2003-06-22 12:20:51 peter Exp $
 
-# dictionary.tcl / dictionary script for an eggdrop
-# version 0.8.3 / 24/08/2002 / by Peter Postma <peter@webdeveloping.nl>    
+# Dictionary script for an eggdrop
+# version 0.8.4, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>    
 #
-# changes from 0.8 - 0.8.1: (12/08/2002)
-#   - problem with brackets fixed
-#   - underline option added to suffix
-#   - some code clean up
-#
-# changes from 0.8.1 - 0.8.2: (18/08/2002)
-#   - shared database option added
-#
-# changes from 0.8.2 - 0.8.3: (24/08/2002)
-#   - code optimized
+# Changelog:
+#  0.8.4: (??/??/????)
+#   - style changes.
+#  0.8.3: (24/08/2002)
+#   - code optimized.
+#  0.8.2: (18/08/2002)
+#   - shared database option added.
+#  0.8.1: (12/08/2002)
+#   - problem with brackets fixed.
+#   - underline option added to suffix.
+#   - some code clean up.
+#  0.8:
+#   - first version.
 #
 # With this script, your users can create their own dictionary. 
 # They can add words and can let explain them. 
 # Users with a special flag (configurable) can delete words.
 # 
 # To add words use:      !define or !learn
-# To explain a word use: !explain or !what
+# To explain a word use: !explain or !what or ??
 # To delete a word use:  !delword
 # To delete the whole dictionary in a channel use: !deldict
 #
@@ -60,7 +63,7 @@ set dict_shared_db 1
 
 ### Begin TCL code (DO NOT CHANGE SOMETHING AFTER THIS LINE)
 
-set dictversion "0.8.3"
+set dictversion "0.8.4"
 
 bind pub $learn_flag   "!learn"   pub:dict_learn
 bind pub $learn_flag   "!define"  pub:dict_learn
@@ -217,4 +220,4 @@ proc check_dict_file {dbfile} {
   }
 }
 
-putlog "Dictionary version $dictversion: LOADED!"
+putlog "Dictionary version $dictversion loaded!"
