@@ -1,7 +1,7 @@
-# $Id: fok.tcl,v 1.29 2003-08-07 18:09:33 peter Exp $
+# $Id: fok.tcl,v 1.30 2003-08-09 15:10:56 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
-# version 2.0, 07/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -191,7 +191,7 @@ proc fok:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[Fok!\] Problem: $msg"
     return -1
   }
@@ -208,10 +208,15 @@ proc fok:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[Fok!\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists fokdata]} { unset fokdata }
 
   set count 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     regexp "<id>(.*)</id>" $line trash fokdata(id,$count)
     regexp "<titel>(.*)</titel>" $line trash fokdata(titel,$count)
@@ -223,7 +228,7 @@ proc fok:getdata {} {
   set fok(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count line trash }
+  catch { unset url page msg data count line trash }
 
   return 0
 }
@@ -284,7 +289,7 @@ proc fok:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc fok:update {} {
@@ -306,30 +311,31 @@ proc fok:update {} {
 
     if {$fokdata(ts,0) > $fok(lastitem)} {
       if {$fok(log)} { putlog "\[Fok!\] There's news!" }
+      if {[regexp {^\*$} $fok(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $fok(autonewschan)
+      }
       for {set i 0} {$i < $fok(automax)} {incr i} {
         if {![info exists fokdata(ts,$i)]} { break }
         if {$fokdata(ts,$i) == $fok(lastitem)} { break }
-        if {[regexp {^\*$} $fok(autonewschan)]} {
-          foreach chan [split [channels]] { fok:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $fok(autonewschan)] { fok:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { fok:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$fok(log)} { putlog "\[Fok!\] No news." } 
+      if {$fok(log)} { putlog "\[Fok!\] No news." }
     }
 
     set fok(lastitem) $fokdata(ts,0)
   }
 
-  if {$fok(updates) < 5} { 
+  if {$fok(updates) < 5} {
     putlog "\[Fok!\] Warning: the \$fok(updates) setting is too low! Defaulting to 5 minutes..."
     timer 5 fok:update
   } else {
     timer $fok(updates) fok:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

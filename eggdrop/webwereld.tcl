@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.16 2003-08-07 18:09:33 peter Exp $
+# $Id: webwereld.tcl,v 1.17 2003-08-09 15:10:57 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 07/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -149,7 +149,7 @@ proc webw:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[WebWereld\] Problem: $msg"
     return -1
   }
@@ -166,11 +166,16 @@ proc webw:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[WebWereld\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists webwdata]} { unset webwdata }
 
   set count 0
   set item 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
@@ -184,7 +189,7 @@ proc webw:getdata {} {
   set webw(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count item line trash }
+  catch { unset url page msg data count item line trash }
 
   return 0
 }
@@ -244,7 +249,7 @@ proc webw:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc webw:update {} {
@@ -266,17 +271,19 @@ proc webw:update {} {
 
     if {$webwdata(link,0) != $webw(lastitem)} {
       if {$webw(log)} { putlog "\[WebWereld\] There's news!" }
+      if {[regexp {^\*$} $webw(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $webw(autonewschan)
+      }
       for {set i 0} {$i < $webw(automax)} {incr i} {
         if {![info exists webwdata(link,$i)]} { break }
         if {$webwdata(link,$i) == $webw(lastitem)} { break }
-        if {[regexp {^\*$} $webw(autonewschan)]} {
-          foreach chan [split [channels]] { webw:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $webw(autonewschan)] { webw:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest)] { webw:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$webw(log)} { putlog "\[WebWereld\] No news." } 
+      if {$webw(log)} { putlog "\[WebWereld\] No news." }
     }
 
     set webw(lastitem) $webwdata(link,0)
@@ -289,7 +296,6 @@ proc webw:update {} {
     timer $webw(updates) webw:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

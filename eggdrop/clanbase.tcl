@@ -1,7 +1,7 @@
-# $Id: clanbase.tcl,v 1.28 2003-08-07 18:09:33 peter Exp $
+# $Id: clanbase.tcl,v 1.29 2003-08-09 15:10:56 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
-# version 1.4, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -159,7 +159,7 @@ proc cb:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 30000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 30000] } msg]} {
     putlog "\[Clanbase\] Problem: $msg"
     return -1
   }
@@ -176,11 +176,16 @@ proc cb:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[Clanbase\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists cbdata]} { unset cbdata }
 
   set count 0
   set item 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
@@ -193,7 +198,7 @@ proc cb:getdata {} {
   set cb(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count item line trash}
+  catch { unset url page msg data count item line trash}
 
   return 0
 }
@@ -252,7 +257,7 @@ proc cb:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc cb:update {} {
@@ -274,17 +279,19 @@ proc cb:update {} {
 
     if {$cbdata(link,0) != $cb(lastitem)} {
       if {$cb(log)} { putlog "\[Clanbase\] There's news!" }
+      if {[regexp {^\*$} $cb(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $cb(autonewschan)
+      }
       for {set i 0} {$i < $cb(automax)} {incr i} {
         if {![info exists cbdata(link,$i)]} { break }
         if {$cbdata(link,$i) == $cb(lastitem)} { break }
-        if {[regexp {^\*$} $cb(autonewschan)]} {
-          foreach chan [split [channels]] { cb:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $cb(autonewschan)] { cb:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { cb:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$cb(log)} { putlog "\[Clanbase\] No news." } 
+      if {$cb(log)} { putlog "\[Clanbase\] No news." }
     }
 
     set cb(lastitem) $cbdata(link,0)
@@ -297,7 +304,6 @@ proc cb:update {} {
     timer $cb(updates) cb:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

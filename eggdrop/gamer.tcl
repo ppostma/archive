@@ -1,7 +1,7 @@
-# $Id: gamer.tcl,v 1.30 2003-08-07 18:09:33 peter Exp $
+# $Id: gamer.tcl,v 1.31 2003-08-09 15:10:57 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 2.0, 07/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -192,7 +192,7 @@ proc gamer:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[Gamer.nl\] Problem: $msg"
     return -1
   }
@@ -209,10 +209,15 @@ proc gamer:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[Gamer.nl\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists gamerdata]} { unset gamerdata }
 
   set count 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     regexp "<id>(.*)</id>" $line trash gamerdata(id,$count)
     regexp "<title>(.*)</title>" $line trash gamerdata(titel,$count)
@@ -225,7 +230,7 @@ proc gamer:getdata {} {
   set gamer(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count line trash }
+  catch { unset url page msg data count line trash }
 
   return 0
 }
@@ -287,7 +292,7 @@ proc gamer:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc gamer:update {} {
@@ -309,17 +314,19 @@ proc gamer:update {} {
 
     if {$gamerdata(ts,0) > $gamer(lastitem)} {
       if {$gamer(log)} { putlog "\[Gamer.nl\] There's news!" }
+      if {[regexp {^\*$} $gamer(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $gamer(autonewschan)
+      }
       for {set i 0} {$i < $gamer(automax)} {incr i} {
         if {![info exists gamerdata(ts,$i)]} { break }
         if {$gamerdata(ts,$i) == $gamer(lastitem)} { break }
-        if {[regexp {^\*$} $gamer(autonewschan)]} {
-          foreach chan [split [channels]] { gamer:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $gamer(autonewschan)] { gamer:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { gamer:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$gamer(log)} { putlog "\[Gamer.nl\] No news." } 
+      if {$gamer(log)} { putlog "\[Gamer.nl\] No news." }
     }
 
     set gamer(lastitem) $gamerdata(ts,0)
@@ -332,7 +339,6 @@ proc gamer:update {} {
     timer $gamer(updates) gamer:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

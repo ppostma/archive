@@ -1,7 +1,7 @@
-# $Id: tweakers.tcl,v 1.31 2003-08-07 18:09:33 peter Exp $
+# $Id: tweakers.tcl,v 1.32 2003-08-09 15:10:57 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
-# version 2.0, 07/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -195,7 +195,7 @@ proc tnet:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[T.Net\] Problem: $msg"
     return -1
   }
@@ -212,10 +212,15 @@ proc tnet:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[T.Net\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists tnetdata]} { unset tnetdata }
 
   set count 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     regexp "<id>(.*)</id>" $line trash tnetdata(id,$count)
     regexp "<titel>(.*)</titel>" $line trash tnetdata(titel,$count)
@@ -231,7 +236,7 @@ proc tnet:getdata {} {
   set tnet(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count line trash }
+  catch { unset url page msg data count line trash }
 
   return 0
 }
@@ -297,7 +302,7 @@ proc tnet:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc tnet:update {} {
@@ -319,17 +324,19 @@ proc tnet:update {} {
 
     if {$tnetdata(ts,0) > $tnet(lastitem)} {
       if {$tnet(log)} { putlog "\[T.Net\] There's news!" }
+      if {[regexp {^\*$} $tnet(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $tnet(autonewschan)
+      }
       for {set i 0} {$i < $tnet(automax)} {incr i} {
         if {![info exists tnetdata(ts,$i)]} { break }
         if {$tnetdata(ts,$i) == $tnet(lastitem)} { break }
-        if {[regexp {^\*$} $tnet(autonewschan)]} {
-          foreach chan [split [channels]] { tnet:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $tnet(autonewschan)] { tnet:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { tnet:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$tnet(log)} { putlog "\[T.Net\] No news." } 
+      if {$tnet(log)} { putlog "\[T.Net\] No news." }
     }
 
     set tnet(lastitem) $tnetdata(ts,0)
@@ -342,7 +349,6 @@ proc tnet:update {} {
     timer $tnet(updates) tnet:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

@@ -1,7 +1,7 @@
-# $Id: bsdforums.tcl,v 1.18 2003-08-07 18:09:33 peter Exp $
+# $Id: bsdforums.tcl,v 1.19 2003-08-09 15:10:56 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
-# version 1.2, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -153,7 +153,7 @@ proc bsdforums:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[BSDForums\] Problem: $msg"
     return -1
   }
@@ -170,11 +170,16 @@ proc bsdforums:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[BSDForums\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists bsdforumsdata]} { unset bsdforumsdata }
 
   set count 0
   set item 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item .+>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
@@ -187,7 +192,7 @@ proc bsdforums:getdata {} {
   set bsdforums(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count item line trash }
+  catch { unset url page msg data count item line trash }
 
   return 0
 }
@@ -246,7 +251,7 @@ proc bsdforums:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc bsdforums:update {} {
@@ -268,30 +273,31 @@ proc bsdforums:update {} {
 
     if {$bsdforumsdata(link,0) != $bsdforums(lastitem)} {
       if {$bsdforums(log)} { putlog "\[BSDForums\] There's news!" }
+      if {[regexp {^\*$} $bsdforums(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $bsdforums(autonewschan)
+      }
       for {set i 0} {$i < $bsdforums(automax)} {incr i} {
         if {![info exists bsdforumsdata(link,$i)]} { break }
         if {$bsdforumsdata(link,$i) == $bsdforums(lastitem)} { break }
-        if {[regexp {^\*$} $bsdforums(autonewschan)]} {
-          foreach chan [split [channels]] { bsdforums:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $bsdforums(autonewschan)] { bsdforums:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { bsdforums:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$bsdforums(log)} { putlog "\[BSDForums\] No news." } 
+      if {$bsdforums(log)} { putlog "\[BSDForums\] No news." }
     }
 
     set bsdforums(lastitem) $bsdforumsdata(link,0)
   }
 
-  if {$bsdforums(updates) < 120} { 
+  if {$bsdforums(updates) < 120} {
     putlog "\[BSDForums\] Warning: the \$bsdforums(updates) setting is too low! Defaulting to 120 minutes..."
     timer 120 bsdforums:update
   } else {
     timer $bsdforums(updates) bsdforums:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

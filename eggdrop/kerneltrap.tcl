@@ -1,7 +1,7 @@
-# $Id: kerneltrap.tcl,v 1.27 2003-08-09 12:45:22 peter Exp $
+# $Id: kerneltrap.tcl,v 1.28 2003-08-09 15:10:57 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
-# version 1.4, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -49,7 +49,7 @@
 set kerneltrap(proxy) ""
 
 # the triggers: [seperate with spaces]
-set kerneltrap(triggers) "!kerneltrap"
+set kerneltrap(triggers) "!kerneltrap !kt"
 
 # flags needed to use the trigger [default=everyone]
 set kerneltrap(flags) "-|-"
@@ -159,7 +159,7 @@ proc kerneltrap:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[KernelTrap\] Problem: $msg"
     return -1
   }
@@ -176,11 +176,16 @@ proc kerneltrap:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[KernelTrap\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists kerneltrapdata]} { unset kerneltrapdata }
 
   set count 0
   set item 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
@@ -193,7 +198,7 @@ proc kerneltrap:getdata {} {
   set kerneltrap(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count item line trash }
+  catch { unset url page msg data count item line trash }
 
   return 0
 }
@@ -252,7 +257,7 @@ proc kerneltrap:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc kerneltrap:update {} {
@@ -274,17 +279,19 @@ proc kerneltrap:update {} {
 
     if {$kerneltrapdata(link,0) != $kerneltrap(lastitem)} {
       if {$kerneltrap(log)} { putlog "\[KernelTrap\] There's news!" }
+      if {[regexp {^\*$} $kerneltrap(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $kerneltrap(autonewschan)
+      }
       for {set i 0} {$i < $kerneltrap(automax)} {incr i} {
         if {![info exists kerneltrapdata(link,$i)]} { break }
         if {$kerneltrapdata(link,$i) == $kerneltrap(lastitem)} { break }
-        if {[regexp {^\*$} $kerneltrap(autonewschan)]} {
-          foreach chan [split [channels]] { kerneltrap:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $kerneltrap(autonewschan)] { kerneltrap:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { kerneltrap:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$kerneltrap(log)} { putlog "\[KernelTrap\] No news." } 
+      if {$kerneltrap(log)} { putlog "\[KernelTrap\] No news." }
     }
 
     set kerneltrap(lastitem) $kerneltrapdata(link,0)
@@ -297,7 +304,6 @@ proc kerneltrap:update {} {
     timer $kerneltrap(updates) kerneltrap:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

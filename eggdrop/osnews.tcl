@@ -1,7 +1,7 @@
-# $Id: osnews.tcl,v 1.26 2003-08-07 18:09:33 peter Exp $
+# $Id: osnews.tcl,v 1.27 2003-08-09 15:10:57 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
-# version 1.4, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -159,7 +159,7 @@ proc osnews:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[OSnews\] Problem: $msg"
     return -1
   }
@@ -176,11 +176,16 @@ proc osnews:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[OSnews\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists osnewsdata]} { unset osnewsdata }
 
   set count 0
   set item 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
@@ -193,7 +198,7 @@ proc osnews:getdata {} {
   set osnews(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count item line trash }
+  catch { unset url page msg data count item line trash }
 
   return 0
 }
@@ -252,7 +257,7 @@ proc osnews:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc osnews:update {} {
@@ -274,30 +279,31 @@ proc osnews:update {} {
 
     if {$osnewsdata(link,0) != $osnews(lastitem)} {
       if {$osnews(log)} { putlog "\[OSnews\] There's news!" }
+      if {[regexp {^\*$} $osnews(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $osnews(autonewschan)
+      }
       for {set i 0} {$i < $osnews(automax)} {incr i} {
         if {![info exists osnewsdata(link,$i)]} { break }
         if {$osnewsdata(link,$i) == $osnews(lastitem)} { break }
-        if {[regexp {^\*$} $osnews(autonewschan)]} {
-          foreach chan [split [channels]] { osnews:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $osnews(autonewschan)] { osnews:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { osnews:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$osnews(log)} { putlog "\[OSnews\] No news." } 
+      if {$osnews(log)} { putlog "\[OSnews\] No news." }
     }
 
     set osnews(lastitem) $osnewsdata(link,0)
   }
 
-  if {$osnews(updates) < 30} { 
+  if {$osnews(updates) < 30} {
     putlog "\[OSnews\] Warning: the \$osnews(updates) setting is too low! Defaulting to 30 minutes..."
     timer 30 osnews:update
   } else {
     timer $osnews(updates) osnews:update
   }
 
-  catch { unset i chan }
   return 0
 }
 

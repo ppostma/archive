@@ -1,7 +1,7 @@
-# $Id: slashdot.tcl,v 1.28 2003-08-07 18:09:33 peter Exp $
+# $Id: slashdot.tcl,v 1.29 2003-08-09 15:10:57 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -163,7 +163,7 @@ proc slashdot:getdata {} {
     catch { unset proxyhost proxyport }
   }
 
-  if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
+  if {[catch { set page [::http::geturl $url -timeout 15000] } msg]} {
     putlog "\[Slashdot\] Problem: $msg"
     return -1
   }
@@ -180,10 +180,15 @@ proc slashdot:getdata {} {
     return -1
   }
 
+  if {[catch { set data [::http::data $page] } msg]} {
+    putlog "\[Slashdot\] Problem: $msg"
+    return -1
+  }
+
   if {[info exists slashdotdata]} { unset slashdotdata }
 
   set count 0
-  foreach line [split [::http::data $page] \n] {
+  foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     regexp "<title>(.*)</title>" $line trash slashdotdata(title,$count)
     regexp "<url>(.*)</url>" $line trash slashdotdata(url,$count)
@@ -196,7 +201,7 @@ proc slashdot:getdata {} {
   set slashdot(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg count line trash }
+  catch { unset url page msg data count line trash }
 
   return 0
 }
@@ -260,7 +265,7 @@ proc slashdot:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  catch { unset item outchan }
+  catch { unset outchan }
 }
 
 proc slashdot:update {} {
@@ -282,17 +287,19 @@ proc slashdot:update {} {
 
     if {$slashdotdata(time,0) > $slashdot(lastitem)} {
       if {$slashdot(log)} { putlog "\[Slashdot\] There's news!" }
+      if {[regexp {^\*$} $slashdot(autonewschan)]} {
+        set dest [channels]
+      } else {
+        set dest $slashdot(autonewschan)
+      }
       for {set i 0} {$i < $slashdot(automax)} {incr i} {
         if {![info exists slashdotdata(time,$i)]} { break }
         if {$slashdotdata(time,$i) == $slashdot(lastitem)} { break }
-        if {[regexp {^\*$} $slashdot(autonewschan)]} {
-          foreach chan [split [channels]] { slashdot:put $chan $chan $i 1 }
-        } else {
-          foreach chan [split $slashdot(autonewschan)] { slashdot:put $chan $chan $i 1 }
-        }
+        foreach chan [split $dest] { slashdot:put $chan $chan $i 1 }
       }
+      catch { unset dest i chan }
     } else {
-      if {$slashdot(log)} { putlog "\[Slashdot\] No news." } 
+      if {$slashdot(log)} { putlog "\[Slashdot\] No news." }
     }
 
     set slashdot(lastitem) $slashdotdata(time,0)
@@ -305,7 +312,6 @@ proc slashdot:update {} {
     timer $slashdot(updates) slashdot:update
   }
 
-  catch { unset i chan }
   return 0
 }
 
