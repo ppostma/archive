@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.34 2003-11-04 16:11:43 peter Exp $
+ * $Id: ess.c,v 1.35 2003-11-05 16:00:28 peter Exp $
  */
 
 #include <sys/types.h>
@@ -32,10 +32,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION			"0.3.5-beta"
-#define HTTP_REQUEST		"HEAD / HTTP/1.0\r\n\r\n"
-#define CONNECT_TIMEOUT		3	/* seconds when connect will timeout */
-#define BANNER_TIMEOUT		1	/* seconds after last banner recv */
+#define VERSION		"0.3.5-beta"
+#define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
+#define CONNECT_TIMEOUT	3	/* seconds when connect will timeout */
+#define BANNER_TIMEOUT	1	/* seconds after last banner recv    */
+#define BANNER_SIZE	2048	/* max recv size for banner	     */
 
 size_t	 readln(int, char *, size_t);
 size_t	 readall(int);
@@ -213,7 +214,7 @@ main(int argc, char *argv[])
 			printf(" connection successful!\n");
 		if (ident_flag) {
 			len = sizeof(ss);
-			if (getsockname(ssock, (struct sockaddr *)&ss, &len) < 0) {
+			if (getsockname(ssock,(struct sockaddr *)&ss,&len) <0) {
 				perror("getsockname");
 				exit(255);
 			}
@@ -305,6 +306,7 @@ print_results:
 		if (!all_flag)
 			break;
 	}
+
 	close(ssock);
 	freeaddrinfo(res);
 
@@ -404,7 +406,7 @@ get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 char *
 get_serv(char *port)
 {
-	struct servent	*service;
+	struct servent	*serv;
 	static char	 buf[NI_MAXSERV];
 	unsigned int	 i;
 
@@ -412,17 +414,17 @@ get_serv(char *port)
 		if (isalpha((int)port[i]) != 0)
 			goto name;
 
-	service = getservbyport(htons(atoi(port)), "tcp");
-	if (service != NULL)
-		snprintf(buf, sizeof(buf), "%s (%s)", port, service->s_name);
+	serv = getservbyport(htons(atoi(port)), "tcp");
+	if (serv != NULL)
+		snprintf(buf, sizeof(buf), "%s (%s)", port, serv->s_name);
 	else
 		snprintf(buf, sizeof(buf), "%s", port);
 	return buf;
 
 name:
-	service = getservbyname(port, "tcp");
-	if (service != NULL)
-		snprintf(buf, sizeof(buf), "%u (%s)", ntohs(service->s_port), port);
+	serv = getservbyname(port, "tcp");
+	if (serv != NULL)
+		snprintf(buf, sizeof(buf), "%u (%s)", ntohs(serv->s_port),port);
 	else
 		snprintf(buf, sizeof(buf), "%s", port);
 	return buf;
@@ -431,10 +433,10 @@ name:
 void
 banner_scan(u_short port)
 {
-	static char	buf[2048];
-	struct timeval	tv;
-	int		count;
-	fd_set		read_fds;
+	struct timeval	 tv;
+	fd_set		 read_fds;
+	char		*buf;
+	int		 count;
 
 	tv.tv_sec = BANNER_TIMEOUT;
 	tv.tv_usec = 0;
@@ -442,20 +444,28 @@ banner_scan(u_short port)
 	FD_ZERO(&read_fds);
 	FD_SET(ssock, &read_fds);
 
+	buf = (char *)malloc(BANNER_SIZE);
+	if (buf == NULL)
+		return;
+
 	if (port == 80)
 		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
 
 	for (;;) {
 		select(ssock+1, &read_fds, NULL, NULL, &tv);
 		if (!FD_ISSET(ssock, &read_fds))
-			return;
+			goto cleanup;
 		count = recv(ssock, buf, sizeof(buf), 0);
 		if (count < 1)
-			return;
+			goto cleanup;
 		buf[count] = '\0';
 		printf("%s", buf);
 		fflush(stdout);
 	}
+
+cleanup:
+	free(buf);
+	return;
 }
 
 int
@@ -639,14 +649,16 @@ relay_scan(char *host, char *ip)
 		(void)readall(ssock);
 
 		/* Send MAIL FROM */
-		snprintf(request, sizeof(request), "MAIL FROM: %s\r\n", s[i].from);
+		snprintf(request, sizeof(request), "MAIL FROM: %s\r\n",
+		   s[i].from);
 		send(ssock, request, strlen(request), 0);
 		if (verbose_flag)
 			printf(">>> %s", request);
 		(void)readall(ssock);
 
 		/* Send RCPT TO */
-		snprintf(request, sizeof(request), "RCPT TO: %s\r\n", s[i].rcpt);
+		snprintf(request, sizeof(request), "RCPT TO: %s\r\n",
+		   s[i].rcpt);
 		send(ssock, request, strlen(request), 0);
 		if (verbose_flag)
 			printf(">>> %s", request);
@@ -682,7 +694,11 @@ usage(char *progname)
 "  -f      Anonymous FTP scan, checks if the server allows anonymous logins.\n"
 "  -i      Ident scan, queries ident/auth (port 113) and tries to get the\n"
 "          identity of the service we're connecting to.\n"
+#ifdef RESOLVE
 "  -n      Don't try to resolve addresses to names.\n"
+#else
+"  -n      Don't try to resolve names to addresses.\n"
+#endif
 "  -q      Be quiet. Don't output anything to stdout.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
 "          Use twice for an extensive open-relay test.\n"
@@ -699,7 +715,8 @@ fatal(int errornum)
 
 	switch (errornum) {
 	case EAI_AGAIN:
-		fprintf(stderr, "The name could not be resolved at this time.\n");
+		fprintf(stderr,
+		    "The name could not be resolved at this time.\n");
 		break;
 	case EAI_BADFLAGS:
 		fprintf(stderr, "The flags had an invalid value.\n");
@@ -708,13 +725,16 @@ fatal(int errornum)
 		fprintf(stderr, "A non-recoverable error occurred.\n");
 		break;
 	case EAI_FAMILY:
-		fprintf(stderr, "The address family was not recognized or the address length was invalid for the specified family.\n");
+		fprintf(stderr,
+		    "The address family was not recognized or the address "
+		    "length was invalid for the specified family.\n");
 		break;
 	case EAI_MEMORY:
 		fprintf(stderr, "There was a memory allocation failure.\n");
 		break;
 	case EAI_NONAME:
-		fprintf(stderr, "The name does not resolve for the supplied parameters.\n");
+		fprintf(stderr,
+		    "The name does not resolve for the supplied parameters.\n");
 		break;
 	case EAI_SERVICE:
 		fprintf(stderr, "Unknown service name.\n");
