@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.2 2003-05-18 15:41:07 peter Exp $
+# $Id: kerneltrap.tcl,v 1.3 2003-05-19 15:18:47 peter Exp $
 
 # kerneltrap.tcl / KernelTrap.org News Announce Script for an eggdrop
 # version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -157,6 +157,8 @@ proc kerneltrap:put {chan nick which method} {
   set outchan $kerneltrap(layout)
   regsub -all "%title" $outchan $kerneltrapdata(title,$which) outchan
   regsub -all "%link" $outchan $kerneltrapdata(link,$which) outchan
+  # strange bug:
+  regsub -all "%titleamp;" $outchan "\\\&" outchan
   regsub -all "&amp;" $outchan "\\\&" outchan
   regsub -all "%b"   $outchan "\002" outchan
   regsub -all "%u"   $outchan "\037" outchan

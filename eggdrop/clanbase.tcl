@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.2 2003-05-18 15:41:07 peter Exp $
+# $Id: clanbase.tcl,v 1.3 2003-05-19 15:18:47 peter Exp $
 
 # cb.tcl / Clanbase.com News Announce Script for an eggdrop
 # version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -157,9 +157,11 @@ proc cb:put {chan nick which method} {
   set outchan $cb(layout)
   regsub -all "%title" $outchan $cbdata(title,$which) outchan
   regsub -all "%link" $outchan $cbdata(link,$which) outchan
+  # strange bug:
+  regsub -all "%titleamp;" $outchan "\\\&" outchan
   regsub -all "&amp;" $outchan "\\\&" outchan
-  regsub -all "%b"   $outchan "\002" outchan
-  regsub -all "%u"   $outchan "\037" outchan
+  regsub -all "%b" $outchan "\002" outchan
+  regsub -all "%u" $outchan "\037" outchan
   switch -- $method {
     0 { putserv "PRIVMSG $nick :$outchan" } 
     1 { putserv "PRIVMSG $chan :$outchan" }
