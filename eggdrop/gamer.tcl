@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.3 2003-05-17 20:39:15 peter Exp $
+# $Id: gamer.tcl,v 1.4 2003-05-17 21:43:32 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -234,7 +234,7 @@ proc gamer:update {} {
     if {$gamerdata(ts,0) > $gamer_lastitem} {
       if {$gamer(log)} { putlog "\[Gamer.nl\] There's news!" }
       for {set i 0} {$i < $gamer(automax)} {incr i} {
-        if {$gamerdata(ts,0) == $gamer_lastitem} { break }
+        if {$gamerdata(ts,$i) == $gamer_lastitem} { break }
         foreach chan [split $gamer(autonewschan)] { gamer:put $chan $chan $i 1 }
         unset chan
       }

@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.3 2003-05-17 20:38:44 peter Exp $
+# $Id: fok.tcl,v 1.4 2003-05-17 21:43:32 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -231,7 +231,7 @@ proc fok:update {} {
     if {$fokdata(ts,0) > $fok_lastitem} {
       if {$fok(log)} { putlog "\[Fok!\] There's news!" }
       for {set i 0} {$i < $fok(automax)} {incr i} {
-        if {$fokdata(ts,0) == $fok_lastitem} { break }
+        if {$fokdata(ts,$i) == $fok_lastitem} { break }
         foreach chan [split $fok(autonewschan)] { fok:put $chan $chan $i 1 }
         unset chan
       }

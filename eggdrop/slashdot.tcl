@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.3 2003-05-17 20:35:23 peter Exp $
+# $Id: slashdot.tcl,v 1.4 2003-05-17 21:43:33 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.6 / 17/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -199,7 +199,7 @@ proc slashdot:update {} {
     if {$slashdotdata(time,0) > $slashdot_lastitem} {
       if {$slashdot(log)} { putlog "\[Slashdot\] There's news!" }
       for {set i 0} {$i < $slashdot(automax)} {incr i} {
-        if {$slashdotdata(time,0) == $slashdot_lastitem} { break }
+        if {$slashdotdata(time,$i) == $slashdot_lastitem} { break }
         foreach chan [split $slashdot(autonewschan)] { slashdot:put $chan $chan $i 1 }
         unset chan
       }
