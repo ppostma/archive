@@ -1,4 +1,4 @@
-/* $Id: scan.c,v 1.6 2003-06-22 12:39:10 peter Exp $ */
+/* $Id: scan.c,v 1.7 2003-07-04 01:48:36 peter Exp $ */
 
 /*
  * scan.c - very simple portscanner for IPv4 & IPv6
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 	signal(SIGALRM, timeout_handler);
 
 	/* Setup Address info */
-	bzero((char *)&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = (v6) ? AF_INET6 : AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	if ((error = getaddrinfo(argv[0], argv[1], &hints, &res)) != 0)
