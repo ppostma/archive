@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.11 2003-10-10 19:58:27 peter Exp $
+ * $Id: playlist.cc,v 1.12 2003-10-12 17:54:18 peter Exp $
  */
 
 #include <stdlib.h>
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 	}
 
 	getline(input, temp);
-	if (temp != "#EXTM3U") {
+	if (temp.find("#EXTM3U") == string::npos) {
 		cerr << "Not a m3u playlist file." << endl;
 		input.close();
 		exit(1);
@@ -257,11 +257,19 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		pos1 = temp.find("#EXTINF");
-		if (pos1 == string::npos)
+		// extended info?
+		if (temp.find("#EXTINF") == string::npos)
 			extinfo = false;
 		else
 			extinfo = true;
+
+		// remove \r and \n from the string
+		pos1 = temp.find("\r");
+		if (pos1 != string::npos)
+			temp.erase(pos1);
+		pos1 = temp.find("\n");
+		if (pos1 != string::npos)
+			temp.erase(pos1);
 
 		if (extinfo == true) {
 			pos1 = temp.find_first_of(":");
