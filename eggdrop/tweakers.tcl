@@ -1,10 +1,11 @@
-# $Id: tweakers.tcl,v 1.16 2003-07-01 01:29:00 peter Exp $
+# $Id: tweakers.tcl,v 1.17 2003-07-01 02:41:58 peter Exp $
 
 # Tweakers.net Nieuws script voor een eggdrop
 # version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.9: (??/??/????) [changes]
+#  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
 #  - style changes.
@@ -133,10 +134,23 @@ set tnet(log) 1
 
 ### Begin TCL code ###
 
+package require http
+
 set tnet(version) "1.9"
 
-package require Tcl 8.2
-package require http
+if {[info tclversion] < 8.2} {
+  putlog "\[T.Net\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.2 nodig en u heeft TCL versie [info tclversion]."
+  return 1
+}
+
+if {![info exists alltools_loaded]} {
+  putlog "\[T.Net\] Kan [file tail [info script]] niet laden: Zorg ervoor dat alltools.tcl in uw eggdrop configuratie wordt geladen!"
+  return 1
+}
+
+set whichtimer [timerexists "tnet:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+catch { unset whichtimer }
 
 for {set i 0} {$i < [llength $tnet(triggers)]} {incr i} {
   bind pub $tnet(flags) [lindex $tnet(triggers) $i] tnet:pub
@@ -326,10 +340,6 @@ proc tnet:auton {nick uhost hand chan text} {
     putserv "NOTICE $nick :Mijn tweakers.net nieuws aankondiger staat al aan."
   }
 }
-
-set whichtimer [timerexists "tnet:update"]
-if {$whichtimer != ""} { killtimer $whichtimer }
-catch { unset whichtimer }
 
 if {$tnet(autonews) == 1} { tnet:update }
 

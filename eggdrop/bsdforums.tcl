@@ -1,10 +1,11 @@
-# $Id: bsdforums.tcl,v 1.4 2003-07-01 01:50:30 peter Exp $
+# $Id: bsdforums.tcl,v 1.5 2003-07-01 02:41:58 peter Exp $
 
 # BSDForums.org News Announce Script for an eggdrop
 # version 1.1, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
+#  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
 #  - added url for latest version. 
 # 1.0: (20/06/2003) [first version]
@@ -90,10 +91,23 @@ set bsdforums(log) 1
 
 ### Begin TCL code ###
 
+package require http
+
 set bsdforums(version) "1.1"
 
-package require Tcl 8.2
-package require http
+if {[info tclversion] < 8.2} {
+  putlog "\[BSDForums\] Cannot load [file tail [info script]]: You need at least TCL version 8.2 and you have TCL version [info tclversion]."
+  return 1
+}
+
+if {![info exists alltools_loaded]} {
+  putlog "\[BSDForums\] Cannot load [file tail [info script]]: Please load alltools.tcl in your eggdrop configuration!"
+  return 1
+}
+
+set whichtimer [timerexists "bsdforums:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+catch { unset whichtimer }
 
 for {set i 0} {$i < [llength $bsdforums(triggers)]} {incr i} {
   bind pub $bsdforums(flags) [lindex $bsdforums(triggers) $i] bsdforums:pub
@@ -274,10 +288,6 @@ proc bsdforums:auton {nick uhost hand chan text} {
     putserv "NOTICE $nick :My news announcer is already on!"
   }
 }
-
-set whichtimer [timerexists "bsdforums:update"]
-if {$whichtimer != ""} { killtimer $whichtimer }
-catch { unset whichtimer }
 
 if {$bsdforums(autonews) == 1} { bsdforums:update }
 

@@ -1,10 +1,11 @@
-# $Id: fok.tcl,v 1.14 2003-07-01 01:50:30 peter Exp $
+# $Id: fok.tcl,v 1.15 2003-07-01 02:41:58 peter Exp $
 
 # fok.nl Nieuws script voor een eggdrop
 # version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.9: (??/??/????) [changes]
+#  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
 #  - style changes.
@@ -129,10 +130,23 @@ set fok(log) 1
 
 ### Begin TCL code ###
 
+package require http
+
 set fok(version) "1.9"
 
-package require Tcl 8.2
-package require http
+if {[info tclversion] < 8.2} {
+  putlog "\[Fok!\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.2 nodig en u heeft TCL versie [info tclversion]."
+  return 1
+}
+
+if {![info exists alltools_loaded]} {
+  putlog "\[Fok!\] Kan [file tail [info script]] niet laden: Zorg ervoor dat alltools.tcl in uw eggdrop configuratie wordt geladen!"
+  return 1
+}
+
+set whichtimer [timerexists "fok:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+catch { unset whichtimer }
 
 for {set i 0} {$i < [llength $fok(triggers)]} {incr i} {
   bind pub $fok(flags) [lindex $fok(triggers) $i] fok:pub
@@ -313,10 +327,6 @@ proc fok:auton {nick uhost hand chan text} {
     putserv "NOTICE $nick :Mijn fok.nl nieuws aankondiger staat al aan."
   }
 }
-
-set whichtimer [timerexists "fok:update"]
-if {$whichtimer != ""} { killtimer $whichtimer }
-catch { unset whichtimer }
 
 if {$fok(autonews) == 1} { fok:update }
 

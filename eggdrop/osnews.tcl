@@ -1,10 +1,11 @@
-# $Id: osnews.tcl,v 1.12 2003-07-01 01:50:30 peter Exp $
+# $Id: osnews.tcl,v 1.13 2003-07-01 02:41:58 peter Exp $
 
 # OSnews.com News Announce Script for an eggdrop
 # version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.3: (??/??/????) [changes]
+#  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
 #  - added url for latest version.
 #  - trivial style changes.
@@ -97,10 +98,23 @@ set osnews(log) 1
 
 ### Begin TCL code ###
 
+package require http
+
 set osnews(version) "1.3"
 
-package require Tcl 8.2
-package require http
+if {[info tclversion] < 8.2} {
+  putlog "\[OSNews\] Cannot load [file tail [info script]]: You need at least TCL version 8.2 and you have TCL version [info tclversion]."
+  return 1
+}
+
+if {![info exists alltools_loaded]} {
+  putlog "\[OSNews\] Cannot load [file tail [info script]]: Please load alltools.tcl in your eggdrop configuration!"
+  return 1
+}
+
+set whichtimer [timerexists "osnews:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+catch { unset whichtimer }
 
 for {set i 0} {$i < [llength $osnews(triggers)]} {incr i} {
   bind pub $osnews(flags) [lindex $osnews(triggers) $i] osnews:pub
@@ -281,10 +295,6 @@ proc osnews:auton {nick uhost hand chan text} {
     putserv "NOTICE $nick :My news announcer is already on!"
   }
 }
-
-set whichtimer [timerexists "osnews:update"]
-if {$whichtimer != ""} { killtimer $whichtimer }
-catch { unset whichtimer }
 
 if {$osnews(autonews) == 1} { osnews:update }
 

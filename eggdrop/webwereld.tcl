@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.1 2003-07-01 01:31:22 peter Exp $
+# $Id: webwereld.tcl,v 1.2 2003-07-01 02:41:58 peter Exp $
 
 # WebWereld.nl Nieuws script voor een eggdrop
 # version 1.0, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -88,10 +88,23 @@ set webw(log) 1
 
 ### Begin TCL code ###
 
+package require http
+
 set webw(version) "1.0"
 
-package require Tcl 8.2
-package require http
+if {[info tclversion] < 8.2} {
+  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.2 nodig en u heeft TCL versie [info tclversion]."
+  return 1
+}
+
+if {![info exists alltools_loaded]} {
+  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: Zorg ervoor dat alltools.tcl in uw eggdrop configuratie wordt geladen!"
+  return 1
+}
+
+set whichtimer [timerexists "webw:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+catch { unset whichtimer }
 
 for {set i 0} {$i < [llength $webw(triggers)]} {incr i} {
   bind pub $webw(flags) [lindex $webw(triggers) $i] webw:pub
@@ -274,10 +287,6 @@ proc webw:auton {nick uhost hand chan text} {
     putserv "NOTICE $nick :Mijn webwereld.nl nieuws aankondiger staat al aan."
   }
 }
-
-set whichtimer [timerexists "webw:update"]
-if {$whichtimer != ""} { killtimer $whichtimer }
-catch { unset whichtimer }
 
 if {$webw(autonews) == 1} { webw:update }
 
