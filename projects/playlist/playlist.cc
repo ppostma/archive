@@ -13,10 +13,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.16 2003-10-13 03:10:09 peter Exp $
+ * $Id: playlist.cc,v 1.17 2003-10-14 15:10:03 peter Exp $
  */
-
-#include <stdlib.h>
 
 #include <fstream>
 #include <iostream>
@@ -34,7 +32,8 @@
 
 using namespace std;
 
-string itos(int i);
+long stol(string s);		// string to long
+string itos(int i);		// int to string
 string time2texts(long time);
 string time2textl(long time);
 
@@ -121,7 +120,7 @@ void Playlist::Output()
 	for (long i=1; i; i++) {
 		cout << i << ". " << tail->track;
 		if (tail->time.size() != 0)
-			cout << " (" << time2texts(atol(tail->time.c_str())) << ")";
+			cout << " (" << time2texts(stol(tail->time)) << ")";
 		cout << BR << endl;
 
 		if (tail->next == NULL) break;
@@ -158,6 +157,17 @@ void Playlist::PrintFooter()
 "</div>\n"
 "</body>\n"
 "</html>\n";
+}
+
+long stol(string s)
+{
+	stringstream	ss;
+	long		l;
+
+	ss << s;
+	ss >> l;
+
+	return l;
 }
 
 string itos(int i)
@@ -230,20 +240,20 @@ int main(int argc, char *argv[])
 
 	if (argc != 2) {
 		cerr << "Syntax: " << argv[0] << " <m3u file>" << endl;
-		exit(1);
+		return 1;
 	}
 
 	ifstream input(argv[1], ios::in);
 	if (!input) {
 		cerr << "Cannot open file '" << argv[1] << "'." << endl;
-		exit(1);
+		return 1;
 	}
 
 	getline(input, temp);
 	if (temp.find("#EXTM3U") == string::npos) {
 		cerr << "Not a m3u playlist file." << endl;
 		input.close();
-		exit(1);
+		return 1;
 	}
 
 	while (getline(input, temp)) {
@@ -269,7 +279,7 @@ int main(int argc, char *argv[])
 				continue;
 
 			time  = temp.substr(pos1+1, (pos2 - pos1) - 1);
-			if (atol(time.c_str()) < 0)   // Ignore negative values
+			if (stol(time) < 0)	// Ignore negative values
 				time.erase();
 
 			track = temp.substr(pos2+1, temp.length());
@@ -297,11 +307,11 @@ int main(int argc, char *argv[])
 		if (List.Append(track, time) == false) {
 			cerr << "Fatal: Can't reserve memory!" << endl;
 			input.close();
-			exit(1);
+			return 1;
 		}
 
 		if (time.size() != 0)
-			totaltime += atol(time.c_str());
+			totaltime += stol(time);
 		else
 			unknownlength++;
 
@@ -311,7 +321,7 @@ int main(int argc, char *argv[])
 
 	if (totaltracks < 1) {
 		cerr << "No tracks in the playlist." << endl;
-		exit(1);
+		return 1;
 	}
 
 	List.PrintHeader();
