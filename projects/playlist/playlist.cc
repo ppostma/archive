@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.13 2003-10-12 23:34:02 peter Exp $
+ * $Id: playlist.cc,v 1.14 2003-10-13 02:55:31 peter Exp $
  */
 
 #include <stdlib.h>
@@ -121,8 +121,7 @@ void Playlist::Output()
 	for (long i=1; i; i++) {
 		cout << i << ". " << tail->track;
 		if (tail->time.size() != 0)
-			if (atol(tail->time.c_str()) >= 0)
-				cout << " (" << time2texts(atol(tail->time.c_str())) << ")";
+			cout << " (" << time2texts(atol(tail->time.c_str())) << ")";
 		cout << BR << endl;
 
 		if (tail->next == NULL) break;
