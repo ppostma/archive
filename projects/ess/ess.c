@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.22 2003-08-22 08:59:37 peter Exp $
+ * $Id: ess.c,v 1.23 2003-08-22 16:29:07 peter Exp $
  */
 
 #include <sys/types.h>
@@ -150,10 +150,10 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 2 && port == NULL)
+	host = argv[0];
+	if (argc < 2 && (port == NULL || host == NULL))
 		usage(progname);
 
-	host = argv[0];
 	if (port == NULL || argv[1] != NULL)
 		port = argv[1];
 
