@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.44 2004-02-21 16:21:37 peter Exp $
+ * $Id: ess.c,v 1.45 2004-03-05 15:48:11 peter Exp $
  */
 
 #include <sys/types.h>
@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -31,9 +32,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BANNER_SIZE	2048	/* max receive size for banner */
-#define BANNER_TIMEOUT	1000	/* milliseconds after last banner recv */
-#define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts */
+#define BANNER_SIZE	2048L	/* max receive size for banner */
+#define BANNER_TIMEOUT	1000L	/* milliseconds after last banner recv */
+#define CONNECT_TIMEOUT	3000L	/* milliseconds when connect timeouts */
 
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define VERSION		"0.3.6-beta"
@@ -44,12 +45,13 @@ static size_t	   readall(int);
 static int	   readcode(int);
 static const char *get_af(int);
 static const char *get_addr(struct sockaddr *, socklen_t, int);
-static const char *get_serv(char *, int);
+static const char *get_serv(const char *, int);
 static void	   banner_scan(int, u_short);
-static int	   ident_scan(char *, int, u_short, u_short, char *, size_t);
-static int	   ftp_scan(int, char *);
-static int	   relay_scan(int, char *, char *, int);
-static void	   usage(char *);
+static int	   ident_scan(const char *, int, u_short, u_short,
+			char *, size_t);
+static int	   ftp_scan(int, const char *);
+static int	   relay_scan(int, const char *, const char *, int);
+static void	   usage(const char *);
 static void	   fatal(int);
 
 static int verbose_flag = 0;
@@ -71,15 +73,15 @@ main(int argc, char *argv[])
 {
 	struct sockaddr_storage	ss;
 	struct addrinfo	*res, *ai, hints;
-	char		*progname;
-	char		*host = NULL;
-	char		*port = NULL;
+	const char	*host = NULL;
+	const char	*port = NULL;
+	const char	*progname;
 	char		 ip[NI_MAXHOST];
 	char		 name[NI_MAXHOST];
 	char		 portnr[NI_MAXSERV];
 	char		 service[NI_MAXSERV];
 	char		 result[128], owner[128];
-	int		 ch, err, ret = 70;
+	int		 ch, error, ret = 70;
 	int		 ssock = -1;
 	int		 all_flag = 0;
 	int		 ftp_flag = 0;
@@ -117,12 +119,9 @@ main(int argc, char *argv[])
 			resolve_flag = resolve_flag ? 0 : 1;
 			break;
 		case 'q':
-			if (verbose_flag) {
-				fprintf(stderr,
-				    "Options -v (verbose) and -q (quiet) "
-				    "cannot be used together!\n");
-				exit(65);
-			}
+			if (verbose_flag)
+				errx(65, "Options -v (verbose) and -q (quiet) "
+					 "cannot be used together!");
 			quiet_flag = 1;
 			break;
 		case 'r':
@@ -130,18 +129,15 @@ main(int argc, char *argv[])
 			port = "25";
 			break;
 		case 'v':
-			if (quiet_flag) {
-				fprintf(stderr,
-				    "Options -v (verbose) and -q (quiet) "
-				    "cannot be used together!\n");
-				exit(65);
-			}
+			if (quiet_flag)
+				errx(65, "Options -v (verbose) and -q (quiet) "
+					 "cannot be used together!");
 			verbose_flag = 1;
 			break;
 		case 'V':
-			fprintf(stderr, "Easy Service Scan v%s by Peter Postma "
-					"<peter@webdeveloping.nl>\n", VERSION);
-			exit(99);
+			errx(99, "Easy Service Scan v%s by Peter Postma "
+				 "<peter@webdeveloping.nl>\n", VERSION);
+			/* NOTREACHED */
 		case 'h':
 		case '?':
 		default:
@@ -165,8 +161,8 @@ main(int argc, char *argv[])
 	hints.ai_family = IPv4or6;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((err = getaddrinfo(host, port, &hints, &res)))
-		fatal(err);
+	if ((error = getaddrinfo(host, port, &hints, &res)))
+		fatal(error);
 
 	if (res->ai_next != NULL && !all_flag && !quiet_flag)
 		printf("Resolved to multiple addresses! "
@@ -214,13 +210,11 @@ main(int argc, char *argv[])
 			printf("connection successful!\n");
 		if (ident_flag) {
 			len = sizeof(ss);
-			if (getsockname(ssock,(struct sockaddr *)&ss,&len) <0) {
-				perror("getsockname");
-				exit(255);
-			}
-			if ((err = getnameinfo((struct sockaddr *)&ss, len,
+			if (getsockname(ssock,(struct sockaddr *)&ss, &len) < 0)
+				err(255, "getsockname");
+			if ((error = getnameinfo((struct sockaddr *)&ss, len,
 			    NULL, 0, service, sizeof(service), NI_NUMERICSERV)))
-				fatal(err);
+				fatal(error);
 			localport = atoi(service);
 			remoteport = atoi(get_serv(port, 0));
 			strncpy(ip, get_addr(ai->ai_addr, ai->ai_addrlen, 0),
@@ -332,18 +326,15 @@ static int
 tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 {
 	struct timeval tv;
-	int flags, val, optlen;
-	int ret = 0;
+	socklen_t optlen;
+	int flags, val, ret = 0;
 	fd_set fds;
 
-	if ((flags = fcntl(sock, F_GETFL, 0)) < 0) {
-		perror("fcntl(F_GETFL)");
-		exit(255);
-	}
-	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
-		perror("fcntl(F_SETFL)");
-		exit(255);
-	}
+	if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
+		err(255, "fcntl(F_GETFL)");
+	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+		err(255, "fcntl(F_SETFL)");
+
 	if (connect(sock, addr, len) < 0) {
 		if (errno == EINPROGRESS) {
 			tv.tv_sec = timeout / 1000;
@@ -353,10 +344,8 @@ tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 			if (select(sock + 1, NULL, &fds, NULL, &tv) > 0) {
 				optlen = sizeof(int);
 				if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
-				    (void *)&val, &optlen) < 0) {
-					perror("getsockopt");
-					exit(255);
-				}
+				    (void *)&val, &optlen) < 0)
+					err(255, "getsockopt");
 				if (val)
 					ret = 1;
 			} else
@@ -364,10 +353,9 @@ tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 		} else
 			ret = 1;
 	}
-	if (fcntl(sock, F_SETFL, flags) < 0) {
-		perror("fcntl(F_SETFL)");
-		exit(255);
-	}
+	if (fcntl(sock, F_SETFL, flags) < 0)
+		err(255, "fcntl(F_SETFL)");
+
 	return ret;
 }
 
@@ -402,9 +390,9 @@ readall(int fd)
 			count += b;
 		if (verbose_flag)
 			printf("<<< %s", response);
-	} while (isdigit((int)response[0]) &&
-		 isdigit((int)response[1]) &&
-		 isdigit((int)response[2]) &&
+	} while (isdigit((unsigned char)response[0]) &&
+		 isdigit((unsigned char)response[1]) &&
+		 isdigit((unsigned char)response[2]) &&
 		 response[3] == '-');
 
 	return count;
@@ -422,9 +410,9 @@ readcode(int fd)
 		(void)readln(fd, response, sizeof(response));
 		if (verbose_flag)
 			printf("<<< %s", response);
-		if (isdigit((int)response[0]) &&
-		    isdigit((int)response[1]) &&
-		    isdigit((int)response[2]))
+		if (isdigit((unsigned char)response[0]) &&
+		    isdigit((unsigned char)response[1]) &&
+		    isdigit((unsigned char)response[2]))
 			strncpy(code, response, 3);
 	} while (response[3] == '-');
 
@@ -463,14 +451,14 @@ get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 }
 
 static const char *
-get_serv(char *port, int resolve)
+get_serv(const char *port, int resolve)
 {
 	struct servent	*serv;
 	static char	 buf[NI_MAXSERV];
 	unsigned int	 i;
 
 	for (i = 0; i < (strlen(port)); i++)
-		if (isalpha((int)port[i]) != 0)
+		if (isalpha((unsigned char)port[i]) != 0)
 			goto name;
 
 	serv = getservbyport(htons(atoi(port)), "tcp");
@@ -496,7 +484,7 @@ banner_scan(int sock, u_short port)
 	fd_set		 read_fds;
 	char		*buf, *save;
 	int		 count;
-	char		 ch;
+	unsigned char	 ch;
 
 	tv.tv_sec = BANNER_TIMEOUT / 1000;
 	tv.tv_usec = BANNER_TIMEOUT % 1000;
@@ -504,19 +492,17 @@ banner_scan(int sock, u_short port)
 	FD_ZERO(&read_fds);
 	FD_SET(sock, &read_fds);
 
-	if ((buf = (char *)malloc(BANNER_SIZE)) == NULL) {
-		perror("malloc");
-		exit(255);
-	}
+	if ((buf = (char *)malloc(BANNER_SIZE)) == NULL)
+		err(255, "malloc");
 
 	if (port == 80)
-		send(sock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
+		send(sock, HTTP_REQUEST, strlen(HTTP_REQUEST), 0);
 
 	for (;;) {
-		select(sock+1, &read_fds, NULL, NULL, &tv);
+		select(sock + 1, &read_fds, NULL, NULL, &tv);
 		if (!FD_ISSET(sock, &read_fds))
 			break;
-		if ((count = recv(sock, buf, BANNER_SIZE, 0)) < 1)
+		if ((count = recv(sock, buf, BANNER_SIZE - 1, 0)) < 1)
 			break;
 		buf[count] = '\0';
 		save = buf;
@@ -529,10 +515,10 @@ banner_scan(int sock, u_short port)
 				printf("\\t");
 			else if (ch == '\\')
 				printf("\\\\");
-			else if (isprint((int)ch))
+			else if (isprint(ch))
 				printf("%c", ch);
 			else
-				printf("\\%03d", (int)ch);
+				printf("\\%03d", ch);
 		}
 		fflush(stdout);
 	}
@@ -542,20 +528,20 @@ banner_scan(int sock, u_short port)
 }
 
 static int
-ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
+ident_scan(const char *ip, int ai_family, u_short remoteport, u_short localport,
     char *owner, size_t len)
 {
 	struct addrinfo	 hints, *res;
 	char		*temp, *p;
 	char		 request[16], response[1024];
-	int		 isock, err, bytes;
+	int		 isock, error, bytes;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = ai_family;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((err = getaddrinfo(ip, "113", &hints, &res)))
-		fatal(err);
+	if ((error = getaddrinfo(ip, "113", &hints, &res)))
+		fatal(error);
 
 	isock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (isock < 0)
@@ -568,7 +554,7 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 
 	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
 	send(isock, request, strlen(request), 0); 
-	if ((bytes = recv(isock, response, sizeof(response), 0)) < 0)
+	if ((bytes = recv(isock, response, sizeof(response) - 1, 0)) < 0)
 		return 255;
 	else if (bytes == 0)
 		return 1;
@@ -578,15 +564,12 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 
 	response[bytes] = '\0';
 
-	temp = strrchr(response, ':');
-	if (temp == NULL)
+	if ((temp = strrchr(response, ':')) == NULL)
 		return 1;
-	while (*(++temp) == ' ')
+	while (*++temp && isspace((unsigned char)*temp))
 		continue;
 
-	if ((p = strchr(temp, '\r')))
-		*p = '\0';
-	if ((p = strchr(temp, '\n')))
+	if ((p = strpbrk(temp, "\r\n")))
 		*p = '\0';
 
 	strncpy(owner, temp, len);
@@ -595,7 +578,7 @@ ident_scan(char *ip, int ai_family, u_short remoteport, u_short localport,
 }
 
 static int
-ftp_scan(int sock, char *name)
+ftp_scan(int sock, const char *name)
 {
 	char	request[1024];
 	int	code;
@@ -611,13 +594,13 @@ ftp_scan(int sock, char *name)
 
 	code = readcode(sock);
 
-	/* User not logged in reply */
-	if (code == 530)
-		return 1;
-
 	/* Problem? */
 	if (code < 0)
 		return 2;
+
+	/* User not logged in reply */
+	if (code == 530)
+		return 1;
 
 	/* Send PASS command */
 	strcpy(request, "PASS anonymous@pointless.nl\r\n");
@@ -639,7 +622,7 @@ ftp_scan(int sock, char *name)
 }
 
 static int
-relay_scan(int sock, char *host, char *ip, int flag)
+relay_scan(int sock, const char *host, const char *ip, int flag)
 {
 	char	 request[1024];
 	struct	 scans {
@@ -653,7 +636,7 @@ relay_scan(int sock, char *host, char *ip, int flag)
 		n = sizeof(s) / sizeof(struct scans);
 
 	/*
-	 * Setup info for the relay scan. Tests from
+	 * Setup info for the relay scan. The tests are from
 	 * http://www.reedmedia.net/misc/mail/open-relay.html
 	 */
 	strcpy (s[0].from,  "<test@pointless.nl>");
@@ -719,7 +702,7 @@ relay_scan(int sock, char *host, char *ip, int flag)
 		strcpy(request, "RSET\r\n");
 		send(sock, request, strlen(request), 0);
 		if (verbose_flag)
-	                printf(">>> %s", request);
+			printf(">>> %s", request);
 		(void)readall(sock);
 
 		/* Send MAIL FROM */
@@ -749,7 +732,7 @@ relay_scan(int sock, char *host, char *ip, int flag)
 }
 
 static void
-usage(char *progname)
+usage(const char *progname)
 {
 	fprintf(stderr,
 "Usage: %s [options] hostname port\n"
@@ -783,40 +766,39 @@ fatal(int errornum)
 	switch (errornum) {
 	case EAI_AGAIN:
 		fprintf(stderr,
-		    "The name could not be resolved at this time.\n");
+		    "The name could not be resolved at this time.");
 		break;
 	case EAI_BADFLAGS:
-		fprintf(stderr, "The flags had an invalid value.\n");
+		fprintf(stderr, "The flags had an invalid value.");
 		break;
 	case EAI_FAIL:
-		fprintf(stderr, "A non-recoverable error occurred.\n");
+		fprintf(stderr, "A non-recoverable error occurred.");
 		break;
 	case EAI_FAMILY:
 		fprintf(stderr,
 		    "The address family was not recognized or the address "
-		    "length was invalid for the specified family.\n");
+		    "length was invalid for the specified family.");
 		break;
 	case EAI_MEMORY:
-		fprintf(stderr, "There was a memory allocation failure.\n");
+		fprintf(stderr, "There was a memory allocation failure.");
 		break;
 	case EAI_NONAME:
 		fprintf(stderr,
-		    "The name does not resolve for the supplied parameters.\n");
+		    "The name does not resolve for the supplied parameters.");
 		break;
 	case EAI_SERVICE:
-		fprintf(stderr, "Unknown service name.\n");
+		fprintf(stderr, "Unknown service name.");
 		break;
 	case EAI_SOCKTYPE:
-		fprintf(stderr, "Unsupported socket type.\n");
+		fprintf(stderr, "Unsupported socket type.");
 		break;
 	case EAI_SYSTEM:
-		fprintf(stderr, "A system error occurred.\n");
-		break;
-	case EAI_NODATA:
-		fprintf(stderr, "No address associated with hostname.\n");
+		fprintf(stderr, "A system error occurred.");
 		break;
 	default:
-		fprintf(stderr, "%s\n", gai_strerror(errornum));
+		fprintf(stderr, "%s", gai_strerror(errornum));
 	}
+
+	fprintf(stderr, "\n");
 	exit(128);
 }
