@@ -1,4 +1,4 @@
-/* $Id: scan.c,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $ */
+/* $Id: scan.c,v 1.2 2003-03-21 02:07:10 peter Exp $ */
 
 /*
  * scan.c - very simple portscanner for IPv4
@@ -6,7 +6,7 @@
  * scans a port and returns the status of the scanned port.
  * syntax: scan <host/ip> <port no.>
  *
- * by Peter Postma <peterpostma@yahoo.com>
+ * by Peter Postma <peter@webdeveloping.nl>
  */
 
 #include <string.h>

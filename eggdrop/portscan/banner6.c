@@ -1,4 +1,4 @@
-/* $Id: banner6.c,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $ */
+/* $Id: banner6.c,v 1.2 2003-03-21 02:07:10 peter Exp $ */
 
 /*
  * banner6.c - banner grabber for IPv6
@@ -6,7 +6,7 @@
  * grabs the banner on an open port
  * syntax: banner6 <host/ip> <port no.>
  *
- * by Peter Postma <peterpostma@yahoo.com>
+ * by Peter Postma <peter@webdeveloping.nl>
  */
 
 #include <string.h>
