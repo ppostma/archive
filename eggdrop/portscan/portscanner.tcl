@@ -1,15 +1,12 @@
-# $Id: portscanner.tcl,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $
+# $Id: portscanner.tcl,v 1.2 2003-03-21 01:33:48 peter Exp $
 
 # portscanner.tcl / portscanner script for an eggdrop 
-# version 0.3.4 / 24/11/2002 / by Peter Postma <peterpostma@yahoo.com> 
+# version 0.3.5 / 21/03/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
 # dit script gebruikt scan.c (door Peter & Sliver) om een host te scannen.
-# extra optie is banner grabbing. deze gebruikt banner.c (door Pano) om 
+# extra optie is banner grabbing. deze gebruikt banner.c (door Peter) om 
 # de banner op een bepaalde poort te laten zien. 
-# 
-# compileer scan.c en banner.c alsvolgt:
-#  $ gcc -Wall -o banner banner.c
-#  $ gcc -Wall -o scan scan.c
+# typ 'make' om de scan programma's te compileren.
 #
 # pas de onderstaande variabelen aan voor het juiste path van de proggies. 
 # de variabele ports kan je ook aanpassen om het aantal poorten die gescant
@@ -18,17 +15,16 @@
 #
 # gebruik in IRC: '!portscan <host/ip> <port>'. gebruik de optie '-v' 
 # om de banners te grabben, dus: '!portscan -v <host/ip> <port>'.
-# een o-flag is nodig om dit te kunnen gebruiken.
 #
 # VB: !portscan localhost       (scant localhost)
 #     !portscan localhost 80    (scant poort 80 op localhost)
-#     !portscan -v localhost 22 (laat de banner zien op poort 22, localhost)
+#     !portscan -v localhost 22 (laat de banner zien op poort 22 van localhost)
 #
 # origineel idee en script: SilverSliver <silversliver2000@hotmail.com>
-# verbeteringen, bugfixes en banner grabbing: Peter <peterpostma@yahoo.com>
+# verbeteringen, bugfixes en banner grabbing: Peter <peter@webdeveloping.nl>
 
 
-# scan progs... lijkt me duidelijk 
+# volledige path naar de scan programma's
 set scanprog    "/usr/local/eggdrop/scripts/my/portscan/scan"
 set scanprog6   "/usr/local/eggdrop/scripts/my/portscan/scan6"
 set bannerprog  "/usr/local/eggdrop/scripts/my/portscan/banner"
@@ -38,7 +34,7 @@ set bannerprog6 "/usr/local/eggdrop/scripts/my/portscan/banner6"
 set scan_flags "f|f"
 
 # poorten die gescant worden
-set scan_ports "21 22 23 25 37 53 79 80 110 111 113 135 137 139 143 443 445 587 982 1080 1214 2049 3306 8080"
+set scan_ports "21 22 23 25 37 53 79 80 110 111 113 135 137 139 143 443 445 587 1080 1214 2049 3306 8080"
 
 # channels waar de bot niet reageerd op triggers (scheiden met spatie)
 set scan_nopub ""
@@ -51,7 +47,7 @@ set scan6_trigger "!portscan6"
 bind pub $scan_flags $scan_trigger pub:portscan
 bind pub $scan_flags $scan6_trigger pub:portscan
 
-set portscan_version "0.3.4"
+set portscan_version "0.3.5"
 
 proc pub:portscan {nick uhost hand chan text} {
   global lastbind scanprog scanprog6 bannerprog bannerprog6 scan_ports scan_nopub scan6_trigger
