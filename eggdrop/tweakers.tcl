@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.23 2003-07-09 15:39:48 peter Exp $
+# $Id: tweakers.tcl,v 1.24 2003-07-09 17:19:34 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -9,7 +9,7 @@
 #    de tnet(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
-#  - flood protectie wordt nu per kanaal bij gehouden (lijkt me nuttiger zo).
+#  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.

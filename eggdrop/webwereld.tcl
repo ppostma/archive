@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.8 2003-07-09 15:39:48 peter Exp $
+# $Id: webwereld.tcl,v 1.9 2003-07-09 17:19:34 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -9,7 +9,7 @@
 #    de webw(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
-#  - flood protectie wordt nu per kanaal bij gehouden (lijkt me nuttiger zo).
+#  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
 # 1.0: (04/07/2003)
 #  - eerste versie, gebaseerd op tweakers.tcl v1.9
 #
