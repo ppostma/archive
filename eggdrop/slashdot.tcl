@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.2 2003-05-17 20:24:53 peter Exp $
+# $Id: slashdot.tcl,v 1.3 2003-05-17 20:35:23 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.6 / 17/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -128,7 +128,7 @@ proc slashdot:getdata {} {
     regexp "<time>(.*?)</time>" $line trash slashdotdata(time,$count)
     regexp "<author>(.*?)</author>" $line trash slashdotdata(author,$count)
     regexp "<comments>(.*?)</comments>" $line trash slashdotdata(comments,$count)
-    if {[regexp "<section>(.*?)</section>" $line trash slashdotdata(sec,$count)]} { incr count }
+    if {[regexp "<section>(.*?)</section>" $line trash slashdotdata(section,$count)]} { incr count }
   }
   ::http::cleanup $page
 
