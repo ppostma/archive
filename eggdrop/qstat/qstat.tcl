@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.6 2003-07-04 13:49:09 peter Exp $
+# $Id: qstat.tcl,v 1.7 2003-07-08 21:31:33 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 04/07/2003 
 # 
@@ -176,16 +176,9 @@ proc qstat:pub {nick host hand chan arg} {
 
   # run the qstat program.
   if {$players == 1} { 
-    catch { set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat -Tp $qstat(path)/players.qstat -P" r] } err
+    set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat -Tp $qstat(path)/players.qstat -P" r]
   } else {
-    catch { set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat" r] } err
-  }
-
-  # error when we ran the program?
-  if {$err != ""} {
-    putlog "qstat.tcl error: $err"
-    putserv "NOTICE $nick :$err"
-    return 0
+    set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat" r]
   }
 
   # output the result.
