@@ -1,4 +1,4 @@
-# $Id: info.tcl,v 1.3 2004-02-01 14:44:11 peter Exp $
+# $Id: info.tcl,v 1.4 2004-02-01 18:53:50 peter Exp $
 
 # Info commands for the TclBot.
 # Requires the message.tcl module to be loaded.
@@ -68,7 +68,7 @@ proc pub:uptime {nick mask hand chan text} {
 proc pub:load {nick mask hand chan text} {
 	catch {exec uptime} load
 
-	regexp {users,\s(.*)$} $load all load
+	regexp {user.?,\s(.*)$} $load all load
 	ircsend "PRIVMSG $chan :$load"
 }
 
