@@ -1,7 +1,7 @@
-# $Id: portscanner.tcl,v 1.7 2003-06-24 15:29:01 peter Exp $
+# $Id: portscanner.tcl,v 1.8 2003-07-03 16:54:46 peter Exp $
 
 # Portscan script for an eggdrop 
-# version 0.4.1, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4.2, 03/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Use like this:
 #  !portscan localhost        (scans localhost)
@@ -15,40 +15,40 @@
 ### Configuration
 
 # Full path to the scan program
-set scanprog "/home/ai/scripts/my/portscan/scan"
+set scan(program) "/usr/home/peter/eggdrop/scripts/my/portscan/scan"
 
 # Flags needed to use the command
-set scan_flags "f|f"
+set scan(flags) "f|f"
 
 # Scan which ports?
-set scan_ports "21 22 23 25 37 53 79 80 110 111 113 135 137 139 143 443 445 587 1080 1214 2049 3306 8080"
+set scan(ports) "21 22 23 25 37 53 79 80 110 111 113 135 137 139 143 443 445 587 1080 1214 2049 3306 8080"
 
 # Channels where the command is disabled (seperate with spaces)
-set scan_nopub ""
+set scan(nopub) ""
 
 # The commands/triggers
-set scan_trigger "!portscan"
-set scan6_trigger "!portscan6"
+set scan(trigger) "!portscan"
+set scan(trigger6) "!portscan6"
 
 ### End Configuration
 
 
-bind pub $scan_flags $scan_trigger pub:portscan
-bind pub $scan_flags $scan6_trigger pub:portscan
+bind pub $scan(flags) $scan(trigger) pub:portscan
+bind pub $scan(flags) $scan(trigger6) pub:portscan
 
-set portscan_version "0.4.1"
+set scan(version) "0.4.2"
 
 proc pub:portscan {nick uhost hand chan text} {
-  global lastbind scanprog scan_ports scan_nopub scan6_trigger
+  global lastbind scan
 
-  if {[lsearch -exact $scan_nopub [string tolower $chan]] >= 0} { return 0 }
+  if {[lsearch -exact $scan(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {[string length [lindex $text 0]] == 0} {
-    putquick "NOTICE $nick :* Syntax: $lastbind \[-b\] <host/ip> \[port\]"
+    putquick "NOTICE $nick :* Syntax: $lastbind \[-b\] <host/ip> \[port/service\]"
     return 0
   }
 
-  if {[regexp \[^\[:alnum:\]\[:space:\]\.\:\-\] $text]} {
+  if {![regexp \[\[:alnum:\]\[:space:\]\.\:\-\] [join $text]]} {
     putquick "NOTICE $nick :* Error: Invalid characters!"
     return 0
   }
@@ -69,12 +69,12 @@ proc pub:portscan {nick uhost hand chan text} {
 
     putquick "PRIVMSG $chan :* start scanning $host"
 
-    for {set i 0} {$i < [llength $scan_ports]} {incr i} {
+    for {set i 0} {$i < [llength $scan(ports)]} {incr i} {
 
-      if {$lastbind == $scan6_trigger} {
-        catch {exec $scanprog -6 $host [lindex $scan_ports $i]} status
+      if {$lastbind == $scan(trigger6)} {
+        catch {exec $scan(program) -6 $host [lindex $scan(ports) $i]} status
       } else {
-        catch {exec $scanprog $host [lindex $scan_ports $i]} status
+        catch {exec $scan(program) $host [lindex $scan(ports) $i]} status
       }
 
       if {[regexp "^FAILED \[\(\](.*?)\[\)\]$" $status foo error]} {
@@ -90,20 +90,18 @@ proc pub:portscan {nick uhost hand chan text} {
         incr open
         putquick "PRIVMSG $chan :* $strport"
       } else {
-        putquick "PRIVMSG $chan :* oops... something went wrong.. :("
+        putquick "PRIVMSG $chan :* $status"
         return 0
       }
     }
 
-    putquick "PRIVMSG $chan :* scan finished! [llength $scan_ports] ports scanned. (open: $open, closed: $closed, stealth: $stealth)"
+    putquick "PRIVMSG $chan :* scan finished! [llength $scan(ports)] ports scanned. (open: $open, closed: $closed, stealth: $stealth)"
   } else {
 
-    if {$lastbind == $scan6_trigger} {
-#      putquick "PRIVMSG $chan :* start scanning \[$host\]:$port"
-      catch {exec $scanprog -6 $host $port} status
+    if {$lastbind == $scan(trigger6)} {
+      catch {exec $scan(program) -6 $host $port} status
     } else {
-#      putquick "PRIVMSG $chan :* start scanning $host:$port"   
-      catch {exec $scanprog $host $port} status
+      catch {exec $scan(program) $host $port} status
     }
 
     if {[regexp "^FAILED \[\(\](.*?)\[\)\]$" $status foo error]} {
@@ -117,10 +115,10 @@ proc pub:portscan {nick uhost hand chan text} {
       putquick "PRIVMSG $chan :* no response from port $strport"
     } elseif {[regexp "^OPEN \[\(\](.*?)\[\)\]$" $status foo strport]} {
       if {[lindex $text 0] == "-v" || [lindex $text 0] == "-b"} {
-        if {$lastbind == $scan6_trigger} {
-          set pf [open "| $scanprog -6b $host $port" r]
+        if {$lastbind == $scan(trigger6)} {
+          set pf [open "| $scan(program) -6 -b $host $port" r]
         } else {
-          set pf [open "| $scanprog -b $host $port" r]
+          set pf [open "| $scan(program) -b $host $port" r]
         }
         while {[gets $pf line] >= 0} {
           if {[regexp "^NOBANNER \[\(\](.*?)\[\)\]$" $line foo strport]} {
@@ -134,9 +132,10 @@ proc pub:portscan {nick uhost hand chan text} {
         putquick "PRIVMSG $chan :* port $strport is OPEN"
       }
     } else {
-      putquick "PRIVMSG $chan :* oops... something went wrong.. :("
+      putquick "PRIVMSG $chan :* $status"
+      return 0
     }
   }
 }
 
-putlog "Portscanner v$portscan_version: Loaded!"
+putlog "Portscanner v$scan(version) loaded!"
