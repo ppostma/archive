@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ess.c,v 1.53 2004-09-04 18:54:56 peter Exp $
+ * $Id: ess.c,v 1.54 2004-09-04 19:03:12 peter Exp $
  */
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define VERSION		"0.3.6"
 
-static int	   tconnect(int, struct sockaddr *, socklen_t, long);
+static int	   tconnect(int, struct sockaddr *, socklen_t, int);
 static size_t	   readln(int, char *, size_t);
 static size_t	   readall(int);
 static int	   readcode(int);
@@ -58,9 +58,9 @@ static const char *get_af(int);
 static const char *get_addr(struct sockaddr *, socklen_t, int);
 static const char *get_serv(const char *, int);
 static const char *get_myaddr(int, int);
-static void	   banner_scan(int, uint16_t, long);
+static void	   banner_scan(int, uint16_t, int);
 static int	   ident_scan(const char *, int, uint16_t, uint16_t,
-			char *, size_t, long);
+			char *, size_t, int);
 static int	   ftp_scan(int, const char *);
 static int	   relay_scan(int, const char *, const char *,
 			const char *, int);
@@ -104,8 +104,8 @@ main(int argc, char *argv[])
 	int			 quiet_flag = 0;
 	int			 relay_flag = 0;
 	int			 banner_flag = 0;
+	int			 timeout = 0;
 	uint16_t		 remoteport, localport;
-	long			 timeout = 0;
 	socklen_t		 len;
 
 	host = port = proxy_type = NULL;
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 			port = "25";
 			break;
 		case 't':
-			timeout = strtol(optarg, &p, 10);
+			timeout = (int)strtol(optarg, &p, 10);
 			if (optarg[0] == '\0' || *p == '\0')
 				errx(64, "Invalid timeout value '%s'", optarg);
 			break;
@@ -392,7 +392,7 @@ print_results:
  * returns 0: ok, 1: refused, 2: timeout
  */
 static int
-tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
+tconnect(int sock, struct sockaddr *addr, socklen_t len, int timeout)
 {
 	struct pollfd fds[1];
 	int flags, val, ret = 0;
@@ -433,7 +433,7 @@ readln(int fd, char *line, size_t len)
 	char	temp;
 
 	do {
-		if ((b = recv(fd, &temp, 1, 0)) < 0)
+		if ((b = recv(fd, &temp, sizeof(temp), 0)) < 0)
 			return b;
 		else if (b == 0)
 			break;
@@ -551,7 +551,7 @@ get_myaddr(int sock, int resolve)
 }
 
 static void
-banner_scan(int sock, uint16_t port, long timeout)
+banner_scan(int sock, uint16_t port, int timeout)
 {
 	struct pollfd	 fds[1];
 	char		*buf, *save;
@@ -598,12 +598,13 @@ banner_scan(int sock, uint16_t port, long timeout)
 
 static int
 ident_scan(const char *ip, int ai_family, uint16_t remoteport,
-    uint16_t localport, char *owner, size_t len, long timeout)
+    uint16_t localport, char *owner, size_t len, int timeout)
 {
 	struct addrinfo	 hints, *ai;
 	char		*temp, *p;
 	char		 buf[1024];
-	int		 isock, error, bytes;
+	ssize_t		 bytes;
+	int		 isock, error;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = ai_family;
@@ -853,7 +854,8 @@ socks_proxy_scan(int sock, const char *ip, uint16_t port)
 	unsigned char	buf[32];
 	struct in_addr	daddr;
 	uint16_t	dport;
-	int		len, i;
+	ssize_t		len;
+	int		i;
 
 	daddr.s_addr = inet_addr(ip);
 	dport = htons(port);
@@ -864,7 +866,7 @@ socks_proxy_scan(int sock, const char *ip, uint16_t port)
 	buf[1] = 0x01;	/* number of methods	     */
 	buf[2] = 0x00;	/* method: no authentication */
 
-	/* Send authenication method packet */
+	/* Send authentication method packet */
 	if (send(sock, buf, 3, 0) < 0)
 		err(1, "send");
 	if (verbose_flag)
@@ -952,7 +954,7 @@ usage(const char *progname)
 "  -6          Force the use of IPv6 only.\n"
 "  -a          When resolved to multiple addresses, scan them all.\n"
 "  -b          Grab the banner from an open port.\n"
-"  -f          Anon FTP scan, checks if the server allows anonymous logins.\n"
+"  -f          FTP scan, checks if the server allows anonymous logins.\n"
 "  -i          Ident scan, queries ident/auth (port 113) to get the\n"
 "              identity of the service we're connecting to.\n"
 #ifdef RESOLVE
