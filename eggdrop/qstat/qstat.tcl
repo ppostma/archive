@@ -1,6 +1,6 @@
-# $Id: qstat.tcl,v 1.3 2003-06-22 12:43:47 peter Exp $
+# $Id: qstat.tcl,v 1.4 2003-07-03 17:23:56 peter Exp $
 
-# Qstat script for an eggdrop, version 2.2, 22/06/2003 
+# Qstat script for the eggdrop, version 2.3, 03/07/2003 
 # 
 # This script will query gameservers using the qstat program to
 # display server status and players using public commands. 
@@ -26,6 +26,8 @@
 #  2.2 by Peter Postma <peter@webdeveloping.nl>
 #    - added BF, Gamespy, QW and UT2003.
 #    - added '-timeout 5' option in qstat exec
+#  2.3 by Peter Postma <peter@webdeveloping.nl>
+#    - trivial changes, make it more logical
 #
 # Installation steps:
 # 1) Easiest way of installing: put all Qstat related files (players.qstat, 
@@ -45,59 +47,67 @@
 # 8) Typ !qstat in the channel for a command list.
 # 9) Have fun :)
 #
-# Configuration settings:
 
-# Flags needed to use the commands
-set qstat_flag "-|-"
+### Configuration settings ###
 
 # Path to qstat folder containing qstat stuff/scripts and the qstat program
-set pathqstat "/home/ai/scripts/my/qstat"
+set qstat(path) "/home/ai/scripts/my/qstat"
 
-# Channels you _dont_ want the bot to reply to public triggers on 
-# (seperate with spaces):
-set nopub ""
+# Flags needed to use the commands
+set qstat(flags) "-|-"
 
-# End configuration settings
+# Channels where the bot doesn't respond to triggers [seperate with spaces]
+set qstat(nopub) ""
+
+# flood protection: seconds between use of the triggers
+# to disable: set it to 0
+set qstat(antiflood) 10
+
+# method to send the messages:
+# 0 = Private message
+# 1 = Public message
+# 2 = Private notice
+# 3 = Public notice
+set qstat(method) 1
+
+### End configuration settings ###
 
 
+### Begin TCL code ###
 
-################################################################
-# This is where the evil TCL code starts, read at your peril!  #
-################################################################
+set qstat(version) "2.3"
 
-set qversion "2.2"
+bind pub $qstat(flags) "!ut"  qstat:pub
+bind pub $qstat(flags) "!hl"  qstat:pub 
+bind pub $qstat(flags) "!cs"  qstat:pub 
+bind pub $qstat(flags) "!qw"  qstat:pub
+bind pub $qstat(flags) "!q1"  qstat:pub
+bind pub $qstat(flags) "!q2"  qstat:pub
+bind pub $qstat(flags) "!q3"  qstat:pub
+bind pub $qstat(flags) "!rcw" qstat:pub
+bind pub $qstat(flags) "!bf"  qstat:pub
+bind pub $qstat(flags) "!gs"  qstat:pub
+bind pub $qstat(flags) "!ut2k3"  qstat:pub
+bind pub $qstat(flags) "!ut2003" qstat:pub
 
-bind pub $qstat_flag "!ut"  pub:qstat
-bind pub $qstat_flag "!hl"  pub:qstat 
-bind pub $qstat_flag "!cs"  pub:qstat
-bind pub $qstat_flag "!qw"  pub:qstat
-bind pub $qstat_flag "!q1"  pub:qstat 
-bind pub $qstat_flag "!q2"  pub:qstat 
-bind pub $qstat_flag "!q3"  pub:qstat 
-bind pub $qstat_flag "!rcw" pub:qstat
-bind pub $qstat_flag "!bf"  pub:qstat
-bind pub $qstat_flag "!gs"  pub:qstat
-bind pub $qstat_flag "!ut2k3"  pub:qstat
-bind pub $qstat_flag "!ut2003" pub:qstat
+bind pub $qstat(flags) "!utp"  qstat:pub 
+bind pub $qstat(flags) "!hlp"  qstat:pub
+bind pub $qstat(flags) "!qwp"  qstat:pub
+bind pub $qstat(flags) "!q1p"  qstat:pub
+bind pub $qstat(flags) "!q3p"  qstat:pub
+bind pub $qstat(flags) "!q2p"  qstat:pub
+bind pub $qstat(flags) "!rcwp" qstat:pub
+bind pub $qstat(flags) "!bfp"  qstat:pub
+bind pub $qstat(flags) "!ut2k3p"  qstat:pub
+bind pub $qstat(flags) "!ut2003p" qstat:pub
 
-bind pub $qstat_flag "!utp"  pub:qstat
-bind pub $qstat_flag "!hlp"  pub:qstat
-bind pub $qstat_flag "!qwp"  pub:qstat
-bind pub $qstat_flag "!q1p"  pub:qstat
-bind pub $qstat_flag "!q3p"  pub:qstat
-bind pub $qstat_flag "!q2p"  pub:qstat
-bind pub $qstat_flag "!rcwp" pub:qstat
-bind pub $qstat_flag "!bfp"  pub:qstat
-bind pub $qstat_flag "!ut2k3p"  pub:qstat
-bind pub $qstat_flag "!ut2003p" pub:qstat
+bind pub $qstat(flags) "!qstat" qstat:help
 
-bind pub $qstat_flag "!qstat" pub:qstat_help
-
-proc pub:qstat_help {nick host hand chan arg} {
-  global pathqstat nopub
+proc qstat:help {nick host hand chan arg} {
+  global qstat
 
   # check if channel is allowed.
-  if {[lsearch -exact $nopub [string tolower $chan]] >= 0} {return 0}
+  if {[lsearch -exact $qstat(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   # output qstat commands / help.
   putserv "NOTICE $nick :Qstat commands:"
@@ -107,18 +117,18 @@ proc pub:qstat_help {nick host hand chan arg} {
   return 0
 }
 
-proc pub:qstat {nick host hand chan arg} {
-  global lastbind pathqstat nopub
+proc qstat:pub {nick host hand chan arg} {
+  global lastbind qstat
 
   # check if channel is allowed.
-  if {[lsearch -exact $nopub [string tolower $chan]] >= 0} {return 0}
+  if {[lsearch -exact $qstat(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  # only use one argument.
+  # only use one argument in the list.
   set arg [lindex $arg 0]
 
   # check for input.
   if {[string length [string trim $arg]] == 0 || [qstat:input_check $arg]} {
-    putquick "NOTICE $nick :Syntax: $lastbind <ip/host>"
+    putserv "NOTICE $nick :Syntax: $lastbind <ip/host>"
     return 0
   }
 
@@ -147,29 +157,44 @@ proc pub:qstat {nick host hand chan arg} {
     "!ut2k3p"  { set gametype "-ut2s"; set players 1 }
     "!ut2003p" { set gametype "-ut2s"; set players 1 }
     default {
-      putquick "NOTICE $nick :Unknown command."
+      putserv "NOTICE $nick :Unknown command."
       return 0
     }
   }
 
+  # flood protection
+  if {[info exists qstat(floodprot)]} {
+    set diff [expr [clock seconds] - $qstat(floodprot)]
+    if {$diff < $qstat(antiflood)} {
+      putserv "NOTICE $nick :Trigger has just been used! Please wait [expr $qstat(antiflood) - $diff] seconds..."
+      return 0
+    }
+  }
+  set qstat(floodprot) [clock seconds]
+
   # run the qstat program.
-  if {$players} { 
-    set stat [open "|$pathqstat/qstat -timeout 5 $gametype $arg -Ts $pathqstat/server.qstat -Tp $pathqstat/players.qstat -P" r]
+  if {$players == 1} { 
+    catch { set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat -Tp $qstat(path)/players.qstat -P" r] } err
   } else {
-    set stat [open "|$pathqstat/qstat -timeout 5 $gametype $arg -Ts $pathqstat/server.qstat" r]
+    catch { set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat" r] } err
+  }
+  if {$err != ""} {
+    putlog "qstat.tcl error: $err"
+    putserv "NOTICE $nick :$err"
+    return 0
   }
 
   # output the result.
-  qstat:results $chan $nick $stat
+  qstat:results $fd $chan $nick $qstat(method)
 
   # close fork, end program.
-  close $stat
+  close $fd
   return 0
 }
 
 # show results.
-proc qstat:results {chan nick pf} {
-  while {[gets $pf line] >= 0} { 
+proc qstat:results {fd chan nick method} {
+  while {[gets $fd line] >= 0} { 
     if {[string match "DOWN*" $line]} {
       putquick "NOTICE $nick :Connection refused while querying server."
       break
@@ -180,15 +205,21 @@ proc qstat:results {chan nick pf} {
       putquick "NOTICE $nick :Timeout while querying server."
       break
     }
-    putquick "PRIVMSG $chan :$line"  
+    switch -- $method {
+      0 { putserv "PRIVMSG $nick :$line" }
+      1 { putserv "PRIVMSG $chan :$line" }
+      2 { putserv "NOTICE $nick :$line" }
+      3 { putserv "NOTICE $chan :$line" }
+      default { putserv "PRIVMSG $chan :$line" }
+    }
   }
 }
 
-# check for valid chars
+# check for valid characters
 proc qstat:input_check {text} {
-  if {[regexp \[^\[:alnum:\]_\.\:\] $text]} { return 1 }
+  if {[regexp \[^\[:alnum:\]_\.\:\-\] $text]} { return 1 }
   if {[string match "0*" $text]} { return 1 }
   return 0
 }
 
-putlog "Qstat4Eggdrop version $qversion: Loaded!"
+putlog "Qstat4Eggdrop version $qstat(version): loaded."
