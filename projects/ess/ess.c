@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.28 2003-10-12 17:03:27 peter Exp $
+ * $Id: ess.c,v 1.29 2003-10-13 23:11:41 peter Exp $
  */
 
 #include <sys/types.h>
@@ -31,7 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.4"
+#define VERSION		"0.3.5-beta"
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
 #define TIMEOUT		3  /* seconds */
 
@@ -47,7 +47,7 @@ int	 ftp_scan(char *);
 int	 relay_scan(char *, char *);
 void	 timeout_handler(int);
 void	 usage(char *);
-void	 error(int);
+void	 fatal(int);
 
 int	ssock, isock;
 int	timedout = 0;
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 
 	err = getaddrinfo(host, port, &hints, &res);
 	if (err)
-		error(err);
+		fatal(err);
 
 	if (res->ai_next != NULL && !all_flag && !quiet_flag)
 		printf("Resolved to multiple addresses! "
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 			err = getnameinfo((struct sockaddr *)&ss, len, NULL, 0,
 			    sbuf, sizeof(sbuf), NI_NUMERICSERV);
 			if (err)
-				error(err);
+				fatal(err);
 			serv = getservbyname(port, "tcp");
 			if (serv != NULL)
 				remoteport = ntohs(serv->s_port);
@@ -412,6 +412,23 @@ name:
 	return buf;
 }
 
+char *
+banner_scan(u_short port)
+{
+	static char	buf[2048];
+	int		count;
+
+	if (port == 80)
+		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
+	else
+		send(ssock, "", 0, 0);
+
+	count = recv(ssock, buf, sizeof(buf), 0);
+	buf[count] = '\0';
+
+	return buf;
+}
+
 int
 ident_scan(char *host, int ai_family, u_short remoteport, u_short localport,
 	   char *owner, size_t len)
@@ -428,7 +445,7 @@ ident_scan(char *host, int ai_family, u_short remoteport, u_short localport,
 
 	err = getaddrinfo(host, "113", &hints, &res);
 	if (err)
-		error(err);
+		fatal(err);
 	for (ai = res; ai != NULL; ai = res->ai_next) {
 		isock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (isock < 0)
@@ -471,23 +488,6 @@ ident_scan(char *host, int ai_family, u_short remoteport, u_short localport,
 	strncpy(owner, temp, len);
 
 	return 0;
-}
-
-char *
-banner_scan(u_short port)
-{
-	static char	buf[2048];
-	int		count;
-
-	if (port == 80)
-		send(ssock, HTTP_REQUEST, sizeof(HTTP_REQUEST), 0);
-	else
-		send(ssock, "", 0, 0);
-
-	count = recv(ssock, buf, sizeof(buf), 0);
-	buf[count] = '\0';
-
-	return buf;
 }
 
 int
@@ -668,7 +668,7 @@ usage(char *progname)
 }
 
 void
-error(int errornum)
+fatal(int errornum)
 {
 	fprintf(stderr, "Fatal error: ");
 
