@@ -1,9 +1,11 @@
-# $Id: tweakers.tcl,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $
-
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
-# version 1.5 / 12/10/2002 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.6: (17/05/03) [bugfixes]
+#  - fix memory leak!!! (ongebruikte variabelen unsetten en 
+#    de belangrijkste: de ::http::cleanup functie!
+#  - veel kleine TCL changes/fixes
 # 1.5: (12/10/02) [features/changes]
 #  - extra check in de getdata procedure (voor HTTP errors zoals 404, etc..)
 #  - triggers/functie toegevoegd om de aankondiger aan en uit te zetten.
@@ -34,10 +36,13 @@
 #  - eerste (goed werkende) versie. 
 #  - script had alleen triggers, verder nog helemaal niets :-)
 #
-# Dit script heeft alltools.tcl nodig! Zorg dat deze is geladen in het
-# eggdrop configuratie bestand. Dit script gebruikt ook http.tcl. 
-# Oudere TCL versies kunnen deze nog niet (goed) gebruiken. 
-# U heeft dus minimaal TCL versie 8.2 ? nodig.
+# Dit script maakt gebruik van een functie uit alltools.tcl.
+# Zorg ervoor dat alltools.tcl geladen wordt in je eggdrop configuratie!
+#
+# Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
+# Zet http.tcl *niet* in je eggdrop configuratie!
+#
+# Het tweakers.tcl script werkt het best met TCL versies vanaf 8.2.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
@@ -46,23 +51,23 @@
 ### Configuratie instellingen ###
 
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
-set tnet_flag "-|-"
+set tnet(flags) "-|-"
 
 # kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
-set tnet_nopub "" 
+set tnet(nopub) "" 
 
 # de triggers: [scheiden met een spatie]
-set tnet_triggers "!tnet !tweakers"
+set tnet(triggers) "!tnet !tweakers"
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
 # 1 = Public message 
 # 2 = Private notice 
 # 3 = Public notice
-set tnet_method 1
+set tnet(method) 1
 
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
-set tnet_headlines 2
+set tnet(headlines) 2
 
 # hieronder kun je de layout aanpassen:
 # %tyd = tijd
@@ -75,34 +80,34 @@ set tnet_headlines 2
 # %edt = editor, schrijver
 # %b   = bold (dikgedrukte) tekst
 # %u   = underlined (onderstreepte) tekst
-set tnet_layout "\[%bT.Net%b\] (%cat) %tit - http://tweakers.net/nieuws/%id"
+set tnet(layout) "\[%bT.Net%b\] (%cat) %tit - http://tweakers.net/nieuws/%id"
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set tnet_autonews 1
+set tnet(autonews) 1
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
-set tnet_autonews_chan "#kanaal1 #kanaal2"
+set tnet(autonewschan) "#blaatmode"
 
-# om de hoeveel seconden checken of er nieuws is? [minimaal 300]
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
 # zet dit niet te laag, het zal load/verkeer op de servers vergroten.
-set tnet_updates 600
+set tnet(updates) 5
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
 # updates hoog hebt staan (bv. langer dan een uur).
-set tnet_automax 3
+set tnet(automax) 3
 
 # trigger om het autonews aan te zetten. [string]
-set tnet_auton_trig "!tneton"
+set tnet(autontrigger) "!tneton"
 
 # trigger om het autonews uit te zetten. [string]
-set tnet_autoff_trig "!tnetoff"
+set tnet(autofftrigger) "!tnetoff"
 
 # benodigde flags om de autonews[on/off] triggers te gebruiken [default=master]
-set tnet_auto_trig_flag "m|m"
+set tnet(autotriggerflag) "m|m"
 
 # log extra informatie (debug) naar de partyline? [0=nee / 1=ja]
-set tnet_log 1
+set tnet(log) 1
 
 ### Eind configuratie instellingen ###
 
@@ -110,22 +115,24 @@ set tnet_log 1
 
 ### Begin TCL code ###
 
-set tnet_version "1.5"
+set tnet(version) "1.6"
 
 package require http
 
-for {set i 0} {$i < [llength $tnet_triggers]} {incr i} {
-  bind pub $tnet_flag [lindex $tnet_triggers $i] tnet:pub
-  if {$tnet_log} { putlog "\[T.Net\] Trigger [lindex $tnet_triggers $i] added." }
+for {set i 0} {$i < [llength $tnet(triggers)]} {incr i} {
+  bind pub $tnet(flags) [lindex $tnet(triggers) $i] tnet:pub
+  if {$tnet(log)} { putlog "\[T.Net\] Trigger [lindex $tnet(triggers) $i] added." }
 }
+unset i
 
-bind pub $tnet_auto_trig_flag $tnet_autoff_trig tnet:autoff
-bind pub $tnet_auto_trig_flag $tnet_auton_trig tnet:auton
+bind pub $tnet(autotriggerflag) $tnet(autofftrigger) tnet:autoff
+bind pub $tnet(autotriggerflag) $tnet(autontrigger) tnet:auton
 
 proc tnet:getdata {} {
-  global tnet_id tnet_titel tnet_cat tnet_src tnet_tijd tnet_link tnet_reac tnet_ts tnet_edit tnet_log
+  global tnet tnetdata
 
-  if {$tnet_log} { putlog "\[T.Net\] Updating data..." }
+  if {$tnet(log)} { putlog "\[T.Net\] Updating data..." }
+  if {[info exists tnetdata]} { unset tnetdata }
 
   set url "http://www.tweakers.net/turbotracker.dsp"
   set page [::http::config -useragent "Mozilla"]
@@ -139,8 +146,8 @@ proc tnet:getdata {} {
   # dit is voor errors zoals 'timeout'.. 
   if {[::http::status $page] != "ok"} {
     putlog "\[T.Net\] Problem: [::http::status $page]"
-    return -1 
-  } 
+    return -1
+  }
 
   # dit is voor errors zoals 404 etc..
   if {![regexp -nocase {ok} [::http::code $page]]} {
@@ -153,43 +160,52 @@ proc tnet:getdata {} {
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
-    regexp "<id>(.*?)</id>" $line trash tnet_id($count)
-    regexp "<titel>(.*?)</titel>" $line trash tnet_titel($count)
-    regexp "<editor>(.*?)</editor>" $line trash tnet_edit($count)
-    regexp "<categorie>(.*?)</categorie>" $line trash tnet_cat($count)
-    regexp "<bron>(.*?)</bron>" $line trash tnet_src($count)
-    regexp "<link>(.*?)</link>" $line trash tnet_link($count)
-    regexp "<tijd>(.*?)</tijd>" $line trash tnet_tijd($count)
-    regexp "<timestamp>(.*?)</timestamp>" $line trash tnet_ts($count)
-    if {[regexp "<reacties>(.*?)</reacties>" $line trash tnet_reac($count)]} { incr count }
+    regexp "<id>(.*?)</id>" $line trash tnetdata(id,$count)
+    regexp "<titel>(.*?)</titel>" $line trash tnetdata(titel,$count)
+    regexp "<editor>(.*?)</editor>" $line trash tnetdata(edit,$count)
+    regexp "<categorie>(.*?)</categorie>" $line trash tnetdata(cat,$count)
+    regexp "<bron>(.*?)</bron>" $line trash tnetdata(src,$count)
+    regexp "<link>(.*?)</link>" $line trash tnetdata(link,$count)
+    regexp "<tijd>(.*?)</tijd>" $line trash tnetdata(tijd,$count)
+    regexp "<timestamp>(.*?)</timestamp>" $line trash tnetdata(ts,$count)
+    if {[regexp "<reacties>(.*?)</reacties>" $line trash tnetdata(reac,$count)]} { incr count }
   }
+  ::http::cleanup $page
+
+  unset url page msg count lines
+  if {[info exists line]} { unset line }
+  if {[info exists trash]} { unset trash }
+
   return 0
 }
 
 proc tnet:pub {nick uhost hand chan text} {
-  global lastbind tnet_log tnet_nopub tnet_headlines tnet_method
-  if {[lsearch -exact $tnet_nopub [string tolower $chan]] >= 0} { return 0 }  
+  global lastbind tnet tnetdata
+  if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {$tnet_log} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
+  if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
   if {[tnet:getdata] != -1} {
-    for {set i 0} {$i < $tnet_headlines} {incr i} { tnet:put $chan $nick $i $tnet_method }
+    for {set i 0} {$i < $tnet(headlines)} {incr i} { tnet:put $chan $nick $i $tnet(method) }
+    unset i
   } else {
     putserv "NOTICE $nick :\[T.Net\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
+  if {[info exists tnetdata]} { unset tnetdata }
 }
 
 proc tnet:put {chan nick which method} {
-  global tnet_id tnet_titel tnet_cat tnet_src tnet_link tnet_tijd tnet_layout tnet_reac tnet_ts tnet_edit
-  set outchan $tnet_layout
-  regsub -all "%rea" $outchan $tnet_reac($which) outchan
-  regsub -all "%edt" $outchan $tnet_edit($which) outchan
-  regsub -all "%tyd" $outchan $tnet_tijd($which) outchan
-  regsub -all "%id"  $outchan $tnet_id($which) outchan
-  regsub -all "%cat" $outchan $tnet_cat($which) outchan
-  regsub -all "%src" $outchan $tnet_src($which) outchan
-  regsub -all "%lnk" $outchan $tnet_link($which) outchan
-  regsub -all "%tit" $outchan $tnet_titel($which) outchan
+  global tnet tnetdata
+
+  set outchan $tnet(layout)
+  regsub -all "%rea" $outchan $tnetdata(reac,$which) outchan
+  regsub -all "%edt" $outchan $tnetdata(edit,$which) outchan
+  regsub -all "%tyd" $outchan $tnetdata(tijd,$which) outchan
+  regsub -all "%id"  $outchan $tnetdata(id,$which) outchan
+  regsub -all "%cat" $outchan $tnetdata(cat,$which) outchan
+  regsub -all "%src" $outchan $tnetdata(src,$which) outchan
+  regsub -all "%lnk" $outchan $tnetdata(link,$which) outchan
+  regsub -all "%tit" $outchan $tnetdata(titel,$which) outchan
   # waarom TCL er %titamp; van maakt weet ik niet, maar zo los ik het iig op:
   regsub -all "%titamp;" $outchan "\\\&" outchan
   regsub -all "&amp;" $outchan "\\\&" outchan
@@ -202,50 +218,62 @@ proc tnet:put {chan nick which method} {
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
+  unset outchan
 }
 
 proc tnet:update {} {
-  global tnet_ts tnet_updates tnet_lastitem tnet_log tnet_autonews_chan tnet_automax
+  global tnet tnetdata tnet_lastitem
 
   if {[tnet:getdata] != -1} {
 
-    if {![info exists tnet_lastitem]} { 
-      set tnet_lastitem $tnet_ts(0) 
-      if {$tnet_log} { putlog "\[T.Net\] Last news item timestamp set to $tnet_ts(0)" }
-    } else {
-      if {$tnet_log} { putlog "\[T.Net\] Last news item timestamp is $tnet_ts(0)" }
+    if {![info exists tnetdata(ts,0)]} {
+      putlog "\[T.Net\] Er iets iets fout gegaan tijdens het updaten..."
+      return -1
     }
 
-    if {$tnet_ts(0) > $tnet_lastitem} {
-      if {$tnet_log} { putlog "\[T.Net\] There's news!" }
-      for {set i 0} {$i < $tnet_automax} {incr i} {
-        if {$tnet_ts($i) == $tnet_lastitem} { break }
-        foreach chan [split $tnet_autonews_chan] { tnet:put $chan $chan $i 1 }
+    if {![info exists tnet_lastitem]} {
+      set tnet_lastitem $tnetdata(ts,0)
+      if {$tnet(log)} { putlog "\[T.Net\] Last news item timestamp set to $tnetdata(ts,0)" }
+    } else {
+      if {$tnet(log)} { putlog "\[T.Net\] Last news item timestamp is $tnetdata(ts,0)" }
+    }
+
+    if {$tnetdata(ts,0) > $tnet_lastitem} {
+      if {$tnet(log)} { putlog "\[T.Net\] There's news!" }
+      for {set i 0} {$i < $tnet(automax)} {incr i} {
+        if {$tnetdata(ts,0) == $tnet_lastitem} { break }
+        foreach chan [split $tnet(autonewschan)] { tnet:put $chan $chan $i 1 }
+        unset chan
       }
+      unset i
     } else {
-      if {$tnet_log} { putlog "\[T.Net\] No news." } 
+      if {$tnet(log)} { putlog "\[T.Net\] No news." } 
     }
-  
-    set tnet_lastitem $tnet_ts(0)
+
+    set tnet_lastitem $tnetdata(ts,0)
   }
 
-  if {$tnet_updates < 300} { 
-    utimer 300 tnet:update
+  if {$tnet(updates) < 5} { 
+    timer 5 tnet:update
   } else {
-    utimer $tnet_updates tnet:update
+    timer $tnet(updates) tnet:update
   }
+  if {[info exists tnetdata]} { unset tnetdata }
+
+  return 0
 }
 
 proc tnet:autoff {nick uhost hand chan text} {
-  global lastbind tnet_log tnet_nopub tnet_autonews tnet_lastitem
-  if {[lsearch -exact $tnet_nopub [string tolower $chan]] >= 0} { return 0 }
+  global lastbind tnet tnet_lastitem
+  if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$tnet_log} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
+  if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$tnet_autonews == 1} {
-    set tnet_autonews 0;  unset tnet_lastitem
-    set killtimer [utimerexists "tnet:update"]
-    if {$killtimer != ""} { killutimer $killtimer }
+  if {$tnet(autonews) == 1} {
+    set tnet(autonews) 0;  unset tnet_lastitem
+    set whichtimer [timerexists "tnet:update"]
+    if {$whichtimer != ""} { killtimer $whichtimer }
+    unset whichtimer
     putlog "\[T.Net\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn tweakers.net nieuws aankondiger uitgezet.\001"
   } else {
@@ -254,13 +282,13 @@ proc tnet:autoff {nick uhost hand chan text} {
 }
 
 proc tnet:auton {nick uhost hand chan text} {
-  global lastbind tnet_log tnet_nopub tnet_autonews tnet_lastitem
-  if {[lsearch -exact $tnet_nopub [string tolower $chan]] >= 0} { return 0 }
+  global lastbind tnet
+  if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {$tnet_log} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
+  if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
-  if {$tnet_autonews == 0} {
-    set tnet_autonews 1;  tnet:update
+  if {$tnet(autonews) == 0} {
+    set tnet(autonews) 1;  tnet:update
     putlog "\[T.Net\] Autonews turned on."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn tweakers.net nieuws aankondiger aangezet.\001"
   } else {
@@ -268,9 +296,10 @@ proc tnet:auton {nick uhost hand chan text} {
   }
 }
 
-set killtimer [utimerexists "tnet:update"]
-if {$killtimer != ""} { killutimer $killtimer }
+set whichtimer [timerexists "tnet:update"]
+if {$whichtimer != ""} { killtimer $whichtimer }
+unset whichtimer
 
-if {$tnet_autonews == 1} { tnet:update }
+if {$tnet(autonews) == 1} { tnet:update }
 
-putlog "\[T.Net\] Nieuws script versie $tnet_version: Loaded!"
+putlog "\[T.Net\] Nieuws script versie $tnet(version): Loaded!"
