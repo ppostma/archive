@@ -1,10 +1,10 @@
-# $Id: ports.tcl,v 1.2 2003-07-03 16:11:17 peter Exp $
+# $Id: ports.tcl,v 1.3 2003-07-03 22:16:37 peter Exp $
 
 # FreeBSD Port search script for the eggdrop
-# version 0.2, 03/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 0.2: (03/07/03)
+# 0.2: (04/07/03)
 #  - added several configuration options:
 #  - configurable flags
 #  - nopub, where the bot doesn't speak
@@ -107,10 +107,6 @@ proc pub:ports {nick uhost hand chan text} {
 
   } else {
     set ports(file) "/usr/ports/INDEX"
-    if {![file exists $ports(file)]} {
-      putquick "NOTICE $nick :File '$ports(file)' doesn't exist."
-      return 0
-    }
 
     if {[catch { set fd [open $ports(file) r]} err]} {
       putquick "NOTICE $nick :$err"
