@@ -1,7 +1,7 @@
-# $Id: osnews.tcl,v 1.19 2003-07-09 15:39:48 peter Exp $
+# $Id: osnews.tcl,v 1.20 2003-07-10 08:35:32 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
-# version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -10,6 +10,7 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
+#  - script works with TCL 8.0 now.
 # 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -29,7 +30,7 @@
 # This script also uses http.tcl. You *don't* need to put http.tcl
 # your eggdrop configuration!
 #
-# You need at least TCL version 8.1 to get this script running!
+# You need at least TCL version 8.0 to get this script running!
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
@@ -113,8 +114,8 @@ package require http
 
 set osnews(version) "1.4"
 
-if {[info tclversion] < 8.1} {
-  putlog "\[OSNews\] Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.0} {
+  putlog "\[OSNews\] Cannot load [file tail [info script]]: You need at least TCL version 8.0 and you have TCL version [info tclversion]."
   return 1
 }
 
@@ -127,11 +128,11 @@ set whichtimer [timerexists "osnews:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
 catch { unset whichtimer }
 
-for {set i 0} {$i < [llength $osnews(triggers)]} {incr i} {
-  bind pub $osnews(flags) [lindex $osnews(triggers) $i] osnews:pub
-  if {$osnews(log)} { putlog "\[OSnews\] Trigger [lindex $osnews(triggers) $i] added." }
+foreach trigger [split $osnews(triggers)] {
+  bind pub $osnews(flags) $trigger osnews:pub
+  if {$osnews(log)} { putlog "\[OSnews\] Trigger $trigger added." }
 }
-catch { unset i }
+catch { unset trigger }
 
 bind pub $osnews(autotriggerflag) $osnews(autofftrigger) osnews:autoff
 bind pub $osnews(autotriggerflag) $osnews(autontrigger) osnews:auton
@@ -145,7 +146,7 @@ proc osnews:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$osnews(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*?)} $osnews(proxy) t proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9].*)} $osnews(proxy) trash proxyhost proxyport]} {
       putlog "\[Clanbase\] Wrong proxy configuration ($osnews(proxy))"
       return -1
     }
@@ -160,35 +161,34 @@ proc osnews:getdata {} {
   
   if {[::http::status $page] != "ok"} {
     putlog "\[OSnews\] Problem: [::http::status $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[OSnews\] Problem: [::http::code $page]"
+    catch { ::http::cleanup $page }
     return -1
   }
 
   if {[info exists osnewsdata]} { unset osnewsdata }
 
-  set lines [split [::http::data $page] \n]
   set count 0
   set item 0
-
-  for {set i 0} {$i < [llength $lines]} {incr i} {
-    set line [lindex $lines $i]
+  foreach line [split [::http::data $page] \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
     if {[regexp "</item>" $line]} { set item 0 }
     if {$item == 1} {
-      regexp "<title>(.*?)</title>" $line trash osnewsdata(title,$count)
-      if {[regexp "<link>(.*?)</link>" $line trash osnewsdata(link,$count)]} { incr count }
+      regexp "<title>(.*)</title>" $line trash osnewsdata(title,$count)
+      if {[regexp "<link>(.*)</link>" $line trash osnewsdata(link,$count)]} { incr count }
     }
   }
 
   set osnews(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg lines count item line trash }
+  catch { unset url page msg count item line trash }
 
   return 0
 }
@@ -238,7 +238,7 @@ proc osnews:put {chan nick which method} {
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b"   $outchan "\002" outchan
   regsub -all "%u"   $outchan "\037" outchan
-  switch -- $method {
+  switch $method {
     0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
