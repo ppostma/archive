@@ -41,6 +41,8 @@ If you've problems with uploading files >2MB then change the setting
 4. History:
 
 v0.71 (??/??/2003)
+ - added: set temporary file directory
+ - added: set timeout for cookies
  - delete form, shows directory
  - fixed: double slashed root directory
  - added: change server

@@ -1,5 +1,5 @@
 <?
-  # $Id: ftp.php,v 1.1.1.1 2003-03-19 12:58:21 peter Exp $
+  # $Id: ftp.php,v 1.2 2003-05-02 16:06:54 peter Exp $
   #
   # WebFTP client - ftp class
   #
@@ -17,6 +17,8 @@
 
     function open($server, $username, $password)
     {
+      global $cookie_timeout;
+
       $this->id   = @ftp_connect($server);
       $this->conn = @ftp_login($this->id, $username, $password);
 
@@ -27,10 +29,12 @@
 
       if (!$this->id || !$this->conn) return false;
 
-      setcookie("login",    "yeah");
-      setcookie("server",   $server);
-      setcookie("username", $username);
-      setcookie("password", $password);
+      if (!isset($cookie_timeout)) $cookie_timeout = 300;
+
+      setcookie("login",    "yeah",    time() + $cookie_timeout);
+      setcookie("server",   $server,   time() + $cookie_timeout);
+      setcookie("username", $username, time() + $cookie_timeout);
+      setcookie("password", $password, time() + $cookie_timeout);
 
       return true;
     }
@@ -102,13 +106,16 @@
 
     function download($dir, $file)
     {
+      global $temp_dir;
+
       header("Content-type: application/octetstream");
       header("Content-disposition: attachment; filename=$file");
       header("Pragma: no-cache");
       header("Expires: 0");
 
       $full  = $dir . "/" . $file;
-      $tname = "/tmp/tmp_ftp_" . $file;
+      if (!isset($temp_dir)) $temp_dir = "/tmp";
+      $tname = $temp_dir . "/tmp_ftp_" . $file;
       $tfile = @fopen($tname, "w");
 
       @ftp_fget($this->id, $tfile, $full, FTP_BINARY);
