@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.2 2003-05-17 15:43:00 peter Exp $
+# $Id: fok.tcl,v 1.3 2003-05-17 20:38:44 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
