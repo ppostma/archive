@@ -1,7 +1,14 @@
-# $Id: clanbase.tcl,v 1.3 2003-05-19 15:18:47 peter Exp $
+# $Id: clanbase.tcl,v 1.4 2003-05-20 13:52:57 peter Exp $
 
 # cb.tcl / Clanbase.com News Announce Script for an eggdrop
-# version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+#
+# Changelog:
+# 1.1: (20/05/2003) [changes]
+#  - strange bug with & character fixed.
+#  - small changes to make the script more robust.
+# 1.0: (18/05/2003) [first version]
+#  - wrote this script, based on tweakers.tcl version 1.6
 #
 # This script makes use of a function from alltools.tcl.
 # Please put alltools.tcl in your eggdrop configuration!
@@ -77,7 +84,7 @@ set cb(log) 1
 
 ### Begin TCL code ###
 
-set cb(version) "1.0"
+set cb(version) "1.1"
 
 package require http
 
@@ -85,7 +92,7 @@ for {set i 0} {$i < [llength $cb(triggers)]} {incr i} {
   bind pub $cb(flags) [lindex $cb(triggers) $i] cb:pub
   if {$cb(log)} { putlog "\[Clanbase\] Trigger [lindex $cb(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $cb(autotriggerflag) $cb(autofftrigger) cb:autoff
 bind pub $cb(autotriggerflag) $cb(autontrigger) cb:auton
@@ -129,9 +136,7 @@ proc cb:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count item lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count item line trash}
 
   return 0
 }
@@ -143,8 +148,11 @@ proc cb:pub {nick uhost hand chan text} {
   if {$cb(log)} { putlog "\[Clanbase\] Trigger: $lastbind in $chan by $nick" }
 
   if {[cb:getdata] != -1} {
-    for {set i 0} {$i < $cb(headlines)} {incr i} { cb:put $chan $nick $i $cb(method) }
-    unset i
+    for {set i 0} {$i < $cb(headlines)} {incr i} {
+      if {![info exists cbdata(title,$i)]} { break }
+      cb:put $chan $nick $i $cb(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Clanbase\] Something went wrong while updating."
   }
@@ -156,55 +164,57 @@ proc cb:put {chan nick which method} {
 
   set outchan $cb(layout)
   regsub -all "%title" $outchan $cbdata(title,$which) outchan
-  regsub -all "%link" $outchan $cbdata(link,$which) outchan
-  # strange bug:
-  regsub -all "%titleamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
+  regsub -all "%link"  $outchan $cbdata(link,$which) outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
   regsub -all "%u" $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc cb:update {} {
-  global cb cbdata cb_lastitem
+  global cb cbdata
 
   if {[cb:getdata] != -1} {
 
     if {![info exists cbdata(title,0)]} {
-      putlog "\[Clanbase\] Something went wrong while updating."
+      putlog "\[Clanbase\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists cb_lastitem]} {
-      set cb_lastitem $cbdata(title,0)
-      if {$cb(log)} { putlog "\[Clanbase\] Last news item set to $cbdata(title,0)" }
+    if {![info exists cb(lastitem)]} {
+      set cb(lastitem) $cbdata(title,0)
+      if {$cb(log)} { putlog "\[Clanbase\] Last news item set to '$cbdata(title,0)'." }
     } else {
-      if {$cb(log)} { putlog "\[Clanbase\] Last news item is $cbdata(title,0)" }
+      if {$cb(log)} { putlog "\[Clanbase\] Last news item is '$cbdata(title,0)'." }
     }
 
-    if {$cbdata(title,0) != $cb_lastitem} {
+    if {$cbdata(title,0) != $cb(lastitem)} {
       if {$cb(log)} { putlog "\[Clanbase\] There's news!" }
       for {set i 0} {$i < $cb(automax)} {incr i} {
-        if {$cbdata(title,$i) == $cb_lastitem} { break }
+        if {![info exists cbdata(title,$i)]} { break }
+        if {$cbdata(title,$i) == $cb(lastitem)} { break }
         foreach chan [split $cb(autonewschan)] { cb:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$cb(log)} { putlog "\[Clanbase\] No news." } 
     }
 
-    set cb_lastitem $cbdata(title,0)
+    set cb(lastitem) $cbdata(title,0)
   }
 
-  if {$cb(updates) < 30} { 
+  if {$cb(updates) < 30} {
+    putlog "\[Clanbase\] Warning: the \$cb(updates) setting is too low! Defaulting to 30 minutes..."
     timer 30 cb:update
   } else {
     timer $cb(updates) cb:update
@@ -215,16 +225,16 @@ proc cb:update {} {
 }
 
 proc cb:autoff {nick uhost hand chan text} {
-  global lastbind cb cb_lastitem
+  global lastbind cb
   if {[lsearch -exact $cb(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$cb(log)} { putlog "\[Clanbase\] Trigger: $lastbind in $chan by $nick" }
 
   if {$cb(autonews) == 1} {
-    set cb(autonews) 0;  unset cb_lastitem
+    set cb(autonews) 0;  catch { unset cb(lastitem) }
     set whichtimer [timerexists "cb:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[Clanbase\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION has turned the clanbase.com news announcer off.\001"
   } else {
@@ -249,7 +259,7 @@ proc cb:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "cb:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$cb(autonews) == 1} { cb:update }
 

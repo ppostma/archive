@@ -1,7 +1,14 @@
-# $Id: osnews.tcl,v 1.3 2003-05-19 15:18:47 peter Exp $
+# $Id: osnews.tcl,v 1.4 2003-05-20 13:52:57 peter Exp $
 
 # osnews.tcl / OSnews.org News Announce Script for an eggdrop
-# version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+#
+# Changelog:
+# 1.1: (20/05/2003) [changes]
+#  - strange bug with & character fixed.
+#  - small changes to make the script more robust.
+# 1.0: (18/05/2003) [first version]
+#  - wrote this script, based on tweakers.tcl version 1.6
 #
 # This script makes use of a function from alltools.tcl.
 # Please put alltools.tcl in your eggdrop configuration!
@@ -77,7 +84,7 @@ set osnews(log) 1
 
 ### Begin TCL code ###
 
-set osnews(version) "1.0"
+set osnews(version) "1.1"
 
 package require http
 
@@ -85,7 +92,7 @@ for {set i 0} {$i < [llength $osnews(triggers)]} {incr i} {
   bind pub $osnews(flags) [lindex $osnews(triggers) $i] osnews:pub
   if {$osnews(log)} { putlog "\[OSnews\] Trigger [lindex $osnews(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $osnews(autotriggerflag) $osnews(autofftrigger) osnews:autoff
 bind pub $osnews(autotriggerflag) $osnews(autontrigger) osnews:auton
@@ -129,9 +136,7 @@ proc osnews:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count item lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count item line trash }
 
   return 0
 }
@@ -143,8 +148,11 @@ proc osnews:pub {nick uhost hand chan text} {
   if {$osnews(log)} { putlog "\[OSnews\] Trigger: $lastbind in $chan by $nick" }
 
   if {[osnews:getdata] != -1} {
-    for {set i 0} {$i < $osnews(headlines)} {incr i} { osnews:put $chan $nick $i $osnews(method) }
-    unset i
+    for {set i 0} {$i < $osnews(headlines)} {incr i} {
+      if {![info exists osnewsdata(title,$i)]} { break }
+      osnews:put $chan $nick $i $osnews(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[OSnews\] Something went wrong while updating."
   }
@@ -156,55 +164,57 @@ proc osnews:put {chan nick which method} {
 
   set outchan $osnews(layout)
   regsub -all "%title" $outchan $osnewsdata(title,$which) outchan
-  regsub -all "%link" $outchan $osnewsdata(link,$which) outchan
-  # strange bug:
-  regsub -all "%titleamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
+  regsub -all "%link"  $outchan $osnewsdata(link,$which) outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b"   $outchan "\002" outchan
   regsub -all "%u"   $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc osnews:update {} {
-  global osnews osnewsdata osnews_lastitem
+  global osnews osnewsdata
 
   if {[osnews:getdata] != -1} {
 
     if {![info exists osnewsdata(title,0)]} {
-      putlog "\[OSnews\] Something went wrong while updating."
+      putlog "\[OSnews\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists osnews_lastitem]} {
-      set osnews_lastitem $osnewsdata(title,0)
-      if {$osnews(log)} { putlog "\[OSnews\] Last news item set to $osnewsdata(title,0)" }
+    if {![info exists osnews(lastitem)]} {
+      set osnews(lastitem) $osnewsdata(title,0)
+      if {$osnews(log)} { putlog "\[OSnews\] Last news item set to '$osnewsdata(title,0)'." }
     } else {
-      if {$osnews(log)} { putlog "\[OSnews\] Last news item is $osnewsdata(title,0)" }
+      if {$osnews(log)} { putlog "\[OSnews\] Last news item is '$osnewsdata(title,0)'." }
     }
 
-    if {$osnewsdata(title,0) != $osnews_lastitem} {
+    if {$osnewsdata(title,0) != $osnews(lastitem)} {
       if {$osnews(log)} { putlog "\[OSnews\] There's news!" }
       for {set i 0} {$i < $osnews(automax)} {incr i} {
-        if {$osnewsdata(title,$i) == $osnews_lastitem} { break }
+        if {![info exists osnewsdata(title,$i)]} { break }
+        if {$osnewsdata(title,$i) == $osnews(lastitem)} { break }
         foreach chan [split $osnews(autonewschan)] { osnews:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$osnews(log)} { putlog "\[OSnews\] No news." } 
     }
 
-    set osnews_lastitem $osnewsdata(title,0)
+    set osnews(lastitem) $osnewsdata(title,0)
   }
 
   if {$osnews(updates) < 30} { 
+    putlog "\[OSnews\] Warning: the \$osnews(updates) setting is too low! Defaulting to 30 minutes..."
     timer 30 osnews:update
   } else {
     timer $osnews(updates) osnews:update
@@ -215,16 +225,16 @@ proc osnews:update {} {
 }
 
 proc osnews:autoff {nick uhost hand chan text} {
-  global lastbind osnews osnews_lastitem
+  global lastbind osnews
   if {[lsearch -exact $osnews(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$osnews(log)} { putlog "\[OSnews\] Trigger: $lastbind in $chan by $nick" }
 
   if {$osnews(autonews) == 1} {
-    set osnews(autonews) 0;  unset osnews_lastitem
+    set osnews(autonews) 0;  catch { unset osnews(lastitem) }
     set whichtimer [timerexists "osnews:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[OSnews\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION has turned the osnews.org news announcer off.\001"
   } else {
@@ -249,7 +259,7 @@ proc osnews:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "osnews:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$osnews(autonews) == 1} { osnews:update }
 

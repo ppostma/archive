@@ -1,9 +1,12 @@
-# $Id: gamer.tcl,v 1.5 2003-05-18 15:41:07 peter Exp $
+# $Id: gamer.tcl,v 1.6 2003-05-20 13:52:57 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
-# version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.7: (20/05/03) [changes]
+#  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
+#  - kleine aanpassingen om het script nog wat robuuster te maken.
 # 1.6: (17/05/03) [bugfixes]
 #  - fix memory leak!!! (ongebruikte variabelen unsetten en 
 #    de belangrijkste: de ::http::cleanup functie!
@@ -89,7 +92,7 @@ set gamer(autonewschan) "#kanaal1 #kanaal2"
 
 # om de hoeveel minuten checken of er nieuws is? [minimaal 5]
 # zet dit niet te laag, het zal load/verkeer op de servers vergroten.
-set gamer(updates) 5
+set gamer(updates) 10
 
 # maximaal aantal berichten die worden getoond tijdens de automatische updates.
 # hiermee kan je voorkomen dat de channel wordt ondergeflood als je de 
@@ -114,7 +117,7 @@ set gamer(log) 1
 
 ### Begin TCL code ###
 
-set gamer(version) "1.6"
+set gamer(version) "1.7"
 
 package require http
 
@@ -122,7 +125,7 @@ for {set i 0} {$i < [llength $gamer(triggers)]} {incr i} {
   bind pub $gamer(flags) [lindex $gamer(triggers) $i] gamer:pub
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger [lindex $gamer(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $gamer(autotriggerflag) $gamer(autofftrigger) gamer:autoff
 bind pub $gamer(autotriggerflag) $gamer(autontrigger) gamer:auton
@@ -136,19 +139,16 @@ proc gamer:getdata {} {
   set url "http://www.gamer.nl/newstracker.xml"
   set page [::http::config -useragent "Mozilla"]
 
-  # check of connecten goed gaat
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[Gamer.nl\] Problem: $msg"
     return -1
   }
   
-  # dit is voor errors zoals 'timeout'.. 
   if {[::http::status $page] != "ok"} {
     putlog "\[Gamer.nl\] Problem: [::http::status $page]"
     return -1
   }
 
-  # dit is voor errors zoals 404 etc..
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[Gamer.nl\] Problem: [::http::code $page]"
     return -1
@@ -168,9 +168,7 @@ proc gamer:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count line trash }
 
   return 0
 }
@@ -182,8 +180,11 @@ proc gamer:pub {nick uhost hand chan text} {
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
   if {[gamer:getdata] != -1} {
-    for {set i 0} {$i < $gamer(headlines)} {incr i} { gamer:put $chan $nick $i $gamer(method) }
-    unset i
+    for {set i 0} {$i < $gamer(headlines)} {incr i} {
+      if {![info exists gamerdata(id,$i)]} { break }
+      gamer:put $chan $nick $i $gamer(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Gamer.nl\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
@@ -199,54 +200,56 @@ proc gamer:put {chan nick which method} {
   regsub -all "%rea" $outchan $gamerdata(reac,$which) outchan
   regsub -all "%aut" $outchan $gamerdata(auteur,$which) outchan
   regsub -all "%tit" $outchan $gamerdata(titel,$which) outchan
-  # waarom TCL er %titamp; van maakt weet ik niet, maar zo los ik het iig op:
-  regsub -all "%titamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
-  regsub -all "%b"   $outchan "\002" outchan
-  regsub -all "%u"   $outchan "\037" outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
+  regsub -all "%b" $outchan "\002" outchan
+  regsub -all "%u" $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc gamer:update {} {
-  global gamer gamerdata gamer_lastitem
+  global gamer gamerdata
 
   if {[gamer:getdata] != -1} {
 
     if {![info exists gamerdata(ts,0)]} {
-      putlog "\[Gamer.nl\] Er iets iets fout gegaan tijdens het updaten..."
+      putlog "\[Gamer.nl\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists gamer_lastitem]} {
-      set gamer_lastitem $gamerdata(ts,0)
-      if {$gamer(log)} { putlog "\[Gamer.nl\] Last news item timestamp set to $gamerdata(ts,0)" }
+    if {![info exists gamer(lastitem)]} {
+      set gamer(lastitem) $gamerdata(ts,0)
+      if {$gamer(log)} { putlog "\[Gamer.nl\] Last news item timestamp set to '$gamerdata(ts,0)'." }
     } else {
-      if {$gamer(log)} { putlog "\[Gamer.nl\] Last news item timestamp is $gamerdata(ts,0)" }
+      if {$gamer(log)} { putlog "\[Gamer.nl\] Last news item timestamp is '$gamerdata(ts,0)'." }
     }
 
-    if {$gamerdata(ts,0) > $gamer_lastitem} {
+    if {$gamerdata(ts,0) > $gamer(lastitem)} {
       if {$gamer(log)} { putlog "\[Gamer.nl\] There's news!" }
       for {set i 0} {$i < $gamer(automax)} {incr i} {
-        if {$gamerdata(ts,$i) == $gamer_lastitem} { break }
+        if {![info exists gamerdata(ts,$i)]} { break }
+        if {$gamerdata(ts,$i) == $gamer(lastitem)} { break }
         foreach chan [split $gamer(autonewschan)] { gamer:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$gamer(log)} { putlog "\[Gamer.nl\] No news." } 
     }
 
-    set gamer_lastitem $gamerdata(ts,0)
+    set gamer(lastitem) $gamerdata(ts,0)
   }
 
-  if {$gamer(updates) < 5} { 
+  if {$gamer(updates) < 5} {
+    putlog "\[Gamer.nl\] Warning: the \$gamer(updates) setting is too low! Defaulting to 5 minutes..."
     timer 5 gamer:update
   } else {
     timer $gamer(updates) gamer:update
@@ -257,16 +260,16 @@ proc gamer:update {} {
 }
 
 proc gamer:autoff {nick uhost hand chan text} {
-  global lastbind gamer gamer_lastitem
+  global lastbind gamer
   if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
   if {$gamer(autonews) == 1} {
-    set gamer(autonews) 0;  unset gamer_lastitem
+    set gamer(autonews) 0;  catch { unset gamer(lastitem) }
     set whichtimer [timerexists "gamer:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[Gamer.nl\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn gamer.nl nieuws aankondiger uitgezet.\001"
   } else {
@@ -291,7 +294,7 @@ proc gamer:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "gamer:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$gamer(autonews) == 1} { gamer:update }
 

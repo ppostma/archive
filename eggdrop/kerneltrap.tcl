@@ -1,7 +1,14 @@
-# $Id: kerneltrap.tcl,v 1.3 2003-05-19 15:18:47 peter Exp $
+# $Id: kerneltrap.tcl,v 1.4 2003-05-20 13:52:57 peter Exp $
 
 # kerneltrap.tcl / KernelTrap.org News Announce Script for an eggdrop
-# version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+#
+# Changelog:
+# 1.1: (20/05/2003) [changes]
+#  - strange bug with & character fixed.
+#  - small changes to make the script more robust.
+# 1.0: (18/05/2003) [first version]
+#  - wrote this script, based on tweakers.tcl version 1.6
 #
 # This script makes use of a function from alltools.tcl.
 # Please put alltools.tcl in your eggdrop configuration!
@@ -77,7 +84,7 @@ set kerneltrap(log) 1
 
 ### Begin TCL code ###
 
-set kerneltrap(version) "1.0"
+set kerneltrap(version) "1.1"
 
 package require http
 
@@ -85,7 +92,7 @@ for {set i 0} {$i < [llength $kerneltrap(triggers)]} {incr i} {
   bind pub $kerneltrap(flags) [lindex $kerneltrap(triggers) $i] kerneltrap:pub
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Trigger [lindex $kerneltrap(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $kerneltrap(autotriggerflag) $kerneltrap(autofftrigger) kerneltrap:autoff
 bind pub $kerneltrap(autotriggerflag) $kerneltrap(autontrigger) kerneltrap:auton
@@ -129,9 +136,7 @@ proc kerneltrap:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count item lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count item line trash }
 
   return 0
 }
@@ -143,8 +148,11 @@ proc kerneltrap:pub {nick uhost hand chan text} {
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Trigger: $lastbind in $chan by $nick" }
 
   if {[kerneltrap:getdata] != -1} {
-    for {set i 0} {$i < $kerneltrap(headlines)} {incr i} { kerneltrap:put $chan $nick $i $kerneltrap(method) }
-    unset i
+    for {set i 0} {$i < $kerneltrap(headlines)} {incr i} {
+      if {![info exists kerneltrapdata(title,$i)]} { break }
+      kerneltrap:put $chan $nick $i $kerneltrap(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[KernelTrap\] Something went wrong while updating."
   }
@@ -156,55 +164,57 @@ proc kerneltrap:put {chan nick which method} {
 
   set outchan $kerneltrap(layout)
   regsub -all "%title" $outchan $kerneltrapdata(title,$which) outchan
-  regsub -all "%link" $outchan $kerneltrapdata(link,$which) outchan
-  # strange bug:
-  regsub -all "%titleamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
+  regsub -all "%link"  $outchan $kerneltrapdata(link,$which) outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b"   $outchan "\002" outchan
   regsub -all "%u"   $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc kerneltrap:update {} {
-  global kerneltrap kerneltrapdata kerneltrap_lastitem
+  global kerneltrap kerneltrapdata
 
   if {[kerneltrap:getdata] != -1} {
 
     if {![info exists kerneltrapdata(title,0)]} {
-      putlog "\[KernelTrap\] Something went wrong while updating."
+      putlog "\[KernelTrap\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists kerneltrap_lastitem]} {
-      set kerneltrap_lastitem $kerneltrapdata(title,0)
-      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item set to $kerneltrapdata(title,0)" }
+    if {![info exists kerneltrap(lastitem)]} {
+      set kerneltrap(lastitem) $kerneltrapdata(title,0)
+      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item set to '$kerneltrapdata(title,0)'." }
     } else {
-      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item is $kerneltrapdata(title,0)" }
+      if {$kerneltrap(log)} { putlog "\[KernelTrap\] Last news item is '$kerneltrapdata(title,0)'." }
     }
 
-    if {$kerneltrapdata(title,0) != $kerneltrap_lastitem} {
+    if {$kerneltrapdata(title,0) != $kerneltrap(lastitem)} {
       if {$kerneltrap(log)} { putlog "\[KernelTrap\] There's news!" }
       for {set i 0} {$i < $kerneltrap(automax)} {incr i} {
-        if {$kerneltrapdata(title,$i) == $kerneltrap_lastitem} { break }
+        if {![info exists kerneltrapdata(title,$i)]} { break }
+        if {$kerneltrapdata(title,$i) == $kerneltrap(lastitem)} { break }
         foreach chan [split $kerneltrap(autonewschan)] { kerneltrap:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$kerneltrap(log)} { putlog "\[KernelTrap\] No news." } 
     }
 
-    set kerneltrap_lastitem $kerneltrapdata(title,0)
+    set kerneltrap(lastitem) $kerneltrapdata(title,0)
   }
 
   if {$kerneltrap(updates) < 30} {
+    putlog "\[KernelTrap\] Warning: the \$kerneltrap(updates) setting is too low! Defaulting to 30 minutes..."
     timer 30 kerneltrap:update
   } else {
     timer $kerneltrap(updates) kerneltrap:update
@@ -215,16 +225,16 @@ proc kerneltrap:update {} {
 }
 
 proc kerneltrap:autoff {nick uhost hand chan text} {
-  global lastbind kerneltrap kerneltrap_lastitem
+  global lastbind kerneltrap
   if {[lsearch -exact $kerneltrap(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Trigger: $lastbind in $chan by $nick" }
 
   if {$kerneltrap(autonews) == 1} {
-    set kerneltrap(autonews) 0;  unset kerneltrap_lastitem
+    set kerneltrap(autonews) 0;  catch { unset kerneltrap(lastitem) }
     set whichtimer [timerexists "kerneltrap:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[KernelTrap\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION has turned the kerneltrap.org news announcer off.\001"
   } else {
@@ -249,7 +259,7 @@ proc kerneltrap:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "kerneltrap:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$kerneltrap(autonews) == 1} { kerneltrap:update }
 

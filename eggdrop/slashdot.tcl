@@ -1,7 +1,14 @@
-# $Id: slashdot.tcl,v 1.6 2003-05-18 15:41:07 peter Exp $
+# $Id: slashdot.tcl,v 1.7 2003-05-20 13:52:57 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
-# version 1.6 / 17/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.7 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+#
+# Changelog:
+# 1.7: (20/05/2003) [changes]
+#  - strange bug with & character fixed.
+#  - small changes to make the script more robust.
+# 1.6: (17/05/2003) [first version]
+#  - wrote this script, based on tweakers.tcl version 1.6
 #
 # This script makes use of a function from alltools.tcl.
 # Please put alltools.tcl in your eggdrop configuration!
@@ -56,7 +63,7 @@ set slashdot(autonewschan) "#channel1 #channel2"
 
 # check for news after n minutes? [min. 30]
 # don't set this to low!
-set slashdot(updates) 30
+set slashdot(updates) 60
 
 # max. amount of messages which will be displayed meanwhile automatic updates.
 # with this setting you can prevent channel flooding if the updates are high
@@ -81,7 +88,7 @@ set slashdot(log) 1
 
 ### Begin TCL code ###
 
-set slashdot(version) "1.6"
+set slashdot(version) "1.7"
 
 package require http
 
@@ -89,7 +96,7 @@ for {set i 0} {$i < [llength $slashdot(triggers)]} {incr i} {
   bind pub $slashdot(flags) [lindex $slashdot(triggers) $i] slashdot:pub
   if {$slashdot(log)} { putlog "\[Slashdot\] Trigger [lindex $slashdot(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $slashdot(autotriggerflag) $slashdot(autofftrigger) slashdot:autoff
 bind pub $slashdot(autotriggerflag) $slashdot(autontrigger) slashdot:auton
@@ -132,9 +139,7 @@ proc slashdot:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count line trash }
 
   return 0
 }
@@ -146,8 +151,11 @@ proc slashdot:pub {nick uhost hand chan text} {
   if {$slashdot(log)} { putlog "\[Slashdot\] Trigger: $lastbind in $chan by $nick" }
 
   if {[slashdot:getdata] != -1} {
-    for {set i 0} {$i < $slashdot(headlines)} {incr i} { slashdot:put $chan $nick $i $slashdot(method) }
-    unset i
+    for {set i 0} {$i < $slashdot(headlines)} {incr i} {
+      if {![info exists slashdotdata(time,$i)]} { break }
+      slashdot:put $chan $nick $i $slashdot(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Slashdot\] Something went wrong while updating."
   }
@@ -164,54 +172,56 @@ proc slashdot:put {chan nick which method} {
   regsub -all "%sec" $outchan $slashdotdata(section,$which) outchan
   regsub -all "%url" $outchan $slashdotdata(url,$which) outchan
   regsub -all "%com" $outchan $slashdotdata(comments,$which) outchan
-  # strange bugger:
-  regsub -all "%titamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
-  regsub -all "%b"   $outchan "\002" outchan
-  regsub -all "%u"   $outchan "\037" outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
+  regsub -all "%b" $outchan "\002" outchan
+  regsub -all "%u" $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc slashdot:update {} {
-  global slashdot slashdotdata slashdot_lastitem
+  global slashdot slashdotdata
 
   if {[slashdot:getdata] != -1} {
 
     if {![info exists slashdotdata(time,0)]} {
-      putlog "\[Slashdot\] Something went wrong while updating."
+      putlog "\[Slashdot\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists slashdot_lastitem]} {
-      set slashdot_lastitem $slashdotdata(time,0)
-      if {$slashdot(log)} { putlog "\[Slashdot\] Last news item time set to $slashdotdata(time,0)" }
+    if {![info exists slashdot(lastitem)]} {
+      set slashdot(lastitem) $slashdotdata(time,0)
+      if {$slashdot(log)} { putlog "\[Slashdot\] Last news item time set to '$slashdotdata(time,0)'." }
     } else {
-      if {$slashdot(log)} { putlog "\[Slashdot\] Last news item time is $slashdotdata(time,0)" }
+      if {$slashdot(log)} { putlog "\[Slashdot\] Last news item time is '$slashdotdata(time,0)'." }
     }
 
-    if {$slashdotdata(time,0) > $slashdot_lastitem} {
+    if {$slashdotdata(time,0) > $slashdot(lastitem)} {
       if {$slashdot(log)} { putlog "\[Slashdot\] There's news!" }
       for {set i 0} {$i < $slashdot(automax)} {incr i} {
-        if {$slashdotdata(time,$i) == $slashdot_lastitem} { break }
+        if {![info exists slashdotdata(time,$i)]} { break }
+        if {$slashdotdata(time,$i) == $slashdot(lastitem)} { break }
         foreach chan [split $slashdot(autonewschan)] { slashdot:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$slashdot(log)} { putlog "\[Slashdot\] No news." } 
     }
 
-    set slashdot_lastitem $slashdotdata(time,0)
+    set slashdot(lastitem) $slashdotdata(time,0)
   }
 
-  if {$slashdot(updates) < 30} { 
+  if {$slashdot(updates) < 30} {
+    putlog "\[Slashdot\] Warning: the \$slashdot(updates) setting is too low! Defaulting to 30 minutes..."
     timer 30 slashdot:update
   } else {
     timer $slashdot(updates) slashdot:update
@@ -222,16 +232,16 @@ proc slashdot:update {} {
 }
 
 proc slashdot:autoff {nick uhost hand chan text} {
-  global lastbind slashdot slashdot_lastitem
+  global lastbind slashdot
   if {[lsearch -exact $slashdot(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$slashdot(log)} { putlog "\[Slashdot\] Trigger: $lastbind in $chan by $nick" }
 
   if {$slashdot(autonews) == 1} {
-    set slashdot(autonews) 0;  unset slashdot_lastitem
+    set slashdot(autonews) 0;  catch { unset slashdot(lastitem) }
     set whichtimer [timerexists "slashdot:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[Slashdot\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION has turned the slashdot.org news announcer off.\001"
   } else {
@@ -256,7 +266,7 @@ proc slashdot:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "slashdot:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$slashdot(autonews) == 1} { slashdot:update }
 

@@ -1,9 +1,12 @@
-# $Id: tweakers.tcl,v 1.6 2003-05-18 15:41:07 peter Exp $
+# $Id: tweakers.tcl,v 1.7 2003-05-20 13:52:57 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
-# version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.7: (20/05/03) [changes]
+#  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
+#  - kleine aanpassingen om het script nog wat robuuster te maken.
 # 1.6: (17/05/03) [bugfixes]
 #  - fix memory leak!!! (ongebruikte variabelen unsetten en 
 #    de belangrijkste: de ::http::cleanup functie!
@@ -117,7 +120,7 @@ set tnet(log) 1
 
 ### Begin TCL code ###
 
-set tnet(version) "1.6"
+set tnet(version) "1.7"
 
 package require http
 
@@ -125,7 +128,7 @@ for {set i 0} {$i < [llength $tnet(triggers)]} {incr i} {
   bind pub $tnet(flags) [lindex $tnet(triggers) $i] tnet:pub
   if {$tnet(log)} { putlog "\[T.Net\] Trigger [lindex $tnet(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $tnet(autotriggerflag) $tnet(autofftrigger) tnet:autoff
 bind pub $tnet(autotriggerflag) $tnet(autontrigger) tnet:auton
@@ -139,19 +142,16 @@ proc tnet:getdata {} {
   set url "http://www.tweakers.net/turbotracker.dsp"
   set page [::http::config -useragent "Mozilla"]
 
-  # check of connecten goed gaat
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[T.Net\] Problem: $msg"
     return -1
   }
   
-  # dit is voor errors zoals 'timeout'.. 
   if {[::http::status $page] != "ok"} {
     putlog "\[T.Net\] Problem: [::http::status $page]"
     return -1
   }
 
-  # dit is voor errors zoals 404 etc..
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[T.Net\] Problem: [::http::code $page]"
     return -1
@@ -174,9 +174,7 @@ proc tnet:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count line trash }
 
   return 0
 }
@@ -188,8 +186,11 @@ proc tnet:pub {nick uhost hand chan text} {
   if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
   if {[tnet:getdata] != -1} {
-    for {set i 0} {$i < $tnet(headlines)} {incr i} { tnet:put $chan $nick $i $tnet(method) }
-    unset i
+    for {set i 0} {$i < $tnet(headlines)} {incr i} { 
+      if {![info exists tnetdata(ts,$i)]} { break }
+      tnet:put $chan $nick $i $tnet(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[T.Net\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
@@ -208,54 +209,56 @@ proc tnet:put {chan nick which method} {
   regsub -all "%src" $outchan $tnetdata(src,$which) outchan
   regsub -all "%lnk" $outchan $tnetdata(link,$which) outchan
   regsub -all "%tit" $outchan $tnetdata(titel,$which) outchan
-  # waarom TCL er %titamp; van maakt weet ik niet, maar zo los ik het iig op:
-  regsub -all "%titamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
-  regsub -all "%b"   $outchan "\002" outchan
-  regsub -all "%u"   $outchan "\037" outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
+  regsub -all "%b" $outchan "\002" outchan
+  regsub -all "%u" $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc tnet:update {} {
-  global tnet tnetdata tnet_lastitem
+  global tnet tnetdata
 
   if {[tnet:getdata] != -1} {
 
     if {![info exists tnetdata(ts,0)]} {
-      putlog "\[T.Net\] Er iets iets fout gegaan tijdens het updaten..."
+      putlog "\[T.Net\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists tnet_lastitem]} {
-      set tnet_lastitem $tnetdata(ts,0)
-      if {$tnet(log)} { putlog "\[T.Net\] Last news item timestamp set to $tnetdata(ts,0)" }
+    if {![info exists tnet(lastitem)]} {
+      set tnet(lastitem) $tnetdata(ts,0)
+      if {$tnet(log)} { putlog "\[T.Net\] Last news item timestamp set to '$tnetdata(ts,0)'." }
     } else {
-      if {$tnet(log)} { putlog "\[T.Net\] Last news item timestamp is $tnetdata(ts,0)" }
+      if {$tnet(log)} { putlog "\[T.Net\] Last news item timestamp is '$tnetdata(ts,0)'." }
     }
 
-    if {$tnetdata(ts,0) > $tnet_lastitem} {
+    if {$tnetdata(ts,0) > $tnet(lastitem)} {
       if {$tnet(log)} { putlog "\[T.Net\] There's news!" }
       for {set i 0} {$i < $tnet(automax)} {incr i} {
-        if {$tnetdata(ts,$i) == $tnet_lastitem} { break }
+        if {![info exists tnetdata(ts,$i)]} { break }
+        if {$tnetdata(ts,$i) == $tnet(lastitem)} { break }
         foreach chan [split $tnet(autonewschan)] { tnet:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$tnet(log)} { putlog "\[T.Net\] No news." } 
     }
 
-    set tnet_lastitem $tnetdata(ts,0)
+    set tnet(lastitem) $tnetdata(ts,0)
   }
 
-  if {$tnet(updates) < 5} { 
+  if {$tnet(updates) < 5} {
+    putlog "\[T.Net\] Warning: the \$tnet(updates) setting is too low! Defaulting to 5 minutes..."
     timer 5 tnet:update
   } else {
     timer $tnet(updates) tnet:update
@@ -266,16 +269,16 @@ proc tnet:update {} {
 }
 
 proc tnet:autoff {nick uhost hand chan text} {
-  global lastbind tnet tnet_lastitem
+  global lastbind tnet
   if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
   if {$tnet(autonews) == 1} {
-    set tnet(autonews) 0;  unset tnet_lastitem
+    set tnet(autonews) 0;  catch { unset tnet(lastitem) }
     set whichtimer [timerexists "tnet:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[T.Net\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn tweakers.net nieuws aankondiger uitgezet.\001"
   } else {
@@ -300,7 +303,7 @@ proc tnet:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "tnet:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$tnet(autonews) == 1} { tnet:update }
 

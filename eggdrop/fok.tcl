@@ -1,9 +1,12 @@
-# $Id: fok.tcl,v 1.5 2003-05-18 15:41:07 peter Exp $
+# $Id: fok.tcl,v 1.6 2003-05-20 13:52:57 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
-# version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.7: (20/05/03) [changes]
+#  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
+#  - kleine aanpassingen om het script nog wat robuuster te maken.
 # 1.6: (17/05/03) [bugfixes]
 #  - fix memory leak!!! (ongebruikte variabelen unsetten en 
 #    de belangrijkste: de ::http::cleanup functie!
@@ -113,7 +116,7 @@ set fok(log) 1
 
 ### Begin TCL code ###
 
-set fok(version) "1.6"
+set fok(version) "1.7"
 
 package require http
 
@@ -121,7 +124,7 @@ for {set i 0} {$i < [llength $fok(triggers)]} {incr i} {
   bind pub $fok(flags) [lindex $fok(triggers) $i] fok:pub
   if {$fok(log)} { putlog "\[Fok!\] Trigger [lindex $fok(triggers) $i] added." }
 }
-unset i
+catch { unset i }
 
 bind pub $fok(autotriggerflag) $fok(autofftrigger) fok:autoff
 bind pub $fok(autotriggerflag) $fok(autontrigger) fok:auton
@@ -135,19 +138,16 @@ proc fok:getdata {} {
   set url "http://www.athena.fokzine.net/~danny/remote.xml"
   set page [::http::config -useragent "Mozilla"]
 
-  # check of connecten goed gaat
   if {[catch {set page [::http::geturl $url -timeout 15000]} msg]} {
     putlog "\[Fok!\] Problem: $msg"
     return -1
   }
   
-  # dit is voor errors zoals 'timeout'.. 
   if {[::http::status $page] != "ok"} {
     putlog "\[Fok!\] Problem: [::http::status $page]"
     return -1
   }
 
-  # dit is voor errors zoals 404 etc..
   if {![regexp -nocase {ok} [::http::code $page]]} {
     putlog "\[Fok!\] Problem: [::http::code $page]"
     return -1
@@ -166,9 +166,7 @@ proc fok:getdata {} {
   }
   ::http::cleanup $page
 
-  unset url page msg count lines
-  if {[info exists line]} { unset line }
-  if {[info exists trash]} { unset trash }
+  catch { unset url page msg lines count line trash }
 
   return 0
 }
@@ -180,8 +178,11 @@ proc fok:pub {nick uhost hand chan text} {
   if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
   if {[fok:getdata] != -1} {
-    for {set i 0} {$i < $fok(headlines)} {incr i} { fok:put $chan $nick $i $fok(method) }
-    unset i
+    for {set i 0} {$i < $fok(headlines)} {incr i} {
+      if {![info exists fokdata(id,$i)]} { break }
+      fok:put $chan $nick $i $fok(method)
+    }
+    catch { unset i }
   } else {
     putserv "NOTICE $nick :\[Fok!\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
@@ -196,54 +197,56 @@ proc fok:put {chan nick which method} {
   regsub -all "%id"  $outchan $fokdata(id,$which) outchan
   regsub -all "%rea" $outchan $fokdata(reac,$which) outchan
   regsub -all "%tit" $outchan $fokdata(titel,$which) outchan
-  # waarom TCL er %titamp; van maakt weet ik niet, maar zo los ik het iig op:
-  regsub -all "%titamp;" $outchan "\\\&" outchan
-  regsub -all "&amp;" $outchan "\\\&" outchan
-  regsub -all "%b"   $outchan "\002" outchan
-  regsub -all "%u"   $outchan "\037" outchan
+  regsub -all "\\&"    $outchan "\\\\&" outchan
+  regsub -all "&amp;"  $outchan "\\&" outchan
+  regsub -all "&quot;" $outchan "\"" outchan
+  regsub -all "%b" $outchan "\002" outchan
+  regsub -all "%u" $outchan "\037" outchan
   switch -- $method {
-    0 { putserv "PRIVMSG $nick :$outchan" } 
+    0 { putserv "PRIVMSG $nick :$outchan" }
     1 { putserv "PRIVMSG $chan :$outchan" }
     2 { putserv "NOTICE $nick :$outchan" }
     3 { putserv "NOTICE $chan :$outchan" }
     default { putserv "PRIVMSG $chan :$outchan" }
   }
-  unset outchan
+  catch { unset outchan }
 }
 
 proc fok:update {} {
-  global fok fokdata fok_lastitem
+  global fok fokdata
 
   if {[fok:getdata] != -1} {
 
     if {![info exists fokdata(ts,0)]} {
-      putlog "\[Fok!\] Er iets iets fout gegaan tijdens het updaten..."
+      putlog "\[Fok!\] Something went wrong while updating..."
       return -1
     }
 
-    if {![info exists fok_lastitem]} {
-      set fok_lastitem $fokdata(ts,0)
-      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp set to $fokdata(ts,0)" }
+    if {![info exists fok(lastitem)]} {
+      set fok(lastitem) $fokdata(ts,0)
+      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp set to '$fokdata(ts,0)'." }
     } else {
-      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp is $fokdata(ts,0)" }
+      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp is '$fokdata(ts,0)'." }
     }
 
-    if {$fokdata(ts,0) > $fok_lastitem} {
+    if {$fokdata(ts,0) > $fok(lastitem)} {
       if {$fok(log)} { putlog "\[Fok!\] There's news!" }
       for {set i 0} {$i < $fok(automax)} {incr i} {
-        if {$fokdata(ts,$i) == $fok_lastitem} { break }
+        if {![info exists fokdata(ts,$i)]} { break }
+        if {$fokdata(ts,$i) == $fok(lastitem)} { break }
         foreach chan [split $fok(autonewschan)] { fok:put $chan $chan $i 1 }
-        unset chan
+        catch { unset chan }
       }
-      unset i
+      catch { unset i }
     } else {
       if {$fok(log)} { putlog "\[Fok!\] No news." } 
     }
 
-    set fok_lastitem $fokdata(ts,0)
+    set fok(lastitem) $fokdata(ts,0)
   }
 
   if {$fok(updates) < 5} { 
+    putlog "\[Fok!\] Warning: the \$fok(updates) setting is too low! Defaulting to 5 minutes..."
     timer 5 fok:update
   } else {
     timer $fok(updates) fok:update
@@ -254,16 +257,16 @@ proc fok:update {} {
 }
 
 proc fok:autoff {nick uhost hand chan text} {
-  global lastbind fok fok_lastitem
+  global lastbind fok
   if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
   if {$fok(autonews) == 1} {
-    set fok(autonews) 0;  unset fok_lastitem
+    set fok(autonews) 0;  catch { unset fok(lastitem) }
     set whichtimer [timerexists "fok:update"]
     if {$whichtimer != ""} { killtimer $whichtimer }
-    unset whichtimer
+    catch { unset whichtimer }
     putlog "\[Fok!\] Autonews turned off."
     putserv "PRIVMSG $chan :\001ACTION heeft zijn fok.nl nieuws aankondiger uitgezet.\001"
   } else {
@@ -288,7 +291,7 @@ proc fok:auton {nick uhost hand chan text} {
 
 set whichtimer [timerexists "fok:update"]
 if {$whichtimer != ""} { killtimer $whichtimer }
-unset whichtimer
+catch { unset whichtimer }
 
 if {$fok(autonews) == 1} { fok:update }
 
