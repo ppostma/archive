@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.21 2003-07-10 09:56:06 peter Exp $
+# $Id: osnews.tcl,v 1.22 2003-07-10 10:24:52 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -134,8 +134,8 @@ foreach trigger [split $osnews(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $osnews(autotriggerflag) $osnews(autofftrigger) osnews:autoff
-bind pub $osnews(autotriggerflag) $osnews(autontrigger) osnews:auton
+if {$osnews(autofftrigger) != ""} { bind pub $osnews(autotriggerflag) $osnews(autofftrigger) osnews:autoff }
+if {$osnews(autontrigger)  != ""} { bind pub $osnews(autotriggerflag) $osnews(autontrigger) osnews:auton }
 
 proc osnews:getdata {} {
   global osnews osnewsdata
@@ -197,14 +197,16 @@ proc osnews:pub {nick uhost hand chan text} {
   global lastbind osnews osnewsdata
   if {[lsearch -exact $osnews(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists osnews(floodprot,$chan)]} {
-    set diff [expr [clock seconds] - $osnews(floodprot,$chan)]
-    if {$diff < $osnews(antiflood)} {
-      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $osnews(antiflood) - $diff] seconds..."
-      return 0
+  if {$osnews(antiflood) > 0} {
+    if {[info exists osnews(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $osnews(floodprot,$chan)]
+      if {$diff < $osnews(antiflood)} {
+        putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $osnews(antiflood) - $diff] seconds..."
+        return 0
+      }
     }
+    set osnews(floodprot,$chan) [clock seconds]
   }
-  set osnews(floodprot,$chan) [clock seconds]
 
   if {$osnews(log)} { putlog "\[OSnews\] Trigger: $lastbind in $chan by $nick" }
 

@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.11 2003-07-10 09:56:06 peter Exp $
+# $Id: webwereld.tcl,v 1.12 2003-07-10 10:24:52 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -124,8 +124,8 @@ foreach trigger [split $webw(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $webw(autotriggerflag) $webw(autofftrigger) webw:autoff
-bind pub $webw(autotriggerflag) $webw(autontrigger) webw:auton
+if {$webw(autofftrigger) != ""} { bind pub $webw(autotriggerflag) $webw(autofftrigger) webw:autoff }
+if {$webw(autontrigger)  != ""} { bind pub $webw(autotriggerflag) $webw(autontrigger) webw:auton }
 
 proc webw:getdata {} {
   global webw webwdata
@@ -188,14 +188,16 @@ proc webw:pub {nick uhost hand chan text} {
   global lastbind webw webwdata
   if {[lsearch -exact $webw(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists webw(floodprot,$chan)]} {
-    set verschil [expr [clock seconds] - $webw(floodprot,$chan)]
-    if {$verschil < $webw(antiflood)} {
-      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $webw(antiflood) - $verschil] seconden..."
-      return 0
+  if {$webw(antiflood) > 0} {
+    if {[info exists webw(floodprot,$chan)]} {
+      set verschil [expr [clock seconds] - $webw(floodprot,$chan)]
+      if {$verschil < $webw(antiflood)} {
+        putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $webw(antiflood) - $verschil] seconden..."
+        return 0
+      }
     }
+    set webw(floodprot,$chan) [clock seconds]
   }
-  set webw(floodprot,$chan) [clock seconds]
 
   if {$webw(log)} { putlog "\[WebWereld\] Trigger: $lastbind in $chan by $nick" }
 

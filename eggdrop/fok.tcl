@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.24 2003-07-10 09:56:06 peter Exp $
+# $Id: fok.tcl,v 1.25 2003-07-10 10:24:52 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -166,8 +166,8 @@ foreach trigger [split $fok(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $fok(autotriggerflag) $fok(autofftrigger) fok:autoff
-bind pub $fok(autotriggerflag) $fok(autontrigger) fok:auton
+if {$fok(autofftrigger) != ""} { bind pub $fok(autotriggerflag) $fok(autofftrigger) fok:autoff }
+if {$fok(autontrigger)  != ""} { bind pub $fok(autotriggerflag) $fok(autontrigger) fok:auton }
 
 proc fok:getdata {} {
   global fok fokdata
@@ -227,14 +227,16 @@ proc fok:pub {nick uhost hand chan text} {
   global lastbind fok fokdata
   if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists fok(floodprot,$chan)]} {
-    set verschil [expr [clock seconds] - $fok(floodprot,$chan)]
-    if {$verschil < $fok(antiflood)} {
-      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $fok(antiflood) - $verschil] seconden..."
-      return 0
+  if {$fok(antiflood) > 0} {
+    if {[info exists fok(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $fok(floodprot,$chan)]
+      if {$diff < $fok(antiflood)} {
+        putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $fok(antiflood) - $diff] seconden..."
+        return 0
+      }
     }
+    set fok(floodprot,$chan) [clock seconds]
   }
-  set fok(floodprot,$chan) [clock seconds]
 
   if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 
@@ -255,7 +257,7 @@ proc fok:pub {nick uhost hand chan text} {
   } else {
     putserv "NOTICE $nick :\[Fok!\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret verschil i }
+  catch { unset ret diff i }
 }
 
 proc fok:put {chan nick which method} {

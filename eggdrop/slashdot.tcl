@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.23 2003-07-10 09:56:06 peter Exp $
+# $Id: slashdot.tcl,v 1.24 2003-07-10 10:24:52 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
 # version 2.0, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -138,8 +138,8 @@ foreach trigger [split $slashdot(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $slashdot(autotriggerflag) $slashdot(autofftrigger) slashdot:autoff
-bind pub $slashdot(autotriggerflag) $slashdot(autontrigger) slashdot:auton
+if {$slashdot(autofftrigger) != ""} { bind pub $slashdot(autotriggerflag) $slashdot(autofftrigger) slashdot:autoff }
+if {$slashdot(autontrigger)  != ""} { bind pub $slashdot(autotriggerflag) $slashdot(autontrigger) slashdot:auton }
 
 proc slashdot:getdata {} {
   global slashdot slashdotdata
@@ -200,14 +200,16 @@ proc slashdot:pub {nick uhost hand chan text} {
   global lastbind slashdot slashdotdata
   if {[lsearch -exact $slashdot(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists slashdot(floodprot,$chan)]} {
-    set diff [expr [clock seconds] - $slashdot(floodprot,$chan)]
-    if {$diff < $slashdot(antiflood)} {
-      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $slashdot(antiflood) - $diff] seconds..."
-      return 0
+  if {$slashdot(antiflood) > 0} {
+    if {[info exists slashdot(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $slashdot(floodprot,$chan)]
+      if {$diff < $slashdot(antiflood)} {
+        putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $slashdot(antiflood) - $diff] seconds..."
+        return 0
+      }
     }
+    set slashdot(floodprot,$chan) [clock seconds]
   }
-  set slashdot(floodprot,$chan) [clock seconds]
 
   if {$slashdot(log)} { putlog "\[Slashdot\] Trigger: $lastbind in $chan by $nick" }
 

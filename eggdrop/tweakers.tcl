@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.26 2003-07-10 09:56:06 peter Exp $
+# $Id: tweakers.tcl,v 1.27 2003-07-10 10:24:52 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -170,8 +170,8 @@ foreach trigger [split $tnet(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $tnet(autotriggerflag) $tnet(autofftrigger) tnet:autoff
-bind pub $tnet(autotriggerflag) $tnet(autontrigger) tnet:auton
+if {$tnet(autofftrigger) != ""} { bind pub $tnet(autotriggerflag) $tnet(autofftrigger) tnet:autoff }
+if {$tnet(autontrigger)  != ""} { bind pub $tnet(autotriggerflag) $tnet(autontrigger) tnet:auton }
 
 proc tnet:getdata {} {
   global tnet tnetdata
@@ -235,14 +235,16 @@ proc tnet:pub {nick uhost hand chan text} {
   global lastbind tnet tnetdata
   if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists tnet(floodprot,$chan)]} {
-    set verschil [expr [clock seconds] - $tnet(floodprot,$chan)]
-    if {$verschil < $tnet(antiflood)} {
-      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $tnet(antiflood) - $verschil] seconden..."
-      return 0
+  if {$tnet(antiflood) > 0} {
+    if {[info exists tnet(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $tnet(floodprot,$chan)]
+      if {$diff < $tnet(antiflood)} {
+        putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $tnet(antiflood) - $diff] seconden..."
+        return 0
+      }
     }
+    set tnet(floodprot,$chan) [clock seconds]
   }
-  set tnet(floodprot,$chan) [clock seconds]
 
   if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
@@ -263,7 +265,7 @@ proc tnet:pub {nick uhost hand chan text} {
   } else {
     putserv "NOTICE $nick :\[T.Net\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret verschil i }
+  catch { unset ret diff i }
 }
 
 proc tnet:put {chan nick which method} {

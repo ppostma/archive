@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.21 2003-07-10 09:56:06 peter Exp $
+# $Id: kerneltrap.tcl,v 1.22 2003-07-10 10:24:52 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -134,8 +134,8 @@ foreach trigger [split $kerneltrap(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $kerneltrap(autotriggerflag) $kerneltrap(autofftrigger) kerneltrap:autoff
-bind pub $kerneltrap(autotriggerflag) $kerneltrap(autontrigger) kerneltrap:auton
+if {$kerneltrap(autofftrigger) != ""} { bind pub $kerneltrap(autotriggerflag) $kerneltrap(autofftrigger) kerneltrap:autoff }
+if {$kerneltrap(autontrigger)  != ""} { bind pub $kerneltrap(autotriggerflag) $kerneltrap(autontrigger) kerneltrap:auton }
 
 proc kerneltrap:getdata {} {
   global kerneltrap kerneltrapdata
@@ -197,14 +197,16 @@ proc kerneltrap:pub {nick uhost hand chan text} {
   global lastbind kerneltrap kerneltrapdata
   if {[lsearch -exact $kerneltrap(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists kerneltrap(floodprot,$chan)]} {
-    set diff [expr [clock seconds] - $kerneltrap(floodprot,$chan)]
-    if {$diff < $kerneltrap(antiflood)} {
-      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $kerneltrap(antiflood) - $diff] seconds..."
-      return 0
+  if {$kerneltrap(antiflood) > 0} {
+    if {[info exists kerneltrap(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $kerneltrap(floodprot,$chan)]
+      if {$diff < $kerneltrap(antiflood)} {
+        putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $kerneltrap(antiflood) - $diff] seconds..."
+        return 0
+      }
     }
+    set kerneltrap(floodprot,$chan) [clock seconds]
   }
-  set kerneltrap(floodprot,$chan) [clock seconds]
 
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Trigger: $lastbind in $chan by $nick" }
 

@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.24 2003-07-10 09:56:06 peter Exp $
+# $Id: gamer.tcl,v 1.25 2003-07-10 10:24:52 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -167,8 +167,8 @@ foreach trigger [split $gamer(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $gamer(autotriggerflag) $gamer(autofftrigger) gamer:autoff
-bind pub $gamer(autotriggerflag) $gamer(autontrigger) gamer:auton
+if {$gamer(autofftrigger) != ""} { bind pub $gamer(autotriggerflag) $gamer(autofftrigger) gamer:autoff }
+if {$gamer(autontrigger) != ""} { bind pub $gamer(autotriggerflag) $gamer(autontrigger) gamer:auton }
 
 proc gamer:getdata {} {
   global gamer gamerdata
@@ -229,14 +229,16 @@ proc gamer:pub {nick uhost hand chan text} {
   global lastbind gamer gamerdata
   if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists gamer(floodprot,$chan)]} {
-    set verschil [expr [clock seconds] - $gamer(floodprot,$chan)]
-    if {$verschil < $gamer(antiflood)} {
-      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $gamer(antiflood) - $verschil] seconden..."
-      return 0
+  if {$gamer(antiflood > 0} {
+    if {[info exists gamer(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $gamer(floodprot,$chan)]
+      if {$diff < $gamer(antiflood)} {
+        putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $gamer(antiflood) - $diff] seconden..."
+        return 0
+      }
     }
+    set gamer(floodprot,$chan) [clock seconds]
   }
-  set gamer(floodprot,$chan) [clock seconds]
 
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 
@@ -257,7 +259,7 @@ proc gamer:pub {nick uhost hand chan text} {
   } else {
     putserv "NOTICE $nick :\[Gamer.nl\] Er ging iets fout tijdens het ophalen van de gegevens."
   }
-  catch { unset ret verschil i }
+  catch { unset ret diff i }
 }
 
 proc gamer:put {chan nick which method} {

@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.22 2003-07-10 09:56:06 peter Exp $
+# $Id: clanbase.tcl,v 1.23 2003-07-10 10:24:52 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -134,8 +134,8 @@ foreach trigger [split $cb(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $cb(autotriggerflag) $cb(autofftrigger) cb:autoff
-bind pub $cb(autotriggerflag) $cb(autontrigger) cb:auton
+if {$cb(autofftrigger) != ""} { bind pub $cb(autotriggerflag) $cb(autofftrigger) cb:autoff }
+if {$cb(autontrigger)  != ""} { bind pub $cb(autotriggerflag) $cb(autontrigger) cb:auton }
 
 proc cb:getdata {} {
   global cb cbdata
@@ -197,14 +197,16 @@ proc cb:pub {nick uhost hand chan text} {
   global lastbind cb cbdata
   if {[lsearch -exact $cb(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {[info exists cb(floodprot,$chan)]} {
-    set diff [expr [clock seconds] - $cb(floodprot,$chan)]
-    if {$diff < $cb(antiflood)} {
-      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $cb(antiflood) - $diff] seconds..."
-      return 0
+  if {$cb(antiflood) > 0} {
+    if {[info exists cb(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $cb(floodprot,$chan)]
+      if {$diff < $cb(antiflood)} {
+        putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $cb(antiflood) - $diff] seconds..."
+        return 0
+      }
     }
+    set cb(floodprot,$chan) [clock seconds]
   }
-  set cb(floodprot,$chan) [clock seconds]
 
   if {$cb(log)} { putlog "\[Clanbase\] Trigger: $lastbind in $chan by $nick" }
 

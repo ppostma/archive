@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.13 2003-07-10 09:56:06 peter Exp $
+# $Id: bsdforums.tcl,v 1.14 2003-07-10 10:24:52 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -128,8 +128,8 @@ foreach trigger [split $bsdforums(triggers)] {
 }
 catch { unset trigger }
 
-bind pub $bsdforums(autotriggerflag) $bsdforums(autofftrigger) bsdforums:autoff
-bind pub $bsdforums(autotriggerflag) $bsdforums(autontrigger) bsdforums:auton
+if {$bsdforums(autofftrigger) != ""} { bind pub $bsdforums(autotriggerflag) $bsdforums(autofftrigger) bsdforums:autoff }
+if {$bsdforums(autontrigger)  != ""} { bind pub $bsdforums(autotriggerflag) $bsdforums(autontrigger) bsdforums:auton }
 
 proc bsdforums:getdata {} {
   global bsdforums bsdforumsdata
@@ -191,14 +191,16 @@ proc bsdforums:pub {nick uhost hand chan text} {
   global lastbind bsdforums bsdforumsdata
   if {[lsearch -exact $bsdforums(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists bsdforums(floodprot,$chan)]} {
-    set diff [expr [clock seconds] - $bsdforums(floodprot,$chan)]
-    if {$diff < $bsdforums(antiflood)} {
-      putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $bsdforums(antiflood) - $diff] seconds..."
-      return 0
+  if {$bsdforums(antiflood) > 0} {
+    if {[info exists bsdforums(floodprot,$chan)]} {
+      set diff [expr [clock seconds] - $bsdforums(floodprot,$chan)]
+      if {$diff < $bsdforums(antiflood)} {
+        putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $bsdforums(antiflood) - $diff] seconds..."
+        return 0
+      }
     }
+    set bsdforums(floodprot,$chan) [clock seconds]
   }
-  set bsdforums(floodprot,$chan) [clock seconds]
 
   if {$bsdforums(log)} { putlog "\[BSDForums\] Trigger: $lastbind in $chan by $nick" }
 
