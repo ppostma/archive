@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.31 2003-11-02 18:31:04 peter Exp $
+ * $Id: ess.c,v 1.32 2003-11-02 19:10:58 peter Exp $
  */
 
 #include <sys/types.h>
@@ -39,7 +39,7 @@ size_t	 readln(int, char *, size_t);
 size_t	 readall(int);
 int	 readcode(int);
 char	*get_af(int);
-char	*get_addr(struct sockaddr *, size_t, int);
+char	*get_addr(struct sockaddr *, socklen_t, int);
 char	*get_serv(char *);
 char	*banner_scan(u_short);
 int	 ident_scan(char *, int, u_short, u_short, char *, size_t);
@@ -301,7 +301,7 @@ print_results:
 size_t
 readln(int fd, char *line, size_t len)
 {
-	size_t	b, i = 0;
+	ssize_t	b, i = 0;
 	char	temp[1];
 
 	do {
@@ -372,12 +372,12 @@ get_af(int af)
 }
 
 char *
-get_addr(struct sockaddr *addr, size_t len, int resolve)
+get_addr(struct sockaddr *addr, socklen_t len, int resolve)
 {
 	struct sockaddr_storage	ss;
 	static char	host[NI_MAXHOST];
 
-	memcpy(&ss, addr, len);
+	memcpy(&ss, addr, (size_t)len);
 	if (getnameinfo((struct sockaddr *)&ss, len, host,
 	    sizeof(host), NULL, 0, (resolve) ? 0 : NI_NUMERICHOST) == 0)
 		return host;
