@@ -1,5 +1,5 @@
 <? 
-  # $Id: dir.php,v 1.1.1.1 2003-03-19 12:58:21 peter Exp $
+  # $Id: dir.php,v 1.2 2003-08-01 21:48:47 peter Exp $
   #
   # WebFTP client - dir
   #
@@ -22,7 +22,7 @@
     <td>
       <form enctype="multipart/form-data" action="<?= $_SERVER['PHP_SELF'] ?>" method="post">
         Upload file<br />
-        <input type="file" name="file1" id="file1" class="form" size="25" />
+        <input type="file" name="<?= $tempfile ?>" id="<?= $tempfile ?>" class="form" size="25" />
         <input type="hidden" name="dir" value="<?= $ftp->curdir ?>" />
         <input type="submit" name="upload" value=" Ok " />
       </form>

@@ -35,7 +35,6 @@ If you've problems with uploading files >2MB then change the setting
  - fix: symlinks
  - icons: need a new chmod icon, maybe delete icon too
  - add: owner & group?
- - fix: upload method isn't really correct
 
 
 4. History:
@@ -55,4 +54,4 @@ v0.6 (03/08/2001)
  - first release, very poor written code.
 
 
-$Id: README,v 1.5 2003-06-15 17:17:34 peter Exp $
+$Id: README,v 1.6 2003-08-01 21:48:47 peter Exp $

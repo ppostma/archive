@@ -1,5 +1,5 @@
 <?
-  # $Id: ftp.php,v 1.2 2003-05-02 16:06:54 peter Exp $
+  # $Id: ftp.php,v 1.3 2003-08-01 21:48:47 peter Exp $
   #
   # WebFTP client - ftp class
   #
@@ -129,18 +129,17 @@
       exit;   /* stop execution or else our file may be screwed */
     }
 
-    /* This is not really correct */
-    function upload($dir)
+    function upload($dir, $file)
     {
-      if (is_uploaded_file($_FILES['file1']['tmp_name'])) {
+      if (is_uploaded_file($_FILES[$file]['tmp_name'])) {
 
-        $up = @ftp_put($this->id, $dir . "/" . $_FILES['file1']['name'],
-                       $_FILES['file1']['tmp_name'], FTP_BINARY);
+        $up = @ftp_put($this->id, $dir . "/" . $_FILES[$file]['name'],
+                       $_FILES[$file]['tmp_name'], FTP_BINARY);
         if (!$up)
-          $this->error .= "<p>Upload of '<b>" . $_FILES['file1']['name'] . "</b>' failed.</p>";
+          $this->error .= "<p>Upload of '<b>" . $_FILES[$file]['name'] . "</b>' failed.</p>";
 
       } else {
-        $this->error .= "<p>'<b>" . $_FILES['file1']['tmp_name'] .
+        $this->error .= "<p>'<b>" . $_FILES[$file]['tmp_name'] .
                         "</b>' is not an uploaded file.</p>";
       }
     }

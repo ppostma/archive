@@ -1,5 +1,5 @@
 <?
-  # $Id: index.php,v 1.1.1.1 2003-03-19 12:58:21 peter Exp $
+  # $Id: index.php,v 1.2 2003-08-01 21:48:47 peter Exp $
   #
   # WebFTP client - index
   #
@@ -62,7 +62,7 @@
     } elseif (isset($_POST['upload'])) {
       /* Upload a file */
 
-      $ftp->upload($_POST['dir']);
+      $ftp->upload($_POST['dir'], $tempfile);
 
     } elseif (isset($_POST['newdir'])) {
       /* Make new directory */

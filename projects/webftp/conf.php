@@ -1,5 +1,5 @@
 <?
-  # $Id: conf.php,v 1.4 2003-08-01 21:34:26 peter Exp $
+  # $Id: conf.php,v 1.5 2003-08-01 21:48:47 peter Exp $
   #
   # WebFTP client - configuration
   #
@@ -15,5 +15,8 @@
 
   /* timeout of the cookie in seconds */
   $cookie_timeout = 300;
+
+  /* you should not change this */
+  $tempfile = "file1";
 
 ?>
