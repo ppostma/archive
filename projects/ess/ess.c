@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ess.c,v 1.55 2004-09-04 19:10:50 peter Exp $
+ * $Id: ess.c,v 1.56 2004-09-04 19:12:16 peter Exp $
  */
 
 #include <sys/types.h>
@@ -568,7 +568,7 @@ banner_scan(int sock, uint16_t port, int timeout)
 		fds[0].fd = sock;
 		fds[0].events = POLLIN;
 		if (poll(fds, 1, timeout) < 0)
-			err(1, "poll");
+			err(255, "poll");
 		if ((fds[0].revents & POLLIN) == 0)
 			break;
 		if ((count = recv(sock, buf, BANNER_SIZE - 1, 0)) < 1)
@@ -868,13 +868,13 @@ socks_proxy_scan(int sock, const char *ip, uint16_t port)
 
 	/* Send authentication method packet */
 	if (send(sock, buf, 3, 0) < 0)
-		err(1, "send");
+		err(255, "send");
 	if (verbose_flag)
 		printf(">>> 0x05 0x01 0x00\n");
 
 	/* Read reply */
 	if ((len = recv(sock, buf, sizeof(buf) - 1, 0)) < 0)
-		err(1, "recv");
+		err(255, "recv");
 	else if (len == 0)
 		return 2;
 	if (verbose_flag) {
@@ -907,7 +907,7 @@ socks_proxy_scan(int sock, const char *ip, uint16_t port)
 
 		/* Request connection */
 		if (send(sock, buf, len, 0) < 0)
-			err(1, "send");
+			err(255, "send");
 		if (verbose_flag) {
 			printf(">>>");
 			for (i = 0; i < len; i++)
@@ -917,7 +917,7 @@ socks_proxy_scan(int sock, const char *ip, uint16_t port)
 
 		/* Read reply */
 		if ((len = recv(sock, buf, sizeof(buf) - 1, 0)) < 0)
-			err(1, "recv");
+			err(255, "recv");
 		else if (len == 0)
 			return 2;
 
