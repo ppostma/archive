@@ -1,4 +1,4 @@
-Service Scanner v0.3.3-beta by Peter Postma <peter@webdeveloping.nl>
+Easy Service Scanner v0.3.3-beta by Peter Postma <peter@webdeveloping.nl>
 
 This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
@@ -18,7 +18,7 @@ If you want to install the program to /usr/local/bin then simply do
 # make install
 
 
-Usage: ./ss [options] hostname port
+Usage: ./ess [options] hostname port
 Options:
   -4      Force the use of IPv4 only.
   -6      Force the use of IPv6 only.
