@@ -1,9 +1,11 @@
-# $Id: tweakers.tcl,v 1.9 2003-05-21 16:26:02 peter Exp $
+# $Id: tweakers.tcl,v 1.10 2003-05-26 17:02:08 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
-# version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.8: (26/05/03) [bugfix]
+#  - 3de poging om de bug met & teken te fixen.
 # 1.7: (20/05/03) [changes]
 #  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
 #  - kleine aanpassingen om het script nog wat robuuster te maken.
@@ -120,7 +122,7 @@ set tnet(log) 1
 
 ### Begin TCL code ###
 
-set tnet(version) "1.7"
+set tnet(version) "1.8"
 
 package require http
 
@@ -137,7 +139,6 @@ proc tnet:getdata {} {
   global tnet tnetdata
 
   if {$tnet(log)} { putlog "\[T.Net\] Updating data..." }
-  if {[info exists tnetdata]} { unset tnetdata }
 
   set url "http://www.tweakers.net/turbotracker.dsp"
   set page [::http::config -useragent "Mozilla"]
@@ -157,11 +158,14 @@ proc tnet:getdata {} {
     return -1
   }
 
+  if {[info exists tnetdata]} { unset tnetdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     regexp "<id>(.*?)</id>" $line trash tnetdata(id,$count)
     regexp "<titel>(.*?)</titel>" $line trash tnetdata(titel,$count)
     regexp "<editor>(.*?)</editor>" $line trash tnetdata(edit,$count)
@@ -172,8 +176,8 @@ proc tnet:getdata {} {
     regexp "<timestamp>(.*?)</timestamp>" $line trash tnetdata(ts,$count)
     if {[regexp "<reacties>(.*?)</reacties>" $line trash tnetdata(reac,$count)]} { incr count }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
   return 0
@@ -201,9 +205,6 @@ proc tnet:put {chan nick which method} {
   global tnet tnetdata
 
   set outchan $tnet(layout)
-  foreach item {reac edit tijd id cat src link titel} {
-    regsub -all "\\&" $tnetdata($item,$which) "\\\\&" tnetdata($item,$which)
-  }
   regsub -all "%rea" $outchan $tnetdata(reac,$which) outchan
   regsub -all "%edt" $outchan $tnetdata(edit,$which) outchan
   regsub -all "%tyd" $outchan $tnetdata(tijd,$which) outchan

@@ -1,9 +1,11 @@
-# $Id: gamer.tcl,v 1.8 2003-05-21 16:26:02 peter Exp $
+# $Id: gamer.tcl,v 1.9 2003-05-26 17:02:08 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
-# version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.8: (26/05/03) [bugfix]
+#  - 3de poging om de bug met & teken te fixen.
 # 1.7: (20/05/03) [changes]
 #  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
 #  - kleine aanpassingen om het script nog wat robuuster te maken.
@@ -117,7 +119,7 @@ set gamer(log) 1
 
 ### Begin TCL code ###
 
-set gamer(version) "1.7"
+set gamer(version) "1.8"
 
 package require http
 
@@ -134,7 +136,6 @@ proc gamer:getdata {} {
   global gamer gamerdata
 
   if {$gamer(log)} { putlog "\[Gamer.nl\] Updating data..." }
-  if {[info exists gamerdata]} { unset gamerdata }
 
   set url "http://www.gamer.nl/newstracker.xml"
   set page [::http::config -useragent "Mozilla"]
@@ -154,11 +155,14 @@ proc gamer:getdata {} {
     return -1
   }
 
+  if {[info exists gamerdata]} { unset gamerdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     regexp "<id>(.*?)</id>" $line trash gamerdata(id,$count)
     regexp "<title>(.*?)</title>" $line trash gamerdata(titel,$count)
     regexp "<author>(.*?)</author>" $line trash gamerdata(auteur,$count)
@@ -166,8 +170,8 @@ proc gamer:getdata {} {
     regexp "<unix_timestamp>(.*?)</unix_timestamp>" $line trash gamerdata(ts,$count)
     if {[regexp "<comments>(.*?)</comments>" $line trash gamerdata(reac,$count)]} { incr count }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
   return 0
@@ -195,9 +199,6 @@ proc gamer:put {chan nick which method} {
   global gamer gamerdata
 
   set outchan $gamer(layout)
-  foreach item {tijd id reac auteur titel} {
-    regsub -all "\\&" $gamerdata($item,$which) "\\\\&" gamerdata($item,$which)
-  }
   regsub -all "%tyd" $outchan $gamerdata(tijd,$which) outchan
   regsub -all "%id"  $outchan $gamerdata(id,$which) outchan
   regsub -all "%rea" $outchan $gamerdata(reac,$which) outchan

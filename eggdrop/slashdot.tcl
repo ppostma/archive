@@ -1,9 +1,11 @@
-# $Id: slashdot.tcl,v 1.9 2003-05-21 16:26:02 peter Exp $
+# $Id: slashdot.tcl,v 1.10 2003-05-26 17:02:08 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
-# version 1.7 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.8 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.8: (26/05/2003) [bugfix]
+#  - third attempt to get rid of the bug with the & character.
 # 1.7: (20/05/2003) [changes]
 #  - strange bug with & character fixed.
 #  - small changes to make the script more robust.
@@ -88,7 +90,7 @@ set slashdot(log) 1
 
 ### Begin TCL code ###
 
-set slashdot(version) "1.7"
+set slashdot(version) "1.8"
 
 package require http
 
@@ -105,7 +107,6 @@ proc slashdot:getdata {} {
   global slashdot slashdotdata
 
   if {$slashdot(log)} { putlog "\[Slashdot\] Updating data..." }
-  if {[info exists slashdotdata]} { unset slashdotdata }
 
   set url "http://slashdot.org/slashdot.xml"
   set page [::http::config -useragent "Mozilla"]
@@ -125,11 +126,14 @@ proc slashdot:getdata {} {
     return -1
   }
 
+  if {[info exists slashdotdata]} { unset slashdotdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     regexp "<title>(.*?)</title>" $line trash slashdotdata(title,$count)
     regexp "<url>(.*?)</url>" $line trash slashdotdata(url,$count)
     regexp "<time>(.*?)</time>" $line trash slashdotdata(time,$count)
@@ -137,8 +141,8 @@ proc slashdot:getdata {} {
     regexp "<comments>(.*?)</comments>" $line trash slashdotdata(comments,$count)
     if {[regexp "<section>(.*?)</section>" $line trash slashdotdata(section,$count)]} { incr count }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
   return 0
@@ -166,15 +170,13 @@ proc slashdot:put {chan nick which method} {
   global slashdot slashdotdata
 
   set outchan $slashdot(layout)
-  foreach item {time author title section url comments} {
-    regsub -all "\\&" $slashdotdata($item,$which) "\\\\&" slashdotdata($item,$which)
-  }
   regsub -all "%tim" $outchan $slashdotdata(time,$which) outchan
   regsub -all "%aut" $outchan $slashdotdata(author,$which) outchan
   regsub -all "%tit" $outchan $slashdotdata(title,$which) outchan
   regsub -all "%sec" $outchan $slashdotdata(section,$which) outchan
   regsub -all "%url" $outchan $slashdotdata(url,$which) outchan
   regsub -all "%com" $outchan $slashdotdata(comments,$which) outchan
+  regsub -all "&amp;amp;" $outchan "\\&" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan

@@ -1,9 +1,11 @@
-# $Id: kerneltrap.tcl,v 1.6 2003-05-21 16:26:02 peter Exp $
+# $Id: kerneltrap.tcl,v 1.7 2003-05-26 17:02:08 peter Exp $
 
 # kerneltrap.tcl / KernelTrap.org News Announce Script for an eggdrop
-# version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.2 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.2: (26/05/2003) [bugfix]
+#  - third attempt to get rid of the bug with the & character.
 # 1.1: (20/05/2003) [changes]
 #  - strange bug with & character fixed.
 #  - small changes to make the script more robust.
@@ -84,7 +86,7 @@ set kerneltrap(log) 1
 
 ### Begin TCL code ###
 
-set kerneltrap(version) "1.1"
+set kerneltrap(version) "1.2"
 
 package require http
 
@@ -101,7 +103,6 @@ proc kerneltrap:getdata {} {
   global kerneltrap kerneltrapdata
 
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Updating data..." }
-  if {[info exists kerneltrapdata]} { unset kerneltrapdata }
 
   set url "http://www.kerneltrap.org/module.php?mod=node&op=feed"
   set page [::http::config -useragent "Mozilla"]
@@ -121,12 +122,15 @@ proc kerneltrap:getdata {} {
     return -1
   }
 
+  if {[info exists kerneltrapdata]} { unset kerneltrapdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
   set item 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line trash]} { set item 1 }
     if {[regexp "</item>" $line trash]} { set item 0 }
     if {$item == 1} {
@@ -134,8 +138,8 @@ proc kerneltrap:getdata {} {
       if {[regexp "<link>(.*?)</link>" $line trash kerneltrapdata(link,$count)]} { incr count }
     }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count item line trash }
 
   return 0
@@ -163,9 +167,6 @@ proc kerneltrap:put {chan nick which method} {
   global kerneltrap kerneltrapdata
 
   set outchan $kerneltrap(layout)
-  foreach item {title link} {
-    regsub -all "\\&" $kerneltrapdata($item,$which) "\\\\&" kerneltrapdata($item,$which)
-  }
   regsub -all "%title" $outchan $kerneltrapdata(title,$which) outchan
   regsub -all "%link"  $outchan $kerneltrapdata(link,$which) outchan
   regsub -all "&amp;"  $outchan "\\&" outchan

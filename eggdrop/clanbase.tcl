@@ -1,9 +1,11 @@
-# $Id: clanbase.tcl,v 1.6 2003-05-21 16:26:02 peter Exp $
+# $Id: clanbase.tcl,v 1.7 2003-05-26 17:02:08 peter Exp $
 
 # cb.tcl / Clanbase.com News Announce Script for an eggdrop
-# version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.2 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.2: (26/05/2003) [bugfix]
+#  - third attempt to get rid of the bug with the & character.
 # 1.1: (20/05/2003) [changes]
 #  - strange bug with & character fixed.
 #  - small changes to make the script more robust.
@@ -84,7 +86,7 @@ set cb(log) 1
 
 ### Begin TCL code ###
 
-set cb(version) "1.1"
+set cb(version) "1.2"
 
 package require http
 
@@ -101,7 +103,6 @@ proc cb:getdata {} {
   global cb cbdata
 
   if {$cb(log)} { putlog "\[Clanbase\] Updating data..." }
-  if {[info exists cbdata]} { unset cbdata }
 
   set url "http://www.clanbase.com/rss.php"
   set page [::http::config -useragent "Mozilla"]
@@ -121,12 +122,15 @@ proc cb:getdata {} {
     return -1
   }
 
+  if {[info exists cbdata]} { unset cbdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
   set item 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line trash]} { set item 1 }
     if {[regexp "</item>" $line trash]} { set item 0 }
     if {$item == 1} {
@@ -134,8 +138,8 @@ proc cb:getdata {} {
       if {[regexp "<link>(.*?)</link>" $line trash cbdata(link,$count)]} { incr count }
     }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count item line trash}
 
   return 0
@@ -163,9 +167,6 @@ proc cb:put {chan nick which method} {
   global cb cbdata
 
   set outchan $cb(layout)
-  foreach item {title link} {
-    regsub -all "\\&" $cbdata($item,$which) "\\\\&" cbdata($item,$which)
-  }
   regsub -all "%title" $outchan $cbdata(title,$which) outchan
   regsub -all "%link"  $outchan $cbdata(link,$which) outchan
   regsub -all "&amp;"  $outchan "\\&" outchan

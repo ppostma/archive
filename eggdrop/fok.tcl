@@ -1,9 +1,11 @@
-# $Id: fok.tcl,v 1.8 2003-05-21 16:26:02 peter Exp $
+# $Id: fok.tcl,v 1.9 2003-05-26 17:02:08 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
-# version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
+# version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.8: (26/05/03) [bugfix]
+#  - 3de poging om de bug met & teken te fixen.
 # 1.7: (20/05/03) [changes]
 #  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
 #  - kleine aanpassingen om het script nog wat robuuster te maken.
@@ -116,7 +118,7 @@ set fok(log) 1
 
 ### Begin TCL code ###
 
-set fok(version) "1.7"
+set fok(version) "1.8"
 
 package require http
 
@@ -133,7 +135,6 @@ proc fok:getdata {} {
   global fok fokdata
 
   if {$fok(log)} { putlog "\[Fok!\] Updating data..." }
-  if {[info exists fokdata]} { unset fokdata }
 
   set url "http://www.athena.fokzine.net/~danny/remote.xml"
   set page [::http::config -useragent "Mozilla"]
@@ -153,19 +154,22 @@ proc fok:getdata {} {
     return -1
   }
 
+  if {[info exists fokdata]} { unset fokdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     regexp "<id>(.*?)</id>" $line trash fokdata(id,$count)
     regexp "<titel>(.*?)</titel>" $line trash fokdata(titel,$count)
     regexp "<time>(.*?)</time>" $line trash fokdata(tijd,$count)
     regexp "<timestamp>(.*?)</timestamp>" $line trash fokdata(ts,$count)
     if {[regexp "<reacties>(.*?)</reacties>" $line trash fokdata(reac,$count)]} { incr count }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count line trash }
 
   return 0
@@ -193,9 +197,6 @@ proc fok:put {chan nick which method} {
   global fok fokdata
 
   set outchan $fok(layout)
-  foreach item {tijd id reac titel} {
-    regsub -all "\\&" $fokdata($item,$which) "\\\\&" fokdata($item,$which)
-  }
   regsub -all "%tyd" $outchan $fokdata(tijd,$which) outchan
   regsub -all "%id"  $outchan $fokdata(id,$which) outchan
   regsub -all "%rea" $outchan $fokdata(reac,$which) outchan

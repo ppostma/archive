@@ -1,9 +1,11 @@
-# $Id: osnews.tcl,v 1.6 2003-05-21 16:26:02 peter Exp $
+# $Id: osnews.tcl,v 1.7 2003-05-26 17:02:08 peter Exp $
 
 # osnews.tcl / OSnews.org News Announce Script for an eggdrop
-# version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
+# version 1.2 / 26/05/2003 / by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.2: (26/05/2003) [bugfix]
+#  - third attempt to get rid of the bug with the & character.
 # 1.1: (20/05/2003) [changes]
 #  - strange bug with & character fixed.
 #  - small changes to make the script more robust.
@@ -84,7 +86,7 @@ set osnews(log) 1
 
 ### Begin TCL code ###
 
-set osnews(version) "1.1"
+set osnews(version) "1.2"
 
 package require http
 
@@ -101,7 +103,6 @@ proc osnews:getdata {} {
   global osnews osnewsdata
 
   if {$osnews(log)} { putlog "\[OSnews\] Updating data..." }
-  if {[info exists osnewsdata]} { unset osnewsdata }
 
   set url "http://www.osnews.com/files/recent.rdf"
   set page [::http::config -useragent "Mozilla"]
@@ -121,12 +122,15 @@ proc osnews:getdata {} {
     return -1
   }
 
+  if {[info exists osnewsdata]} { unset osnewsdata }
+
   set lines [split [::http::data $page] \n]
   set count 0
   set item 0
 
   for {set i 0} {$i < [llength $lines]} {incr i} {
     set line [lindex $lines $i]
+    regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line trash]} { set item 1 }
     if {[regexp "</item>" $line trash]} { set item 0 }
     if {$item == 1} {
@@ -134,8 +138,8 @@ proc osnews:getdata {} {
       if {[regexp "<link>(.*?)</link>" $line trash osnewsdata(link,$count)]} { incr count }
     }
   }
-  ::http::cleanup $page
 
+  catch { ::http::cleanup $page }
   catch { unset url page msg lines count item line trash }
 
   return 0
@@ -163,9 +167,6 @@ proc osnews:put {chan nick which method} {
   global osnews osnewsdata
 
   set outchan $osnews(layout)
-  foreach item {title link} {
-    regsub -all "\\&" $osnewsdata($item,$which) "\\\\&" osnewsdata($item,$which)
-  }
   regsub -all "%title" $outchan $osnewsdata(title,$which) outchan
   regsub -all "%link"  $outchan $osnewsdata(link,$which) outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
