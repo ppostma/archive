@@ -1,10 +1,11 @@
-# $Id: tweakers.tcl,v 1.15 2003-06-24 15:29:01 peter Exp $
+# $Id: tweakers.tcl,v 1.16 2003-07-01 01:29:00 peter Exp $
 
 # Tweakers.net Nieuws script voor een eggdrop
-# version 1.9, 24/06/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.9: (??/??/????)
+# 1.9: (??/??/????) [changes]
+#  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
 #  - style changes.
 # 1.8: (26/05/03) [bugfix]
@@ -72,6 +73,9 @@ set tnet(nopub) ""
 
 # de triggers: [scheiden met een spatie]
 set tnet(triggers) "!tnet !tweakers"
+
+# flood protectie: aantal seconden tussen gebruik van de triggers
+set tnet(antiflood) 60
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -194,6 +198,16 @@ proc tnet:getdata {} {
 proc tnet:pub {nick uhost hand chan text} {
   global lastbind tnet tnetdata
   if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }  
+
+  if {[info exists tnet(floodprot)]} {
+    set verschil [expr [clock seconds] - $tnet(floodprot)]
+    if {$verschil < $tnet(antiflood)} {
+      putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $tnet(antiflood) - $verschil] seconden..."
+      return 0
+    }
+    catch { unset verschil }
+  }
+  set tnet(floodprot) [clock seconds]
 
   if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 
