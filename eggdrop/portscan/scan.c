@@ -1,4 +1,4 @@
-/* $Id: scan.c,v 1.5 2003-04-03 09:44:46 peter Exp $ */
+/* $Id: scan.c,v 1.6 2003-06-22 12:39:10 peter Exp $ */
 
 /*
  * scan.c - very simple portscanner for IPv4 & IPv6
@@ -9,6 +9,7 @@
  * by Peter Postma <peter@webdeveloping.nl>
  */
 
+#include <ctype.h>
 #include <errno.h>            
 #include <netdb.h>
 #include <signal.h>
@@ -91,11 +92,34 @@ static void timeout_handler(int s)
 	close(sockid);	
 }
 
+static char *getserv(char *port)
+{
+	struct servent *service;
+	static char buf[NI_MAXSERV];
+	int i;
+
+	for (i=0; i<(strlen(port)); i++)
+		if (isalpha((int)port[i]) != 0)
+			goto name;
+
+	service = getservbyport(htons(atoi(port)), "tcp");
+	if (service != NULL)
+		snprintf(buf, sizeof(buf), "%s (%s)", port, service->s_name);
+	else
+		snprintf(buf, sizeof(buf), "%s", port);
+	return buf;
+name:
+	service = getservbyname(port, "tcp");
+	if (service != NULL)
+		snprintf(buf, sizeof(buf), "%u (%s)", ntohs(service->s_port), port);
+	else
+		snprintf(buf, sizeof(buf), "%s", port);
+	return buf;
+}
+
 int main(int argc, char *argv[])
 {
-	int opt, error, port, banner = 0, v6 = 0;
-	char strport[NI_MAXSERV];
-	char buf[NI_MAXSERV * 2];
+	int opt, error, banner = 0, v6 = 0;
 	struct addrinfo hints, *res;
 
 	/* Parse command-line arguments. */
@@ -117,13 +141,11 @@ int main(int argc, char *argv[])
 	if (argc != 2)
 		fail(ARGC);
 
-	port = atoi(argv[1]);
-
 	/* Set alarm signal handler */
 	signal(SIGALRM, timeout_handler);
 
-	/* Translate address */
-	memset(&hints, 0, sizeof(hints));
+	/* Setup Address info */
+	bzero((char *)&hints, sizeof(hints));
 	hints.ai_family = (v6) ? AF_INET6 : AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	if ((error = getaddrinfo(argv[0], argv[1], &hints, &res)) != 0)
@@ -137,30 +159,19 @@ int main(int argc, char *argv[])
 	/* Alarm call after X seconds */
 	ualarm(TIMEOUT, 0);
 
-	/* Get service name */
-	if ((error = getnameinfo(res->ai_addr, res->ai_addrlen, NULL, 0,
-	    strport, sizeof(strport), 0) == 0)) {
-		if ((port < 0) || (strlen(strport) == 0))
-			snprintf(buf, sizeof(buf), "%d (unknown)", port);
-		else if ((port == 0) || (port == atoi(strport)))
-			snprintf(buf, sizeof(buf), "%s (unknown)", strport);
-		else
-			snprintf(buf, sizeof(buf), "%d (%s)", port, strport);
-	}
-
 	/* Connect to the host */
 	if (connect(sockid, res->ai_addr, res->ai_addrlen) < 0) {
 		if (timedout)
-			printf("TIMEOUT (%s)\n", buf);
+			printf("TIMEOUT (%s)\n", getserv(argv[1]));
 		else
-			printf("CLOSED (%s)\n", buf);
+			printf("CLOSED (%s)\n", getserv(argv[1]));
 	} else {
 		if (banner) {
-			grab_banner(port);
+			grab_banner(atoi(argv[1]));
 			if (timedout)
-				printf("NOBANNER (%s)\n", buf);
-		} else 
-			printf("OPEN (%s)\n", buf);
+				printf("NOBANNER (%s)\n", getserv(argv[1]));
+		} else
+			printf("OPEN (%s)\n", getserv(argv[1]));
 	}
 
 	close(sockid);
