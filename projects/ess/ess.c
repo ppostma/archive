@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.7 2003-08-06 17:38:51 peter Exp $
+ * $Id: ess.c,v 1.8 2003-08-09 16:41:41 peter Exp $
  */
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ main(argc, argv)
 
 	progname = argv[0];
 
-	while ((ch = getopt(argc, argv, "46abfinrvV")) != -1) {
+	while ((ch = getopt(argc, argv, "46abfinrvVh")) != -1) {
 		switch (ch) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -123,6 +123,7 @@ main(argc, argv)
 			fprintf(stderr, "Service Scan v%s by Peter Postma "
 					"<peter@webdeveloping.nl>\n", VERSION);
 			exit(1);
+		case 'h':
 		case '?':
 		default:
 			usage();
