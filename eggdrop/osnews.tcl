@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.1 2003-05-18 00:38:14 peter Exp $
+# $Id: osnews.tcl,v 1.2 2003-05-18 15:41:07 peter Exp $
 
 # osnews.tcl / OSnews.org News Announce Script for an eggdrop
 # version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -45,7 +45,7 @@ set osnews(headlines) 2
 set osnews(layout) "\[%bOSnews%b\] %title - %link"
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
-set osnews(autonews) 1
+set osnews(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
 set osnews(autonewschan) "#channel1"

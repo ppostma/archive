@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.4 2003-05-17 21:43:32 peter Exp $
+# $Id: fok.tcl,v 1.5 2003-05-18 15:41:07 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -81,7 +81,7 @@ set fok(headlines) 2
 set fok(layout) "\[%bFok!%b\] %tit - http://fok.nl/?id=%id"
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set fok(autonews) 1
+set fok(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set fok(autonewschan) "#kanaal1 #kanaal2"

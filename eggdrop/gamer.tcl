@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.4 2003-05-17 21:43:32 peter Exp $
+# $Id: gamer.tcl,v 1.5 2003-05-18 15:41:07 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -82,7 +82,7 @@ set gamer(headlines) 2
 set gamer(layout) "\[%bGamer.nl%b\] %tit - http://gamer.nl/nieuws/%id"
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set gamer(autonews) 1
+set gamer(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set gamer(autonewschan) "#kanaal1 #kanaal2"

@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.1 2003-05-18 12:08:56 peter Exp $
+# $Id: clanbase.tcl,v 1.2 2003-05-18 15:41:07 peter Exp $
 
 # cb.tcl / Clanbase.com News Announce Script for an eggdrop
 # version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -45,7 +45,7 @@ set cb(headlines) 2
 set cb(layout) "\[%bClanbase%b\] %title - %link"
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
-set cb(autonews) 1
+set cb(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
 set cb(autonewschan) "#channel"

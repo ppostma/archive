@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.5 2003-05-17 21:43:33 peter Exp $
+# $Id: tweakers.tcl,v 1.6 2003-05-18 15:41:07 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
 # version 1.6 / 17/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -85,7 +85,7 @@ set tnet(headlines) 2
 set tnet(layout) "\[%bT.Net%b\] (%cat) %tit - http://tweakers.net/nieuws/%id"
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
-set tnet(autonews) 1
+set tnet(autonews) 0
 
 # autonews: stuur naar welke kanalen? [kanalen scheiden met een spatie]
 set tnet(autonewschan) "#kanaal1 #kanaal2"

@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.1 2003-05-18 00:38:14 peter Exp $
+# $Id: kerneltrap.tcl,v 1.2 2003-05-18 15:41:07 peter Exp $
 
 # kerneltrap.tcl / KernelTrap.org News Announce Script for an eggdrop
 # version 1.0 / 18/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -45,7 +45,7 @@ set kerneltrap(headlines) 2
 set kerneltrap(layout) "\[%bKernelTrap%b\] %title - %link"
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
-set kerneltrap(autonews) 1
+set kerneltrap(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
 set kerneltrap(autonewschan) "#channel1"

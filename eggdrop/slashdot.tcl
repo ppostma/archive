@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.5 2003-05-17 23:27:20 peter Exp $
+# $Id: slashdot.tcl,v 1.6 2003-05-18 15:41:07 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.6 / 17/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -49,7 +49,7 @@ set slashdot(headlines) 2
 set slashdot(layout) "\[%bSlashdot%b\] (%sec) %tit - %url"
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
-set slashdot(autonews) 1
+set slashdot(autonews) 0
 
 # autonews: send to which channels? [seperate channels with spaces]
 set slashdot(autonewschan) "#channel1 #channel2"
