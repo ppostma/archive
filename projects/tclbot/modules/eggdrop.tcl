@@ -1,4 +1,4 @@
-# $Id: eggdrop.tcl,v 1.3 2003-08-06 18:28:52 peter Exp $
+# $Id: eggdrop.tcl,v 1.4 2004-01-30 22:14:21 peter Exp $
 
 # Eggdrop compatibility module for the TclBot.
 # This script adds the eggdrop specific functions to TclBot.
@@ -112,9 +112,7 @@ proc putlog {msg} { log $msg }
 # Rehash, reloads configuration file & scripts
 proc rehash {} { reload }
 
-# Just exit, argument is optional
+# Shutdown
 proc die {{text ""}} {
-	ircsend "QUIT :$text"
-	putlog "Shutting down..."
-	exit 0
+	shutdown $text
 }
