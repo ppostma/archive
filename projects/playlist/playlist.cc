@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.9 2003-07-28 18:30:23 peter Exp $
+ * $Id: playlist.cc,v 1.10 2003-07-29 15:26:41 peter Exp $
  */
 
 #include <stdlib.h>
@@ -33,6 +33,10 @@
 #define BR			"<br />"
 
 using namespace std;
+
+string itos(int i);
+string time2texts(long time);
+string time2textl(long time);
 
 class PlaylistEntry {
   public:
@@ -86,7 +90,7 @@ bool Playlist::Insert(string track, string time)
 	tail->next  = head;
 	head = tail;
 
-	return (true);
+	return true;
 }
 
 bool Playlist::Append(string track, string time)
@@ -98,12 +102,12 @@ bool Playlist::Append(string track, string time)
 	while (tail->next != NULL) tail = tail->next;
 
 	tail->next = new PlaylistEntry;
-	if (tail->next == NULL) return (false);
+	if (tail->next == NULL) return false;
 
 	tail->next->track = track;
 	tail->next->time  = time;
 
-	return (true);
+	return true;
 }
 
 void Playlist::Output()
@@ -117,7 +121,8 @@ void Playlist::Output()
 	for (long i=1; i; i++) {
 		cout << i << ". " << tail->track;
 		if (tail->time.size() != 0)
-			cout << " (" << tail->time << ")";
+			if (atol(tail->time.c_str()) >= 0)
+				cout << " (" << time2texts(atol(tail->time.c_str())) << ")";
 		cout << BR << endl;
 
 		if (tail->next == NULL) break;
@@ -170,8 +175,6 @@ string time2texts(long time)
 	string	temp;
 	int	hours, mins, secs;
 
-	if (time < 1) return "";
-
 	hours = time / 3600;
 	time %= 3600;
 	mins  = time / 60;
@@ -190,15 +193,13 @@ string time2texts(long time)
 	
 	temp += itos(secs);
 
-	return (temp);
+	return temp;
 }
 
 string time2textl(long time)
 {
 	string	temp;
 	int	days, hours, mins, secs;
-
-	if (time < 1) return "";
 
 	days  = time / 86400;
 	time %= 86400;
@@ -216,7 +217,7 @@ string time2textl(long time)
 	if (secs > 0)
 		temp += HILITE(itos(secs)) + " second" + ((secs > 1) ? "s" : "");
 
-	return (temp);
+	return temp;
 }
 
 int main(int argc, char *argv[])
@@ -272,7 +273,7 @@ int main(int argc, char *argv[])
 				continue;
 
 			time  = temp.substr(pos1+1, (pos2 - pos1) - 1);
-			if (atol(time.c_str()) < 0)  // Remove negative values
+			if (atol(time.c_str()) < 0)   // Ignore negative values
 				time.erase();
 
 			track = temp.substr(pos2+1, temp.length());
@@ -293,7 +294,7 @@ int main(int argc, char *argv[])
 				track = temp.substr(pos1+1, (pos2 - pos1) - 1);
 		}
 
-		if (List.Append(track, time2texts(atol(time.c_str()))) == false) {
+		if (List.Append(track, time) == false) {
 			cerr << "Fatal: Can't reserve memory!" << endl;
 			input.close();
 			exit(1);
@@ -306,7 +307,6 @@ int main(int argc, char *argv[])
 
 		totaltracks++;
 	}
-
 	input.close();
 
 	if (totaltracks < 1) {
@@ -334,5 +334,5 @@ int main(int argc, char *argv[])
 	List.Output();
 	List.PrintFooter();
 
-	return (0);
+	return 0;
 }
