@@ -1,9 +1,11 @@
-# $Id: webwereld.tcl,v 1.21 2003-10-16 15:09:12 peter Exp $
+# $Id: webwereld.tcl,v 1.22 2003-10-16 15:12:03 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 24/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 16/10/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 1.2: (16/10/2002)
+#  - autonews werkt weer (typo in var. naam)
 # 1.1: (24/08/2003)
 #  - de manier van het updaten is wat veranderd.
 #    de webw(updates) setting wordt nu ook door de triggers gebruikt
@@ -102,7 +104,7 @@ set webw(log) 1
 
 ### Begin Tcl code ###
 
-set webw(version) "1.1"
+set webw(version) "1.2"
 
 if {[catch { package require http } err]} {
   putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: Probleem met het laden van de http package: $err"
