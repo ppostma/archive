@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.20 2003-08-24 13:57:35 peter Exp $
+# $Id: webwereld.tcl,v 1.21 2003-10-16 15:09:12 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 24/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -282,7 +282,7 @@ proc webw:update {} {
       for {set i 0} {$i < $webw(automax)} {incr i} {
         if {![info exists webwdata(link,$i)]} { break }
         if {$webwdata(link,$i) == $webw(lastitem)} { break }
-        foreach chan [split $dest)] {
+        foreach chan [split $dest] {
           if {[catch { webw:put $chan $chan $i 1 } err]} {
             putlog "\[WebWereld\] Problem in data array: $err"
           }
