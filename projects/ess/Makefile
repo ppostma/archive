@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2003-07-19 18:42:35 peter Exp $
+# $Id: Makefile,v 1.2 2003-08-03 15:26:17 peter Exp $
 
 CC	= gcc
 CFLAGS	= -DRESOLVE -Wall -O
@@ -11,6 +11,9 @@ default:
 
 solaris:
 	$(CC) $(CFLAGS) -lsocket -lnsl -o $(EXEC) $(SRC)
+
+install:
+	install -c -m 755 $(EXEC) /usr/local/bin/$(EXEC)
 
 clean:
 	rm -f *.core *~ $(EXEC)
