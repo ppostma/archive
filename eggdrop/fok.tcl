@@ -1,9 +1,11 @@
-# $Id: fok.tcl,v 1.33 2003-08-24 13:54:40 peter Exp $
+# $Id: fok.tcl,v 1.34 2004-02-27 20:35:44 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
-# version 2.0, 24/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.1, 27/02/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
+# 2.1: (27/02/2004)
+#  - script werkt weer met de nieuwe FOK! site.
 # 2.0: (24/08/2003)
 #  - de manier van het updaten is wat veranderd.
 #    de fok(updates) setting wordt nu ook door de triggers gebruikt
@@ -102,13 +104,12 @@ set fok(headlines) 2
 set fok(antiflood) 10
 
 # hieronder kun je de layout aanpassen voor de output:
-# %tyd = tijd
-# %tit = titel
-# %id  = id (wordt gebruikt in de nieuws url)
-# %rea = aantal reacties
-# %b   = bold (dikgedrukte) tekst
-# %u   = underlined (onderstreepte) tekst
-set fok(layout) "\[%bFok!%b\] %tit - http://fok.nl/?id=%id"
+# %datum = datum (vb: Fri, 27 Feb 2004 17:36:47 +0100)
+# %titel = titel bericht
+# %link  = link naar het bericht
+# %b     = bold (dikgedrukte) tekst
+# %u     = underlined (onderstreepte) tekst
+set fok(layout) "\[%bFok!%b\] %titel - %link"
 
 # om de hoeveel minuten checken of er nieuws is? [minimaal 5]
 # deze waarde wordt gebruikt door zowel de triggers als het autonews.
@@ -144,7 +145,7 @@ set fok(log) 1
 
 ### Begin Tcl code ###
 
-set fok(version) "2.0"
+set fok(version) "2.1"
 
 if {[catch { package require http } err]} {
   putlog "\[Fok!\] Kan [file tail [info script]] niet laden: Probleem met het laden van de http package: $err"
@@ -179,7 +180,7 @@ proc fok:getdata {} {
 
   if {$fok(log)} { putlog "\[Fok!\] Updating data..." }
 
-  set url "http://www.athena.fokzine.net/~danny/remote.xml"
+  set url "http://rss.fok.nl/feeds/nieuws"
   set page [::http::config -useragent "Mozilla"]
 
   if {$fok(proxy) != ""} {
@@ -217,19 +218,22 @@ proc fok:getdata {} {
   if {[info exists fokdata]} { unset fokdata }
 
   set count 0
+  set item 0
   foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
-    regexp "<id>(.*)</id>" $line trash fokdata(id,$count)
-    regexp "<titel>(.*)</titel>" $line trash fokdata(titel,$count)
-    regexp "<time>(.*)</time>" $line trash fokdata(tijd,$count)
-    regexp "<timestamp>(.*)</timestamp>" $line trash fokdata(ts,$count)
-    if {[regexp "<reacties>(.*)</reacties>" $line trash fokdata(reac,$count)]} { incr count }
+    if {[regexp "<item>" $line]} { set item 1 }
+    if {[regexp "</item>" $line]} { set item 0 }
+    if {$item == 1} {
+      regexp "<title>(.*)</title>" $line trash fokdata(titel,$count)
+      regexp "<pubDate>(.*)</pubDate>" $line trash fokdata(datum,$count)
+      if {[regexp "<link>(.*)</link>" $line trash fokdata(link,$count)]} { incr count }
+    }
   }
 
   set fok(lastupdate) [clock seconds]
 
   catch { ::http::cleanup $page }
-  catch { unset url page msg data count line trash }
+  catch { unset url page msg data count item line trash }
 
   return 0
 }
@@ -256,13 +260,13 @@ proc fok:pub {nick uhost hand chan text} {
     if {[expr [clock seconds] - $fok(lastupdate)] >= [expr $fok(updates) * 60]} {
       set ret [fok:getdata]
     }
-  } elseif {![info exists fokdata(id,0)]} {
+  } elseif {![info exists fokdata(link,0)]} {
     set ret [fok:getdata]
   }
 
   if {$ret != -1} {
     for {set i 0} {$i < $fok(headlines)} {incr i} {
-      if {![info exists fokdata(id,$i)]} { break }
+      if {![info exists fokdata(link,$i)]} { break }
       if {[catch { fok:put $chan $nick $i $fok(method) } err]} {
         putlog "\[Fok!\] Problem in data array: $err"
       }
@@ -277,10 +281,9 @@ proc fok:put {chan nick which method} {
   global fok fokdata
 
   set outchan $fok(layout)
-  regsub -all "%tyd" $outchan $fokdata(tijd,$which) outchan
-  regsub -all "%id"  $outchan $fokdata(id,$which) outchan
-  regsub -all "%rea" $outchan $fokdata(reac,$which) outchan
-  regsub -all "%tit" $outchan $fokdata(titel,$which) outchan
+  regsub -all "%datum" $outchan $fokdata(datum,$which) outchan
+  regsub -all "%link"  $outchan $fokdata(link,$which) outchan
+  regsub -all "%titel" $outchan $fokdata(titel,$which) outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
@@ -300,19 +303,19 @@ proc fok:update {} {
 
   if {[fok:getdata] != -1} {
 
-    if {![info exists fokdata(ts,0)]} {
+    if {![info exists fokdata(link,0)]} {
       putlog "\[Fok!\] Something went wrong while updating..."
       return -1
     }
 
     if {![info exists fok(lastitem)]} {
-      set fok(lastitem) $fokdata(ts,0)
-      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp set to '$fokdata(ts,0)'." }
+      set fok(lastitem) $fokdata(link,0)
+      if {$fok(log)} { putlog "\[Fok!\] Last news item set to '$fokdata(link,0)'." }
     } else {
-      if {$fok(log)} { putlog "\[Fok!\] Last news item timestamp is '$fokdata(ts,0)'." }
+      if {$fok(log)} { putlog "\[Fok!\] Last news item is '$fokdata(link,0)'." }
     }
 
-    if {$fokdata(ts,0) > $fok(lastitem)} {
+    if {$fokdata(link,0) != $fok(lastitem)} {
       if {$fok(log)} { putlog "\[Fok!\] There's news!" }
       if {[regexp {^\*$} $fok(autonewschan)]} {
         set dest [channels]
@@ -320,8 +323,8 @@ proc fok:update {} {
         set dest $fok(autonewschan)
       }
       for {set i 0} {$i < $fok(automax)} {incr i} {
-        if {![info exists fokdata(ts,$i)]} { break }
-        if {$fokdata(ts,$i) == $fok(lastitem)} { break }
+        if {![info exists fokdata(link,$i)]} { break }
+        if {$fokdata(link,$i) == $fok(lastitem)} { break }
         foreach chan [split $dest] { 
           if {[catch { fok:put $chan $chan $i 1 } err]} {
             putlog "\[Fok!\] Problem in data array: $err"
@@ -333,7 +336,7 @@ proc fok:update {} {
       if {$fok(log)} { putlog "\[Fok!\] No news." }
     }
 
-    set fok(lastitem) $fokdata(ts,0)
+    set fok(lastitem) $fokdata(link,0)
   }
 
   if {$fok(updates) < 5} {
