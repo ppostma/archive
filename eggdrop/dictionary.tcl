@@ -1,9 +1,11 @@
-# $Id: dictionary.tcl,v 1.6 2003-08-02 14:21:05 peter Exp $
+# $Id: dictionary.tcl,v 1.7 2003-08-24 14:24:59 peter Exp $
 
 # Dictionary script for the eggdrop
-# version 0.8.4, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>    
+# version 0.8.5, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>    
 #
 # Changelog:
+#  0.8.5: (24/08/2003)
+#   - changed 'TCL' to 'Tcl' in the comment... that's all :-)
 #  0.8.4: (04/07/2003)
 #   - fixed probs with strings/lists by using 'join' correctly.
 #   - lot of code/style changes.
