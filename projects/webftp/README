@@ -1,25 +1,22 @@
-WebFTP client v0.8 by Peter Postma <peter@webdeveloping.nl>
+WebFTP client v0.8.1-beta by Peter Postma <peter@webdeveloping.nl>
 
 1. Installation:
 
-Change the server ip in conf.php.
-That's all :-)
+Open conf.php in a text editor and make the preferred changes.
 
 
 2. Notes:
 
-This script has been tested and runs succesfull on the following FTP servers:
+This script has been tested and runs successful with the following FTP servers:
 
- - proftpd on FreeBSD
- - proftpd on Linux
- - default ftpd on FreeBSD
- - default ftpd on NetBSD
- - default ftpd on OpenBSD
+ - proftpd on FreeBSD/Linux
+ - pureftpd on FreeBSD/Linux
+ - default ftpd on Free/Net/OpenBSD
 
-Any Microsoft Windows FTP server will not work.
+Any Microsoft Windows FTP server will probably not work, sorry.
 
 Make sure you've compiled PHP with "--enable-ftp" otherwise this script will
-not function. You can check this with phpinfo();
+not work. You can check this with phpinfo();
 
 Do not use this client with large file tranfers, it's too unreliable.
 
@@ -57,4 +54,4 @@ v0.6 (03/08/2001)
  - first release, very poor written code.
 
 
-$Id: README,v 1.7 2003-10-11 17:22:09 peter Exp $
+$Id: README,v 1.8 2003-10-13 20:01:35 peter Exp $
