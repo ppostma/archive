@@ -1,18 +1,16 @@
-Easy Service Scanner v0.3.3-beta by Peter Postma <peter@webdeveloping.nl>
+Easy Service Scanner v0.3.3 by Peter Postma <peter@webdeveloping.nl>
 
 This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
 mail relaying test and it has support for round robin dns entry's.
 
 
-To compile the program on Linux/*BSD:
+To compile the program:
 # make
-
-To compile the program on Solaris:
-# make solaris
 
 You can specify -DIPV4_DEFAULT to use IPv4 only by default.
 See the Makefile for an example.
+If you're on Solaris then you must uncomment the LIBS line before doing make.
 
 If you want to install the program to /usr/local/bin then simply do
 # make install
