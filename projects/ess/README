@@ -1,4 +1,4 @@
-Service Scanner v0.3.2 by Peter Postma <peter@webdeveloping.nl>
+Service Scanner v0.3.3-beta by Peter Postma <peter@webdeveloping.nl>
 
 This is a simple program for testing network services.
 It features IPv6 support, banner grabbing, anonymous ftp scan, ident scanning,
@@ -25,5 +25,6 @@ Options:
           directly to the internet, a NAT router between will not work.
   -n      Don't try to resolve addresses.
   -r      Mail Relay test, performs a simple test to check for open-relay.
+          Use twice for an extensive open-relay test.
   -v      Be verbose. It's use is recommended.
 

@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.11 2003-08-10 16:07:55 peter Exp $
+ * $Id: ess.c,v 1.12 2003-08-10 19:43:59 peter Exp $
  */
 
 #include <sys/types.h>
@@ -39,12 +39,12 @@ const char	*progname;
 
 size_t	 readln(int, char *, size_t);
 char	*get_af(int);
-char	*get_addr(struct sockaddr *, size_t);
+char	*get_addr(struct sockaddr *, size_t, int);
 char	*get_serv(char *);
 char	*ident_scan(char *, int, u_short, u_short);
 char	*banner_scan(u_short);
 int	 ftp_scan(char *);
-int	 relay_scan(char *);
+int	 relay_scan(char *, char *);
 void	 timeout_handler(int);
 void	 usage(void);
 void	 error(int);
@@ -76,9 +76,11 @@ main(argc, argv)
 	struct servent	*serv;
 	char		*host = NULL;
 	char		*port = NULL;
+	char		 thost[NI_MAXHOST];
+	char		 tip[NI_MAXHOST];
 	char		 sbuf[NI_MAXSERV];
 	char		 result[512];
-	int		 ch, err;
+	int		 ch, err, ret;
 	int		 all_flag = 0;
 	int		 banner_flag = 0;
 	int		 ftp_flag = 0;
@@ -161,10 +163,8 @@ main(argc, argv)
 			continue;
 		}
 		if (verbose_flag) {
-			printf("Trying %s ", get_addr(ai->ai_addr, ai->ai_addrlen));
-			resolve_flag = !resolve_flag;	/* reverse */
-			printf("(%s)...", get_addr(ai->ai_addr, ai->ai_addrlen));
-			resolve_flag = !resolve_flag;	/* reverse again to original state */
+			printf("Trying %s ", get_addr(ai->ai_addr, ai->ai_addrlen, 1));
+			printf("(%s)...", get_addr(ai->ai_addr, ai->ai_addrlen, 0));
 			(void)fflush(stdout);
 		}
 		alarm(TIMEOUT);
@@ -211,7 +211,16 @@ main(argc, argv)
 				break;
 			}
 		} else if (relay_flag) {
-			switch (relay_scan("www.pointless.nl")) {
+			if (relay_flag > 1) {
+				strcpy(tip, get_addr(ai->ai_addr, ai->ai_addrlen, 0));
+				if (strcmp(host, tip) == 0)
+					strcpy(thost, get_addr(ai->ai_addr, ai->ai_addrlen, 1));
+				else
+					strcpy(thost, host);
+				ret = relay_scan(thost, tip);
+			} else
+				ret = relay_scan(NULL, NULL);
+			switch (ret) {
 			case -1:
 				strcpy(result, "could not login.");
 				break;
@@ -230,7 +239,7 @@ main(argc, argv)
 print_results:
 		/* Print af, address, port, and result */
 		printf("%s host (%s) ", get_af(ai->ai_family),
-		    get_addr(ai->ai_addr, ai->ai_addrlen));
+		    get_addr(ai->ai_addr, ai->ai_addrlen, resolve_flag));
 		printf("port %s -> %s\n", get_serv(port), result);
 
 		/* Print banner at last */
@@ -287,16 +296,17 @@ get_af(af)
 }
 
 char *
-get_addr(addr, len)
+get_addr(addr, len, resolve)
 	struct sockaddr *addr;
 	size_t		 len;
+	int		 resolve;
 {
 	struct sockaddr_storage	ss;
 	static char	host[NI_MAXHOST];
 
 	memcpy(&ss, addr, len);
 	if (getnameinfo((struct sockaddr *)&ss, len, host,
-	    sizeof(host), NULL, 0, resolve_flag ? 0 : NI_NUMERICHOST) == 0)
+	    sizeof(host), NULL, 0, (resolve) ? 0 : NI_NUMERICHOST) == 0)
 		return host;
 
 	return "?";
@@ -461,10 +471,67 @@ ftp_scan(name)
 }
 
 int
-relay_scan(host)
+relay_scan(host, ip)
 	char	*host;
+	char	*ip;
 {
-	char	request[1024], response[1024];
+	char	 request[1024], response[1024];
+	struct	 scans {
+	    char	from[64];
+	    char	rcpt[64];
+	};
+	struct	 scans	s[20];
+	int	 i, n = 1;
+
+	if (relay_flag > 1)
+		n = 20;
+
+	/*
+	 * Setup info for the relay scan. Tests from
+	 * http://www.reedmedia.net/misc/mail/open-relay.html
+	 */
+	strcpy (s[0].from,  "<test@pointless.nl>");
+	strcpy (s[0].rcpt,  "<test@pointless.nl>");
+	strcpy (s[1].from,  "<test@localhost>");
+	strcpy (s[1].rcpt,  "<test@pointless.nl>");
+	strcpy (s[2].from,  "<test>");
+	strcpy (s[2].rcpt,  "<test@pointless.nl>");
+	strcpy (s[3].from,  "<>");
+	strcpy (s[3].rcpt,  "<test@pointless.nl>");
+	sprintf(s[4].from,  "<test@%s>", host);
+	strcpy (s[4].rcpt,  "<test@pointless.nl>");
+	sprintf(s[5].from,  "<test@[%s]>", ip);
+	strcpy (s[5].rcpt,  "<test@pointless.nl>");
+	sprintf(s[6].from,  "<test@%s>", host);
+	sprintf(s[6].rcpt,  "<test%%pointless.nl@%s>", host);
+	sprintf(s[7].from,  "<test@%s>", host);
+	sprintf(s[7].rcpt,  "<test%%pointless.nl@[%s]>", ip);
+	sprintf(s[8].from,  "<test@%s>", host);
+	strcpy (s[8].rcpt,  "<\"test@pointless.nl\">");
+	sprintf(s[9].from,  "<test@%s>", host);
+	strcpy (s[9].rcpt,  "<\"test%pointless.nl\">");
+	sprintf(s[10].from, "<test@%s>", host);
+	sprintf(s[10].rcpt, "<test@pointless.nl@%s>", host);
+	sprintf(s[11].from, "<test@%s>", host);
+	sprintf(s[11].rcpt, "<\"test@pointless.nl\"@%s>", host);
+	sprintf(s[12].from, "<test@%s>", host);
+	sprintf(s[12].rcpt, "<test@pointless.nl@[%s]>", ip);
+	sprintf(s[13].from, "<test@%s>", host);
+	sprintf(s[13].rcpt, "<\"test@pointless.nl\"@[%s]>", ip);
+	sprintf(s[13].from, "<test@%s>", host);
+	sprintf(s[13].rcpt, "<@%s:test@pointless.nl>", host);
+	sprintf(s[14].from, "<test@%s>", host);
+	sprintf(s[14].rcpt, "<@[%s]:test@pointless.nl>", ip);
+	sprintf(s[15].from, "<test@%s>", host);
+	strcpy (s[15].rcpt, "<pointless.nl!test>");
+	sprintf(s[16].from, "<test@[%s]>", ip);
+	strcpy (s[16].rcpt, "<pointless.nl!test>");
+	sprintf(s[17].from, "<test@%s>", host);
+	sprintf(s[17].rcpt, "<pointless.nl!test@%s>", host);
+	sprintf(s[18].from, "<test@%s>", host);
+	sprintf(s[18].rcpt, "<pointless.nl!test@[%s]>", ip);
+	sprintf(s[19].from, "<postmaster@%s>", host);
+	strcpy (s[19].rcpt, "<test@pointless.nl>");
 
 	/* Read banner */
 	(void)readln(ssock, response, sizeof(response));
@@ -482,36 +549,46 @@ relay_scan(host)
 	if (strstr(response, "250 ") == 0)
 		return -1;
 
-	/* Reset */
-	strcpy(request, "RSET\n");
-	write(ssock, request, strlen(request));
-	if (verbose_flag)
-		printf(">>> %s", request);
-	(void)readln(ssock, response, sizeof(response));
-	if (verbose_flag)
-		printf("<<< %s", response);
+	/* Do all scans */
+	for (i=0; i<n; i++) {
 
-	/* Send MAIL FROM */
-	strcpy(request, "MAIL FROM: <test@pointless.nl>\r\n");
-	write(ssock, request, strlen(request));
-	if (verbose_flag)
-		printf(">>> %s", request);
-	(void)readln(ssock, response, sizeof(response));
-	if (verbose_flag)
-		printf("<<< %s", response);
+		if (verbose_flag)
+			printf("\nRelay test %d\n", i+1);
 
-	/* Send RCPT TO */
-	strcpy(request, "RCPT TO: <test@pointless.nl>\r\n");
-	write(ssock, request, strlen(request));
-	if (verbose_flag)
-		printf(">>> %s", request);
-	(void)readln(ssock, response, sizeof(response));
-	if (verbose_flag)
-		printf("<<< %s", response);
+	        /* Reset */
+		strcpy(request, "RSET\n");
+		write(ssock, request, strlen(request));
+		if (verbose_flag)
+	                printf(">>> %s", request);
+		(void)readln(ssock, response, sizeof(response));
+		if (verbose_flag)
+			printf("<<< %s", response);
 
-	/* 250 Ok = relay accepted */
-	if (strstr(response, "250 "))
-		return 1;
+		/* Send MAIL FROM */
+		snprintf(request, sizeof(request), "MAIL FROM: %s\r\n", s[i].from);
+		write(ssock, request, strlen(request));
+		if (verbose_flag)
+			printf(">>> %s", request);
+		(void)readln(ssock, response, sizeof(response));
+		if (verbose_flag)
+			printf("<<< %s", response);
+
+		/* Send RCPT TO */
+		snprintf(request, sizeof(request), "RCPT TO: %s\r\n", s[i].rcpt);
+		write(ssock, request, strlen(request));
+		if (verbose_flag)
+			printf(">>> %s", request);
+		(void)readln(ssock, response, sizeof(response));
+		if (verbose_flag)
+			printf("<<< %s", response);
+
+		/* 250 Ok = relay accepted */
+		if (strstr(response, "250 "))
+			return 1;
+
+		if (n > 1)
+			sleep(1);
+	}
 
 	return 0;
 }
@@ -539,6 +616,7 @@ usage(void)
 "          identity of the service we're connecting to.\n"
 "  -n      Don't try to resolve addresses.\n"
 "  -r      Mail Relay test, performs a simple test to check for open-relay.\n"
+"          Use twice for an extensive open-relay test.\n"
 "  -v      Be verbose. It's use is recommended.\n\n",
 	progname);
 
