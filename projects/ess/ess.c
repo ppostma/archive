@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.30 2003-11-02 04:55:48 peter Exp $
+ * $Id: ess.c,v 1.31 2003-11-02 18:31:04 peter Exp $
  */
 
 #include <sys/types.h>
@@ -540,7 +540,7 @@ relay_scan(char *host, char *ip)
 	int	 i, n = 1;
 
 	if (relay_flag > 1)
-		n = 20;
+		n = sizeof(s) / sizeof(struct scans);
 
 	/*
 	 * Setup info for the relay scan. Tests from
