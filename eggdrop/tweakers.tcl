@@ -1,7 +1,7 @@
-# $Id: tweakers.tcl,v 1.20 2003-07-07 17:36:16 peter Exp $
+# $Id: tweakers.tcl,v 1.21 2003-07-09 15:14:07 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
-# version 2.0, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -9,6 +9,7 @@
 #    de tnet(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
+#  - flood protectie wordt nu per kanaal bij gehouden (lijkt me nuttiger zo).
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -234,14 +235,14 @@ proc tnet:pub {nick uhost hand chan text} {
   global lastbind tnet tnetdata
   if {[lsearch -exact $tnet(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists tnet(floodprot)]} {
-    set verschil [expr [clock seconds] - $tnet(floodprot)]
+  if {[info exists tnet(floodprot,$chan)]} {
+    set verschil [expr [clock seconds] - $tnet(floodprot,$chan)]
     if {$verschil < $tnet(antiflood)} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $tnet(antiflood) - $verschil] seconden..."
       return 0
     }
   }
-  set tnet(floodprot) [clock seconds]
+  set tnet(floodprot,$chan) [clock seconds]
 
   if {$tnet(log)} { putlog "\[T.Net\] Trigger: $lastbind in $chan by $nick" }
 

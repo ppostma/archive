@@ -1,7 +1,7 @@
-# $Id: bsdforums.tcl,v 1.9 2003-07-07 18:57:29 peter Exp $
+# $Id: bsdforums.tcl,v 1.10 2003-07-09 15:14:07 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
-# version 1.2, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -9,6 +9,7 @@
 #    the bsdforums(updates) it now also being used by the triggers
 #    to check how long to cache the data.
 #  - proxy configuration added.
+#  - flood protection is now for each channel (this is more usefull IMHO).
 # 1.1: (04/07/2003)
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -190,14 +191,14 @@ proc bsdforums:pub {nick uhost hand chan text} {
   global lastbind bsdforums bsdforumsdata
   if {[lsearch -exact $bsdforums(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists bsdforums(floodprot)]} {
-    set diff [expr [clock seconds] - $bsdforums(floodprot)]
+  if {[info exists bsdforums(floodprot,$chan)]} {
+    set diff [expr [clock seconds] - $bsdforums(floodprot,$chan)]
     if {$diff < $bsdforums(antiflood)} {
       putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $bsdforums(antiflood) - $diff] seconds..."
       return 0
     }
   }
-  set bsdforums(floodprot) [clock seconds]
+  set bsdforums(floodprot,$chan) [clock seconds]
 
   if {$bsdforums(log)} { putlog "\[BSDForums\] Trigger: $lastbind in $chan by $nick" }
 

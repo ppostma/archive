@@ -1,7 +1,7 @@
-# $Id: osnews.tcl,v 1.17 2003-07-07 18:57:29 peter Exp $
+# $Id: osnews.tcl,v 1.18 2003-07-09 15:14:07 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
-# version 1.4, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -9,6 +9,7 @@
 #    the osnews(updates) it now also being used by the triggers
 #    to check how long to cache the data.
 #  - proxy configuration added.
+#  - flood protection is now for each channel (this is more usefull IMHO).
 # 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -196,14 +197,14 @@ proc osnews:pub {nick uhost hand chan text} {
   global lastbind osnews osnewsdata
   if {[lsearch -exact $osnews(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists osnews(floodprot)]} {
-    set diff [expr [clock seconds] - $osnews(floodprot)]
+  if {[info exists osnews(floodprot,$chan)]} {
+    set diff [expr [clock seconds] - $osnews(floodprot,$chan)]
     if {$diff < $osnews(antiflood)} {
       putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $osnews(antiflood) - $diff] seconds..."
       return 0
     }
   }
-  set osnews(floodprot) [clock seconds]
+  set osnews(floodprot,$chan) [clock seconds]
 
   if {$osnews(log)} { putlog "\[OSnews\] Trigger: $lastbind in $chan by $nick" }
 

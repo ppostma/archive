@@ -1,7 +1,7 @@
-# $Id: gamer.tcl,v 1.18 2003-07-07 17:36:16 peter Exp $
+# $Id: gamer.tcl,v 1.19 2003-07-09 15:14:07 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 2.0, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -9,6 +9,7 @@
 #    de gamer(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
+#  - flood protectie wordt nu per kanaal bij gehouden (lijkt me nuttiger zo).
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -228,14 +229,14 @@ proc gamer:pub {nick uhost hand chan text} {
   global lastbind gamer gamerdata
   if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists gamer(floodprot)]} {
-    set verschil [expr [clock seconds] - $gamer(floodprot)]
+  if {[info exists gamer(floodprot,$chan)]} {
+    set verschil [expr [clock seconds] - $gamer(floodprot,$chan)]
     if {$verschil < $gamer(antiflood)} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $gamer(antiflood) - $verschil] seconden..."
       return 0
     }
   }
-  set gamer(floodprot) [clock seconds]
+  set gamer(floodprot,$chan) [clock seconds]
 
   if {$gamer(log)} { putlog "\[Gamer.nl\] Trigger: $lastbind in $chan by $nick" }
 

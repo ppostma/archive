@@ -1,7 +1,7 @@
-# $Id: fok.tcl,v 1.18 2003-07-07 17:36:16 peter Exp $
+# $Id: fok.tcl,v 1.19 2003-07-09 15:14:07 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
-# version 2.0, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -9,6 +9,7 @@
 #    de fok(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
+#  - flood protectie wordt nu per kanaal bij gehouden (lijkt me nuttiger zo).
 # 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
@@ -226,14 +227,14 @@ proc fok:pub {nick uhost hand chan text} {
   global lastbind fok fokdata
   if {[lsearch -exact $fok(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists fok(floodprot)]} {
-    set verschil [expr [clock seconds] - $fok(floodprot)]
+  if {[info exists fok(floodprot,$chan)]} {
+    set verschil [expr [clock seconds] - $fok(floodprot,$chan)]
     if {$verschil < $fok(antiflood)} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $fok(antiflood) - $verschil] seconden..."
       return 0
     }
   }
-  set fok(floodprot) [clock seconds]
+  set fok(floodprot,$chan) [clock seconds]
 
   if {$fok(log)} { putlog "\[Fok!\] Trigger: $lastbind in $chan by $nick" }
 

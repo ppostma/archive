@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.5 2003-07-07 17:36:17 peter Exp $
+# $Id: webwereld.tcl,v 1.6 2003-07-09 15:14:07 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 07/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -9,6 +9,7 @@
 #    de webw(updates) setting wordt nu ook door de triggers gebruikt
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
+#  - flood protectie wordt nu per kanaal bij gehouden (lijkt me nuttiger zo).
 # 1.0: (04/07/2003)
 #  - eerste versie, gebaseerd op tweakers.tcl v1.9
 #
@@ -187,14 +188,14 @@ proc webw:pub {nick uhost hand chan text} {
   global lastbind webw webwdata
   if {[lsearch -exact $webw(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists webw(floodprot)]} {
-    set verschil [expr [clock seconds] - $webw(floodprot)]
+  if {[info exists webw(floodprot,$chan)]} {
+    set verschil [expr [clock seconds] - $webw(floodprot,$chan)]
     if {$verschil < $webw(antiflood)} {
       putquick "NOTICE $nick :Trigger is net al gebruikt! Wacht aub. [expr $webw(antiflood) - $verschil] seconden..."
       return 0
     }
   }
-  set webw(floodprot) [clock seconds]
+  set webw(floodprot,$chan) [clock seconds]
 
   if {$webw(log)} { putlog "\[WebWereld\] Trigger: $lastbind in $chan by $nick" }
 

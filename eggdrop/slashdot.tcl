@@ -1,7 +1,7 @@
-# $Id: slashdot.tcl,v 1.18 2003-07-07 17:36:16 peter Exp $
+# $Id: slashdot.tcl,v 1.19 2003-07-09 15:14:07 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -9,6 +9,7 @@
 #    the slashdot(updates) it now also being used by the triggers
 #    to check how long to cache the data.
 #  - proxy configuration added.
+#  - flood protection is now for each channel (this is more usefull IMHO).
 # 1.9: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -199,14 +200,14 @@ proc slashdot:pub {nick uhost hand chan text} {
   global lastbind slashdot slashdotdata
   if {[lsearch -exact $slashdot(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {[info exists slashdot(floodprot)]} {
-    set diff [expr [clock seconds] - $slashdot(floodprot)]
+  if {[info exists slashdot(floodprot,$chan)]} {
+    set diff [expr [clock seconds] - $slashdot(floodprot,$chan)]
     if {$diff < $slashdot(antiflood)} {
       putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $slashdot(antiflood) - $diff] seconds..."
       return 0
     }
   }
-  set slashdot(floodprot) [clock seconds]
+  set slashdot(floodprot,$chan) [clock seconds]
 
   if {$slashdot(log)} { putlog "\[Slashdot\] Trigger: $lastbind in $chan by $nick" }
 

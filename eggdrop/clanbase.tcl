@@ -1,7 +1,7 @@
-# $Id: clanbase.tcl,v 1.17 2003-07-07 17:36:16 peter Exp $
+# $Id: clanbase.tcl,v 1.18 2003-07-09 15:14:07 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
-# version 1.4, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -9,6 +9,7 @@
 #    the cb(updates) it now also being used by the triggers
 #    to check how long to cache the data.
 #  - proxy configuration added.
+#  - flood protection is now for each channel (this is more usefull IMHO).
 # 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
@@ -196,14 +197,14 @@ proc cb:pub {nick uhost hand chan text} {
   global lastbind cb cbdata
   if {[lsearch -exact $cb(nopub) [string tolower $chan]] >= 0} { return 0 }
 
-  if {[info exists cb(floodprot)]} {
-    set diff [expr [clock seconds] - $cb(floodprot)]
+  if {[info exists cb(floodprot,$chan)]} {
+    set diff [expr [clock seconds] - $cb(floodprot,$chan)]
     if {$diff < $cb(antiflood)} {
       putquick "NOTICE $nick :Trigger has just been used! Please wait [expr $cb(antiflood) - $diff] seconds..."
       return 0
     }
   }
-  set cb(floodprot) [clock seconds]
+  set cb(floodprot,$chan) [clock seconds]
 
   if {$cb(log)} { putlog "\[Clanbase\] Trigger: $lastbind in $chan by $nick" }
 
