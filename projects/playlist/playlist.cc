@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: playlist.cc,v 1.8 2003-07-28 18:21:46 peter Exp $
+ * $Id: playlist.cc,v 1.9 2003-07-28 18:30:23 peter Exp $
  */
 
 #include <stdlib.h>
@@ -168,21 +168,20 @@ string itos(int i)
 string time2texts(long time)
 {
 	string	temp;
-	int	days, hours, mins, secs;
+	int	hours, mins, secs;
 
 	if (time < 1) return "";
 
-	days  = time / 86400;
-	time %= 86400;
 	hours = time / 3600;
 	time %= 3600;
 	mins  = time / 60;
 	secs  = time % 60;
 
-	if (days > 0)
-		temp += itos(days) + ":";
 	if (hours > 0)
 		temp += itos(hours) + ":";
+
+	if (hours > 0 && mins < 10)
+		temp += "0";
 
 	temp += itos(mins) + ":";
 
