@@ -1,10 +1,10 @@
-# $Id: di.tcl,v 1.2 2003-07-03 14:51:10 peter Exp $
+# $Id: di.tcl,v 1.3 2003-07-03 22:36:13 peter Exp $
 
 # Digitally Imported Radio info script for the eggdrop
-# version 0.2, 03/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 0.2: (03/07/03)
+# 0.2: (??/??/??)
 #  - added several configuration options:
 #  - configurable flags
 #  - nopub, where the bot doesn't speak
@@ -43,6 +43,7 @@ set di(method) 1
 # %chantitle  = channel title
 # %tracktitle = track title
 # %since      = shows when the track started to play
+# %plsurl     = url to the playlist (128k winamp stream)
 # %b          = bold text
 # %u          = underlined text
 set di(layout) "\[%bDI%b %chantitle\] %tracktitle, playing since %since"
@@ -72,19 +73,58 @@ proc pub:di {nick uhost hand chan text} {
   if {[lsearch -exact $di(nopub) [string tolower $chan]] >= 0} { return 0 }
 
   switch [string tolower [lindex $text 0]] {
-    "vocaltrance"   { set chantitle "VocalTrance" }
-    "hardtrance"    { set chantitle "HardTrance" }
-    "trance"        { set chantitle "Trance" }
-    "hardhouse"     { set chantitle "HardHouse" }
-    "hardcore"      { set chantitle "Hardcore" }
-    "goa"           { set chantitle "Goa" }
-    "eurodance"     { set chantitle "EuroDance " }
-    "djmixes"       { set chantitle "DJMixes" }
-    "deephouse"     { set chantitle "DeepHouse" }
-    "classictechno" { set chantitle "ClassicTechno" }
-    "jazz"          { set chantitle "Jazz" }
-    "classical"     { set chantitle "Classical" }
-    "chillout"      { set chantitle "Chillout" }
+    "vocaltrance" {
+      set chantitle "VocalTrance"
+      set plsurl "http://di.fm/mp3/vocaltrance128k.pls"
+    }
+    "hardtrance" {
+      set chantitle "HardTrance"
+      set plsurl "http://di.fm/mp3/hardtrance128k.pls"
+    }
+    "trance" {
+      set chantitle "Trance"
+      set plsurl "http://di.fm/mp3/trance128k.pls"
+    }
+    "hardhouse" {
+      set chantitle "HardHouse"
+      set plsurl "http://di.fm/mp3/hardhouse128k.pls"
+    }
+    "hardcore" {
+      set chantitle "Hardcore"
+      set plsurl "http://di.fm/mp3/hardcore128k.pls"
+    }
+    "goa" {
+      set chantitle "Goa"
+      set plsurl "http://di.fm/mp3/goapsy128k.pls"
+    }
+    "eurodance" {
+      set chantitle "EuroDance"
+      set plsurl "http://di.fm/mp3/eurodance128k.pls"
+    }
+    "djmixes" {
+      set chantitle "DJMixes"
+      set plsurl "http://di.fm/mp3/djmixes128k.pls"
+    }
+    "deephouse" {
+      set chantitle "DeepHouse"
+      set plsurl "http://di.fm/mp3/deephouse128k.pls"
+    }
+    "classictechno" {
+      set chantitle "ClassicTechno"
+      set plsurl "http://di.fm/mp3/classictechno128k.pls"
+    }
+    "jazz" {
+      set chantitle "Jazz"
+      set plsurl "http://di.fm/mp3/jazz128k.pls"
+    }
+    "classical" {
+      set chantitle "Classical"
+      set plsurl "http://www.mostlyclassical.com/mp3/classical128k.pls"
+    }
+    "chillout" {
+      set chantitle "Chillout"
+      set plsurl "http://di.fm/mp3/chillout128k.pls"
+    }
     default {
       putquick "NOTICE $nick :Usage: $lastbind <channel_title>"
       putquick "NOTICE $nick :Available channel titles are: VocalTrance, HardTrance, Trance, HardHouse, Hardcore, Goa, EuroDance, DJMixes, DeepHouse, ClassicTechno, Jazz, Classical, Chillout"
@@ -113,6 +153,7 @@ proc pub:di {nick uhost hand chan text} {
     set outchan $di(layout)
     regsub -all "%chantitle"  $outchan $chantitle outchan
     regsub -all "%tracktitle" $outchan $tracktitle outchan
+    regsub -all "%plsurl" $outchan $plsurl outchan
     regsub -all "%since"   $outchan [clock format $starttime -format %H:%M:%S] outchan
     regsub -all "%b" $outchan "\002" outchan
     regsub -all "%u" $outchan "\037" outchan
