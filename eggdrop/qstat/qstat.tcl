@@ -1,6 +1,6 @@
-# $Id: qstat.tcl,v 1.1.1.1 2003-03-19 14:50:33 peter Exp $
+# $Id: qstat.tcl,v 1.2 2003-03-20 13:14:02 peter Exp $
 
-# qstat.tcl / qstat script for an eggdrop / version 2.1 / 26/10/2002 
+# qstat.tcl / qstat script for an eggdrop / version 2.2 / 20/03/2003 
 # 
 # This script will query gameservers using the qstat program to
 # display server status and players using public commands. 
@@ -8,21 +8,24 @@
 # History:
 #  1.0 (original) by Mikael Blomqvist <micke@peachpuff.com>
 #  1.5 by ST8 <st8@q3f.net> and in part by Ad <ad@contempt.org.uk>
-#  1.7 by Peter Postma <peterpostma@yahoo.com>
+#  1.7 by Peter Postma <peter@webdeveloping.nl>
 #    - security hole fixed. (passing bad arguments to TCL's exec)
 #    - display players fixed. 
-#  1.8 Peter Postma <peterpostma@yahoo.com>
+#  1.8 Peter Postma <peter@webdeveloping.nl>
 #    - doesn't need a temp file anymore to display player info
 #    - use regsub for input checking 
 #    - better error checking / error messages
 #    - lot of clean up
-#  2.0 by Peter Postma <peterpostma@yahoo.com>
+#  2.0 by Peter Postma <peter@webdeveloping.nl>
 #    - very nasty bugs fixed: endless long flood and bad errors
 #    - wiped out alot code, rewrote the main function
-#  2.1 by Peter Postma <peterpostma@yahoo.com>
+#  2.1 by Peter Postma <peter@webdeveloping.nl>
 #    - support for RTCW, Quake 1
 #    - installation steps added :^)
-#    - windrop fix
+#    - windrop fix (but still doesn't work perfect)
+#  2.2 by Peter Postma <peter@webdeveloping.nl>
+#    - added BF, Gamespy, QW and UT2003.
+#    - added '-timeout 5' option in qstat exec
 #
 # Installation steps:
 # 1) Easiest way of installing: put all Qstat related files (players.qstat, 
@@ -48,7 +51,7 @@
 set qstat_flag "-|-"
 
 # Path to qstat folder containing qstat stuff/scripts and the qstat program
-set pathqstat "/home/peter/AI/scripts/my/qstat"
+set pathqstat "/home/ai/scripts/my/qstat"
 
 # Channels you _dont_ want the bot to reply to public triggers on 
 # (seperate with spaces):
@@ -62,22 +65,31 @@ set nopub ""
 # This is where the evil TCL code starts, read at your peril!  #
 ################################################################
 
-set qversion "2.1"
+set qversion "2.2"
 
 bind pub $qstat_flag "!ut"  pub:qstat
 bind pub $qstat_flag "!hl"  pub:qstat 
 bind pub $qstat_flag "!cs"  pub:qstat
+bind pub $qstat_flag "!qw"  pub:qstat
 bind pub $qstat_flag "!q1"  pub:qstat 
 bind pub $qstat_flag "!q2"  pub:qstat 
 bind pub $qstat_flag "!q3"  pub:qstat 
 bind pub $qstat_flag "!rcw" pub:qstat
+bind pub $qstat_flag "!bf"  pub:qstat
+bind pub $qstat_flag "!gs"  pub:qstat
+bind pub $qstat_flag "!ut2k3"  pub:qstat
+bind pub $qstat_flag "!ut2003" pub:qstat
 
 bind pub $qstat_flag "!utp"  pub:qstat
 bind pub $qstat_flag "!hlp"  pub:qstat
+bind pub $qstat_flag "!qwp"  pub:qstat
 bind pub $qstat_flag "!q1p"  pub:qstat
 bind pub $qstat_flag "!q3p"  pub:qstat
 bind pub $qstat_flag "!q2p"  pub:qstat
 bind pub $qstat_flag "!rcwp" pub:qstat
+bind pub $qstat_flag "!bfp"  pub:qstat
+bind pub $qstat_flag "!ut2k3p"  pub:qstat
+bind pub $qstat_flag "!ut2003p" pub:qstat
 
 bind pub $qstat_flag "!qstat" pub:qstat_help
 
@@ -89,8 +101,9 @@ proc pub:qstat_help {nick host hand chan arg} {
 
   # output qstat commands / help.
   putserv "NOTICE $nick :Qstat commands:"
-  putserv "NOTICE $nick :\002!q1 / !q2 / !q3 / !ut / !hl / !rcw <ip/host>\002 - Displays status of queried Quake 1/2/3, UT, Half-life and RTCW servers"
-  putserv "NOTICE $nick :\002!q1 / !q2p / !q3p / !utp / !hlp / !rcwp <ip/host>\002 - Displays all players on queried Quake 1/2/3, UT, Half-life and RTCW servers"
+  putserv "NOTICE $nick :\002!qw / !q1 / !q2 / !q3 / !rcw <ip/host>\002 - Displays status of queried Quake World, 1, 2, 3 or RTCW servers"
+  putserv "NOTICE $nick :\002!ut / !ut2003 / !hl / !bf / !gs <ip/host>\002 - Displays status of queried UT(2003), Half-life, BF1942 and GameSpy servers"
+
   return 0
 }
 
@@ -104,26 +117,35 @@ proc pub:qstat {nick host hand chan arg} {
   set arg [lindex $arg 0]
 
   # check for input.
-  if {[string length [string trim $arg]] == 0 || [qstat:input_check $arg] || [qstat:zero_check $arg]} {
+  if {[string length [string trim $arg]] == 0 || [qstat:input_check $arg]} {
     putquick "NOTICE $nick :Syntax: $lastbind <ip/host>"
     return 0
   }
 
   # figure out which command was used.
   switch [string tolower $lastbind] {
-    "!hl"   { set gametype "-hls";  set players 0 }
-    "!cs"   { set gametype "-hls";  set players 0 }
-    "!ut"   { set gametype "-uns";  set players 0 }
-    "!q1"   { set gametype "-qs";   set players 0 }
-    "!q2"   { set gametype "-q2s";  set players 0 }
-    "!q3"   { set gametype "-q3s";  set players 0 }
-    "!rcw"  { set gametype "-rwm";  set players 0 }
-    "!hlp"  { set gametype "-hls";  set players 1 }
-    "!utp"  { set gametype "-uns";  set players 1 }
-    "!q1p"  { set gametype "-qs";   set players 1 }
-    "!q2p"  { set gametype "-q2s";  set players 1 }
-    "!q3p"  { set gametype "-q3s";  set players 1 }
-    "!rcwp" { set gametype "-rwm";  set players 1 }
+    "!hl"     { set gametype "-hls";  set players 0 }
+    "!cs"     { set gametype "-hls";  set players 0 }
+    "!ut"     { set gametype "-uns";  set players 0 }
+    "!qw"     { set gametype "-qws";  set players 0 }
+    "!q1"     { set gametype "-qs";   set players 0 }
+    "!q2"     { set gametype "-q2s";  set players 0 }
+    "!q3"     { set gametype "-q3s";  set players 0 }
+    "!rcw"    { set gametype "-rwm";  set players 0 }
+    "!bf"     { set gametype "-gps";  set players 0 }
+    "!gs"     { set gametype "-gps";  set players 0 }
+    "!ut2k3"  { set gametype "-ut2s"; set players 0 }
+    "!ut2003" { set gametype "-ut2s"; set players 0 }
+    "!hlp"     { set gametype "-hls";  set players 1 }
+    "!utp"     { set gametype "-uns";  set players 1 }
+    "!qwp"     { set gametype "-qws";  set players 1 }
+    "!q1p"     { set gametype "-qs";   set players 1 }
+    "!q2p"     { set gametype "-q2s";  set players 1 }
+    "!q3p"     { set gametype "-q3s";  set players 1 }
+    "!rcwp"    { set gametype "-rwm";  set players 1 }
+    "!bfp"     { set gametype "-gps";  set players 1 }
+    "!ut2k3p"  { set gametype "-ut2s"; set players 1 }
+    "!ut2003p" { set gametype "-ut2s"; set players 1 }
     default {
       putquick "NOTICE $nick :Unknown command."
       return 0
@@ -132,9 +154,9 @@ proc pub:qstat {nick host hand chan arg} {
 
   # run the qstat program.
   if {$players} { 
-    set stat [open "|$pathqstat/qstat $gametype $arg -Ts $pathqstat/server.qstat -Tp $pathqstat/players.qstat -P" r]
+    set stat [open "|$pathqstat/qstat -timeout 5 $gametype $arg -Ts $pathqstat/server.qstat -Tp $pathqstat/players.qstat -P" r]
   } else {
-    set stat [open "|$pathqstat/qstat $gametype $arg -Ts $pathqstat/server.qstat" r]
+    set stat [open "|$pathqstat/qstat -timeout 5 $gametype $arg -Ts $pathqstat/server.qstat" r]
   }
 
   # output the result.
@@ -162,16 +184,9 @@ proc qstat:results {chan nick pf} {
   }
 }
 
-# check for bad characters, if no check this can be exploited.
+# check for valid chars
 proc qstat:input_check {text} {
-  foreach char {">" "<" "|" "&"} {
-    if [string match "*$char*" $text] { return 1 }
-  }
-  return 0
-}
-
-# a trailing zero leads to an endless flood.
-proc qstat:zero_check {text} {
+  if {[regexp \[^\[:alnum:\]_\.\:\] $text]} { return 1 }
   if {[string match "0*" $text]} { return 1 }
   return 0
 }
