@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.10 2003-05-26 17:02:08 peter Exp $
+# $Id: tweakers.tcl,v 1.11 2003-06-13 10:36:10 peter Exp $
 
 # tweakers.tcl / Tweakers.net Nieuws script voor een eggdrop
 # version 1.8 / 26/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -213,6 +213,7 @@ proc tnet:put {chan nick which method} {
   regsub -all "%src" $outchan $tnetdata(src,$which) outchan
   regsub -all "%lnk" $outchan $tnetdata(link,$which) outchan
   regsub -all "%tit" $outchan $tnetdata(titel,$which) outchan
+  regsub -all "&euml;" $outchan "ë" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
