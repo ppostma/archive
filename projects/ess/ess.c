@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.9 2003-08-10 11:07:44 peter Exp $
+ * $Id: ess.c,v 1.10 2003-08-10 11:08:05 peter Exp $
  */
 
 #include <sys/types.h>
@@ -31,7 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define VERSION		"0.3.2-beta"
+#define VERSION		"0.3.2"
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\n\n"
 #define TIMEOUT		3  /* seconds */
 
