@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.25 2003-07-10 10:24:52 peter Exp $
+# $Id: gamer.tcl,v 1.26 2003-07-23 16:50:17 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -229,7 +229,7 @@ proc gamer:pub {nick uhost hand chan text} {
   global lastbind gamer gamerdata
   if {[lsearch -exact $gamer(nopub) [string tolower $chan]] >= 0} { return 0 }  
 
-  if {$gamer(antiflood > 0} {
+  if {$gamer(antiflood) > 0} {
     if {[info exists gamer(floodprot,$chan)]} {
       set diff [expr [clock seconds] - $gamer(floodprot,$chan)]
       if {$diff < $gamer(antiflood)} {
