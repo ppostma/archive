@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.8 2003-08-09 16:41:41 peter Exp $
+ * $Id: ess.c,v 1.9 2003-08-10 11:07:44 peter Exp $
  */
 
 #include <sys/types.h>
@@ -161,6 +161,14 @@ main(argc, argv)
 			continue;
 		}
 		alarm(TIMEOUT);
+		if (verbose_flag) {
+			printf("Trying %s ",
+			    get_addr(ai->ai_addr, ai->ai_addrlen));
+			resolve_flag = !resolve_flag;
+			printf("(%s).\n",
+			    get_addr(ai->ai_addr, ai->ai_addrlen));
+			resolve_flag = !resolve_flag;
+		}			
 		if (connect(ssock, ai->ai_addr, ai->ai_addrlen) < 0) {
 			if (timedout) {
 				strcpy(result, "no response");
@@ -199,7 +207,7 @@ main(argc, argv)
 				strcpy(result, "anonymous login denied!");
 				break;
 			case  1:
-				strcpy(result, "anonymous login accepted!");
+				strcpy(result, "anonymous login allowed!");
 				break;
 			}
 		} else if (relay_flag) {
@@ -212,7 +220,7 @@ main(argc, argv)
 				strcpy(result, "relay access denied!");
 				break;
 			case  1:
-				strcpy(result, "relay access accepted!");
+				strcpy(result, "relay access allowed!");
 				break;
 			}
 		} else if (banner_flag) {
