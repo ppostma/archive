@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.29 2003-10-13 23:11:41 peter Exp $
+ * $Id: ess.c,v 1.30 2003-11-02 04:55:48 peter Exp $
  */
 
 #include <sys/types.h>
@@ -325,12 +325,12 @@ readall(int fd)
 	char	response[1024];
 	size_t	b, count = 0;
 
-        do {
-                if ((b = readln(fd, response, sizeof(response))) > 0)
+	do {
+		if ((b = readln(fd, response, sizeof(response))) > 0)
 			count += b;
-                if (verbose_flag)
-                        printf("<<< %s", response);
-        } while (response[3] == '-');
+		if (verbose_flag)
+			printf("<<< %s", response);
+	} while (response[3] == '-');
 
 	return count;
 }
@@ -606,7 +606,7 @@ relay_scan(char *host, char *ip)
 		if (verbose_flag)
 			printf("\nRelay test %d\n", i+1);
 
-	        /* Reset */
+		/* Reset */
 		strcpy(request, "RSET\n");
 		send(ssock, request, strlen(request), 0);
 		if (verbose_flag)
