@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.6 2003-05-20 13:52:57 peter Exp $
+# $Id: gamer.tcl,v 1.7 2003-05-21 15:45:27 peter Exp $
 
 # gamer.tcl / Gamer.nl Nieuws script voor een eggdrop
 # version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -195,12 +195,14 @@ proc gamer:put {chan nick which method} {
   global gamer gamerdata
 
   set outchan $gamer(layout)
+  foreach item {tijd id reac auteur titel} {
+    regsub -all "\\&" $gamerdata($item,$which) "\\\\&" gamerdata($item,$which)
+  }
   regsub -all "%tyd" $outchan $gamerdata(tijd,$which) outchan
   regsub -all "%id"  $outchan $gamerdata(id,$which) outchan
   regsub -all "%rea" $outchan $gamerdata(reac,$which) outchan
   regsub -all "%aut" $outchan $gamerdata(auteur,$which) outchan
   regsub -all "%tit" $outchan $gamerdata(titel,$which) outchan
-  regsub -all "\\&"    $outchan "\\\\&" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan

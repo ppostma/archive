@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.4 2003-05-20 13:52:57 peter Exp $
+# $Id: osnews.tcl,v 1.5 2003-05-21 15:45:27 peter Exp $
 
 # osnews.tcl / OSnews.org News Announce Script for an eggdrop
 # version 1.1 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -163,9 +163,11 @@ proc osnews:put {chan nick which method} {
   global osnews osnewsdata
 
   set outchan $osnews(layout)
+  foreach item {title link} {
+    regsub -all "\\&" $osnewsdata($item,$which) "\\\\&" osnewsdata($item,$which)
+  }
   regsub -all "%title" $outchan $osnewsdata(title,$which) outchan
   regsub -all "%link"  $outchan $osnewsdata(link,$which) outchan
-  regsub -all "\\&"    $outchan "\\\\&" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b"   $outchan "\002" outchan

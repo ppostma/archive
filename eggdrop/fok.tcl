@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.6 2003-05-20 13:52:57 peter Exp $
+# $Id: fok.tcl,v 1.7 2003-05-21 15:45:27 peter Exp $
 
 # fok.tcl / fok.nl Nieuws script voor een eggdrop
 # version 1.7 / 20/05/2003 / door Peter Postma <peter@webdeveloping.nl>
@@ -193,11 +193,13 @@ proc fok:put {chan nick which method} {
   global fok fokdata
 
   set outchan $fok(layout)
+  foreach item {tijd id reac titel} {
+    regsub -all "\\&" $fokdata($item,$which) "\\\\&" fokdata($item,$which)
+  }
   regsub -all "%tyd" $outchan $fokdata(tijd,$which) outchan
   regsub -all "%id"  $outchan $fokdata(id,$which) outchan
   regsub -all "%rea" $outchan $fokdata(reac,$which) outchan
   regsub -all "%tit" $outchan $fokdata(titel,$which) outchan
-  regsub -all "\\&"    $outchan "\\\\&" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan

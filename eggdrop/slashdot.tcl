@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.7 2003-05-20 13:52:57 peter Exp $
+# $Id: slashdot.tcl,v 1.8 2003-05-21 15:45:27 peter Exp $
 
 # slashdot.tcl / Slashdot.org News Announce Script for an eggdrop
 # version 1.7 / 20/05/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -166,13 +166,15 @@ proc slashdot:put {chan nick which method} {
   global slashdot slashdotdata
 
   set outchan $slashdot(layout)
+  foreach item {time author title section url comments} {
+    regsub -all "\\&" $slashdotdata($item,$which) "\\\\&" slashdotdata($item,$which)
+  }
   regsub -all "%tim" $outchan $slashdotdata(time,$which) outchan
   regsub -all "%aut" $outchan $slashdotdata(author,$which) outchan
   regsub -all "%tit" $outchan $slashdotdata(title,$which) outchan
   regsub -all "%sec" $outchan $slashdotdata(section,$which) outchan
   regsub -all "%url" $outchan $slashdotdata(url,$which) outchan
   regsub -all "%com" $outchan $slashdotdata(comments,$which) outchan
-  regsub -all "\\&"    $outchan "\\\\&" outchan
   regsub -all "&amp;"  $outchan "\\&" outchan
   regsub -all "&quot;" $outchan "\"" outchan
   regsub -all "%b" $outchan "\002" outchan
