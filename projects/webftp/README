@@ -1,0 +1,53 @@
+WebFTP client v0.7 by Peter Postma <peter@webdeveloping.nl>
+
+1. Installation:
+
+Change the server ip in conf.php.
+That's all :-)
+
+
+2. Notes:
+
+This script has been tested and runs succesfull on the following FTP servers:
+
+ - proftpd on FreeBSD
+ - proftpd on Linux
+ - default ftpd on FreeBSD
+ - default ftpd on NetBSD
+ - default ftpd on OpenBSD
+
+Any Microsoft Windows FTP server will not work.
+
+Make sure you've compiled PHP with "--enable-ftp" otherwise this script will
+not function. You can check this with phpinfo();
+
+Do not use this client with large file tranfers, it's too unreliable.
+
+If uploads don't work then the value "file_uploads" in php.ini 
+is probably set to "off". Set this to "on" to enable uploads.
+
+If you've problems with uploading files >2MB then change the setting
+"upload_max_filesize" to higher value.
+
+
+3. Todo:
+ - dir.php needs redesign, this one sucks
+ - fix: symlinks
+ - icons: need a new chmod icon, maybe delete icon too
+ - add: owner & group?
+ - fix: upload method isn't really correct
+
+
+4. History:
+
+v0.71 (??/??/2003)
+ - delete form, shows directory
+ - fixed: double slashed root directory
+ - added: change server
+ - upload was broken, fixed now
+
+v0.7 (14/02/2003) 
+ - rewrote
+
+v0.6 (03/08/2001)
+ - first release, very poor written code.

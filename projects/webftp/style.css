@@ -1,0 +1,29 @@
+BODY, TD, P {
+  color: #000000;
+  font-family: verdana, helvetica, sans-serif;
+  font-size: 10pt;
+  background-color: #E8E8E8;
+}
+INPUT, .form {
+  color: #000000;
+  font-family: verdana, helvetica, sans-serif;
+  font-size: 10pt;
+}
+A {
+  color: #000000;
+  font-family: verdana, helvetica, sans-serif;
+  font-size: 10pt;
+  text-decoration: none;
+}
+A:HOVER {
+  color: #000000;
+  font-family: verdana, helvetica, sans-serif;
+  font-size: 10pt;
+  text-decoration: underline;
+}
+A:ACTIVE {
+  color: #000000;
+  font-family: verdana, helvetica, sans-serif;
+  font-size: 10pt;
+  text-decoration: underline;
+}
