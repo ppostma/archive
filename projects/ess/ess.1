@@ -1,20 +1,31 @@
-.\" $Id: ess.1,v 1.2 2003-11-30 19:21:47 peter Exp $
+.\" $Id: ess.1,v 1.3 2004-09-04 19:26:21 peter Exp $
 .\"
-.TH "ESS" "1" "November 24, 2003" "ess 0\.3\.6\-beta"
+.TH "ESS" "1" "September 04, 2004" "ess 0\.3\.6"
 .SH NAME
 .B ess
 \- Easy Service Scanner
 .SH SYNOPSIS
 .B ess
-[\-46abfinqrvV]
+[
+.B \-46abfinqrv
+] [
+.B \-p
+.IR type
+] [
+.B \-t
+.IR timeout
+]
 .IR hostname/ip
 .IR port/service
 .SH DESCRIPTION
 .I ess
-is a simple program for testing TCP network services/daemons.
+is a small program for testing TCP network services and daemons.
 .PP
-It features IPv6 support, banner grabbing, anonymous ftp scan,
-ident scanning, open\-relay test and supports round robin dns entry's.
+The program can test for anonymous ftp logins, mail relay (20 different tests),
+reverse ident scan and open proxy (http, socks) test.
+It supports IPv6 out of the box.
+Note that this program is not a portscanner but only a small tool for testing
+a single port/service.
 .SH OPTIONS
 .TP 8
 .B \-4
@@ -49,6 +60,10 @@ Don't try to resolve addresses to names.
 Compiled without -DRESOLVE:
 Try resolve addresses to names.
 .TP
+.B \-p \fItype\fP
+Open proxy test, checks if the proxy server allows connections.
+The \fItype\fP argument can be either \fBhttp\fP or \fBsocks\fP.
+.TP
 .B \-q
 Be quiet.
 Don't output anything to stdout.
@@ -58,17 +73,17 @@ Mail relay test.
 Performs a simple test to check for open\-relay.
 If you use this option twice then
 .I ess
-will perform an extensive check (20 tests).
+will perform an extensive check (20 different tests).
 You don't have to specify a port here as port 25 will be used by default.
 You may override this by specifying another port.
 .TP
+.B \-t \fItimeout\fP
+Specify a timeout in milliseconds, used when connecting to a service.
+The default timeout is 3000 milliseconds.
+.TP
 .B \-v
 Be verbose.
-It's use is recommended, especially with the FTP (\-f) and
-open-relay (\-r) tests.
-.TP
-.B \-V
-Outputs the version number.
+Its use is recommended, especially with the \fB\-f\fP or \fB\-r\fP flags.
 .SH EXIT CODES
 The program returns several exit codes which might make it useful to
 integrate in shell scripts or automated tasks.
@@ -93,14 +108,14 @@ Invalid combination of flags.
 Unknown error (this should never happen).
 .TP
 .B 99
-Code when option \-V is used.
+Code when option \fB\-V\fP is used.
 .TP
 .B 128
 Bad address/service or some other error which causes
 the address/name resolve functions to fail.
 .TP
 .B 255
-Eror in socket operation (send, recv, getsockname, etc...)
+Eror in socket operation (send, recv, getsockname, ...)
 or malloc failure.
 .SH AUTHOR
 .I ess
@@ -109,7 +124,6 @@ is written by Peter Postma
 .SH DOWNLOAD
 You can download
 .I ess
-here:
-.B http://pointless.nl/~peter/projects/ess/
+here: \fIhttp://pointless.nl/~peter/projects/ess/\fP
 .SH BUGS
 If you find any bugs then please report them to me.
