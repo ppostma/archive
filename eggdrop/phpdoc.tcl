@@ -1,4 +1,4 @@
-# $Id: phpdoc.tcl,v 1.3 2003-07-07 09:00:55 peter Exp $
+# $Id: phpdoc.tcl,v 1.4 2003-08-02 14:21:06 peter Exp $
 
 # PHP Doc for the eggdrop
 # version 0.3, 07/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -46,12 +46,12 @@ set phpdoc(file) "/usr/home/peter/eggdrop/scripts/my/funcsummary.txt"
 
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 set phpdoc(version) 0.3
 
 if {[info tclversion] < 8.1} {
-  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
+  putlog "Cannot load [file tail [info script]]: You need at least Tcl version 8.1 and you have Tcl version [info tclversion]."
   return 1
 }
 

@@ -1,7 +1,7 @@
-# $Id: tweakers.tcl,v 1.28 2003-07-30 19:36:48 peter Exp $
+# $Id: tweakers.tcl,v 1.29 2003-08-02 14:21:06 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
-# version 2.0, 30/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -10,9 +10,9 @@
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
 #  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
-#  - script werkt nu ook met TCL 8.0
+#  - script werkt nu ook met Tcl 8.0
 # 1.9: (04/07/2003) [changes]
-#  - check voor goede TCL versie & alltools.tcl
+#  - check voor goede Tcl versie & alltools.tcl
 #  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
 #  - code style changes.
@@ -24,7 +24,7 @@
 # 1.6: (17/05/2003) [bugfixes]
 #  - fix memory leak!!! (ongebruikte variabelen unsetten en 
 #    de belangrijkste: de ::http::cleanup functie!
-#  - veel kleine TCL changes/fixes
+#  - veel kleine Tcl changes/fixes
 # 1.5: (12/10/2002) [features/changes]
 #  - extra check in de getdata procedure (voor HTTP errors zoals 404, etc..)
 #  - triggers/functie toegevoegd om de aankondiger aan en uit te zetten.
@@ -61,7 +61,7 @@
 # Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
 # Zet http.tcl *niet* in je eggdrop configuratie!
 #
-# Het tweakers.tcl script werkt het best met TCL versies vanaf 8.0.
+# Het tweakers.tcl script werkt het best met Tcl versies vanaf 8.0.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
@@ -97,7 +97,7 @@ set tnet(method) 1
 set tnet(headlines) 2
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
-# voor geen flood protectie: zet 't op 0
+# zet 't op 0 om de flood protectie uit te zetten.
 set tnet(antiflood) 10
 
 # hieronder kun je de layout aanpassen voor de output:
@@ -144,14 +144,14 @@ set tnet(log) 1
 
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 package require http
 
 set tnet(version) "2.0"
 
 if {[info tclversion] < 8.0} {
-  putlog "\[T.Net\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.0 nodig en u heeft TCL versie [info tclversion]."
+  putlog "\[T.Net\] Kan [file tail [info script]] niet laden: U heeft minimaal Tcl versie 8.0 nodig en u heeft Tcl versie [info tclversion]."
   return 1
 }
 

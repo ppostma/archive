@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.11 2003-07-09 02:57:19 peter Exp $
+# $Id: qstat.tcl,v 1.12 2003-08-02 14:21:06 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 09/07/2003 
 # 
@@ -9,7 +9,7 @@
 #  1.0 (original) by Mikael Blomqvist <micke@peachpuff.com>
 #  1.5 by ST8 <st8@q3f.net> and in part by Ad <ad@contempt.org.uk>
 #  1.7 by Peter Postma <peter@webdeveloping.nl>
-#    - security hole fixed. (passing bad arguments to TCL's exec)
+#    - security hole fixed. (passing bad arguments to Tcl's exec)
 #    - display players fixed. 
 #  1.8 Peter Postma <peter@webdeveloping.nl>
 #    - doesn't need a temp file anymore to display player info
@@ -74,7 +74,7 @@ set qstat(method) 1
 ### End configuration settings ###
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 set qstat(version) "2.3"
 

@@ -1,4 +1,4 @@
-# $Id: dictionary.tcl,v 1.5 2003-07-04 13:49:09 peter Exp $
+# $Id: dictionary.tcl,v 1.6 2003-08-02 14:21:05 peter Exp $
 
 # Dictionary script for the eggdrop
 # version 0.8.4, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>    
@@ -62,7 +62,7 @@ set dict(shared_db) 1
 ### End Configuration settings ###
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 set dict(version) "0.8.4"
 

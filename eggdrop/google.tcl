@@ -1,4 +1,4 @@
-# $Id: google.tcl,v 1.6 2003-07-09 03:07:49 peter Exp $
+# $Id: google.tcl,v 1.7 2003-08-02 14:21:06 peter Exp $
 
 # Google script for the eggdrop
 # version 0.3, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -36,14 +36,14 @@ set google(results) 3
 ### End Configuration settings ###
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 set google(version) 0.3
 
 package require http
 
 if {[info tclversion] < 8.1} {
-  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
+  putlog "Cannot load [file tail [info script]]: You need at least Tcl version 8.1 and you have Tcl version [info tclversion]."
   return 1
 }
 

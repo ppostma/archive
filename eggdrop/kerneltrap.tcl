@@ -1,7 +1,7 @@
-# $Id: kerneltrap.tcl,v 1.23 2003-07-30 19:36:48 peter Exp $
+# $Id: kerneltrap.tcl,v 1.24 2003-08-02 14:21:06 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
-# version 1.4, 30/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -10,9 +10,9 @@
 #    to check how long to cache the data.
 #  - proxy configuration added.
 #  - flood protection is now for each channel (this is more usefull IMHO).
-#  - script works with TCL 8.0 now.
+#  - script works with Tcl 8.0 now.
 # 1.3: (04/07/2003) [changes]
-#  - check for correct TCL version & alltools.tcl
+#  - check for correct Tcl version & alltools.tcl
 #  - added flood protection.
 #  - added url for latest version.
 #  - trivial style changes.
@@ -30,7 +30,7 @@
 # This script also uses http.tcl. You *don't* need to put http.tcl
 # your eggdrop configuration!
 #
-# You need at least TCL version 8.0 to get this script running!
+# You need at least Tcl version 8.0 to get this script running!
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
@@ -67,7 +67,7 @@ set kerneltrap(method) 1
 set kerneltrap(headlines) 2
 
 # flood protection: seconds between use of the triggers
-# to disable: set it to 0
+# set this to 0 to disable the flood protection.
 set kerneltrap(antiflood) 10
 
 # below you can change the layout of the output:
@@ -108,14 +108,14 @@ set kerneltrap(log) 1
 
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 package require http
 
 set kerneltrap(version) "1.4"
 
 if {[info tclversion] < 8.0} {
-  putlog "\[KernelTrap\] Cannot load [file tail [info script]]: You need at least TCL version 8.0 and you have TCL version [info tclversion]."
+  putlog "\[KernelTrap\] Cannot load [file tail [info script]]: You need at least Tcl version 8.0 and you have Tcl version [info tclversion]."
   return 1
 }
 

@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.13 2003-07-30 19:36:48 peter Exp $
+# $Id: webwereld.tcl,v 1.14 2003-08-02 14:21:06 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 30/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -10,7 +10,7 @@
 #    om te checken hoe lang de data gecached moet worden.
 #  - proxy configuratie toegevoegd.
 #  - flood protectie wordt nu per kanaal bijgehouden (lijkt me nuttiger zo).
-#  - script werkt nu ook met TCL 8.0.
+#  - script werkt nu ook met Tcl 8.0.
 # 1.0: (04/07/2003)
 #  - eerste versie, gebaseerd op tweakers.tcl v1.9
 #
@@ -20,7 +20,7 @@
 # Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
 # Zet http.tcl *niet* in je eggdrop configuratie!
 #
-# Het webwereld.tcl script werkt het best met TCL versies vanaf 8.0.
+# Het webwereld.tcl script werkt het best met Tcl versies vanaf 8.0.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
@@ -56,7 +56,7 @@ set webw(method) 1
 set webw(headlines) 2
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
-# voor geen flood protectie: zet 't op 0
+# zet 't op 0 om de flood protectie uit te zetten.
 set webw(antiflood) 10
 
 # hieronder kun je de layout aanpassen voor de output:
@@ -98,14 +98,14 @@ set webw(log) 1
 
 
 
-### Begin TCL code ###
+### Begin Tcl code ###
 
 package require http
 
 set webw(version) "1.1"
 
 if {[info tclversion] < 8.0} {
-  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.0 nodig en u heeft TCL versie [info tclversion]."
+  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal Tcl versie 8.0 nodig en u heeft Tcl versie [info tclversion]."
   return 1
 }
 
