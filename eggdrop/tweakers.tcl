@@ -1,11 +1,11 @@
-# $Id: tweakers.tcl,v 1.14 2003-06-22 12:07:45 peter Exp $
+# $Id: tweakers.tcl,v 1.15 2003-06-24 15:29:01 peter Exp $
 
 # Tweakers.net Nieuws script voor een eggdrop
-# version 1.9, 22/06/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.9, 24/06/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.9: (??/??/????)
-#  - url's voor laatste versie & licensie toegevoegd.
+#  - url voor laatste versie toegevoegd.
 #  - style changes.
 # 1.8: (26/05/03) [bugfix]
 #  - 3de poging om de bug met & teken te fixen.
@@ -56,9 +56,6 @@
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
-# Script Licensie:
-#   http://www.pointless.nl/copyright
-#
 # De laatste versie van dit script kan je hier vinden:
 #   http://www.pointless.nl/?page=eggdrop
 #

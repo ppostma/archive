@@ -1,4 +1,4 @@
-# $Id: portscanner.tcl,v 1.6 2003-06-22 13:12:20 peter Exp $
+# $Id: portscanner.tcl,v 1.7 2003-06-24 15:29:01 peter Exp $
 
 # Portscan script for an eggdrop 
 # version 0.4.1, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -15,7 +15,7 @@
 ### Configuration
 
 # Full path to the scan program
-set scanprog "/usr/home/peter/eggdrop/scripts/portscan/scan"
+set scanprog "/home/ai/scripts/my/portscan/scan"
 
 # Flags needed to use the command
 set scan_flags "f|f"

@@ -1,11 +1,11 @@
-# $Id: osnews.tcl,v 1.10 2003-06-22 12:07:45 peter Exp $
+# $Id: osnews.tcl,v 1.11 2003-06-24 15:29:01 peter Exp $
 
 # OSnews.com News Announce Script for an eggdrop
-# version 1.3, 20/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.3, 24/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.3: (??/??/????)
-#  - added url's for latest version & license.
+#  - added url for latest version.
 #  - trivial style changes.
 # 1.2: (26/05/2003) [bugfix]
 #  - third attempt to get rid of the bug with the & character.
@@ -25,9 +25,6 @@
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
-#
-# Script License:
-#   http://www.pointless.nl/copyright
 #
 # You can always find the latest version of this script on this page:
 #   http://www.pointless.nl/?page=eggdrop

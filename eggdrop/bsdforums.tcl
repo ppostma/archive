@@ -1,11 +1,11 @@
-# $Id: bsdforums.tcl,v 1.2 2003-06-22 12:07:45 peter Exp $
+# $Id: bsdforums.tcl,v 1.3 2003-06-24 15:29:01 peter Exp $
 
 # BSDForums.org News Announce Script for an eggdrop
-# version 1.1, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 24/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
-#  - added url's for latest version & license.
+#  - added url for latest version. 
 # 1.0: (20/06/2003) [first version]
 #  - wrote the script, based on osnews.tcl version 1.3 (beta)
 #
@@ -19,9 +19,6 @@
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
-#
-# Script License:
-#   http://www.pointless.nl/copyright
 #
 # You can always find the latest version of this script on this page:
 #   http://www.pointless.nl/?page=eggdrop
