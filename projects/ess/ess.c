@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ess.c,v 1.52 2004-09-04 18:49:41 peter Exp $
+ * $Id: ess.c,v 1.53 2004-09-04 18:54:56 peter Exp $
  */
 
 #include <sys/types.h>
@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -393,10 +394,9 @@ print_results:
 static int
 tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 {
-	struct timeval tv;
-	socklen_t optlen;
+	struct pollfd fds[1];
 	int flags, val, ret = 0;
-	fd_set fds;
+	socklen_t optlen;
 
 	if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
 		err(255, "fcntl(F_GETFL)");
@@ -405,11 +405,9 @@ tconnect(int sock, struct sockaddr *addr, socklen_t len, long timeout)
 
 	if (connect(sock, addr, len) < 0) {
 		if (errno == EINPROGRESS) {
-			tv.tv_sec = timeout / 1000;
-			tv.tv_usec = timeout % 1000;
-			FD_ZERO(&fds);
-			FD_SET(sock, &fds);
-			if (select(sock + 1, NULL, &fds, NULL, &tv) > 0) {
+			fds[0].fd = sock;
+			fds[0].events = POLLOUT;
+			if (poll(fds, 1, timeout) > 0) {
 				optlen = sizeof(int);
 				if (getsockopt(sock, SOL_SOCKET, SO_ERROR,
 				    (void *)&val, &optlen) < 0)
@@ -555,17 +553,10 @@ get_myaddr(int sock, int resolve)
 static void
 banner_scan(int sock, uint16_t port, long timeout)
 {
-	struct timeval	 tv;
-	fd_set		 read_fds;
+	struct pollfd	 fds[1];
 	char		*buf, *save;
-	int		 count;
+	ssize_t		 count;
 	unsigned char	 ch;
-
-	tv.tv_sec = timeout / 1000;
-	tv.tv_usec = timeout % 1000;
-
-	FD_ZERO(&read_fds);
-	FD_SET(sock, &read_fds);
 
 	if ((buf = (char *)malloc(BANNER_SIZE)) == NULL)
 		err(255, "malloc");
@@ -574,8 +565,11 @@ banner_scan(int sock, uint16_t port, long timeout)
 		send(sock, HTTP_REQUEST, strlen(HTTP_REQUEST), 0);
 
 	for (;;) {
-		select(sock + 1, &read_fds, NULL, NULL, &tv);
-		if (!FD_ISSET(sock, &read_fds))
+		fds[0].fd = sock;
+		fds[0].events = POLLIN;
+		if (poll(fds, 1, timeout) < 0)
+			err(1, "poll");
+		if ((fds[0].revents & POLLIN) == 0)
 			break;
 		if ((count = recv(sock, buf, BANNER_SIZE - 1, 0)) < 1)
 			break;
