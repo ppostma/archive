@@ -1,8 +1,13 @@
 <?
-  # $Id: index.php,v 1.3 2003-10-11 17:22:09 peter Exp $
+  # $Id: index.php,v 1.4 2003-10-13 19:53:55 peter Exp $
   #
   # WebFTP client - index
   #
+
+  if (!function_exists('ftp_connect')) {
+    require('no_ftp.php');
+    exit();
+  }
 
   require_once('timer.php');
 
