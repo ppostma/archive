@@ -1,10 +1,11 @@
-# $Id: google.tcl,v 1.9 2003-08-02 14:37:06 peter Exp $
+# $Id: google.tcl,v 1.10 2003-08-02 23:13:57 peter Exp $
 
 # Google script for the eggdrop
-# version 0.4, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4, 03/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 0.4: (??/??/????)
+#  - added perline option
 #  - code tweaks
 # 0.3: (09/07/2003)
 #  - added several configuration options
@@ -35,6 +36,9 @@ set google(method) 1
 # show how many results? 1, 2 or 3??
 set google(results) 3
 
+# show every result on a new line?  0=no 1=yes
+set google(perline) 0
+
 ### End Configuration settings ###
 
 
@@ -56,6 +60,18 @@ foreach trigger [split $google(triggers)] {
   bind pub $google(flags) $trigger google:pub
 }
 catch { unset trigger }
+
+proc google:output {chan nick output} {
+  global google
+
+  switch $google(method) {
+    0 { putquick "PRIVMSG $nick :$output" }
+    1 { putquick "PRIVMSG $chan :$output" }
+    2 { putquick "NOTICE $nick :$output" }
+    3 { putquick "NOTICE $chan :$output" }
+    default { putquick "PRIVMSG $chan :$output" }
+  }
+}
 
 proc google:pub {nick uhost hand chan text} {
   global lastbind google
@@ -96,10 +112,16 @@ proc google:pub {nick uhost hand chan text} {
     regexp -nocase {related:.*?>.*?related:.*?>.*?related:(.*?)>} $google(data) t link3
   }
 
+  if {$google(perline) == 1} {
+    set separator "\n"
+  } else {
+    set separator "-"
+  }
+
   if {[info exists link3]} {
-    set output "http://$link1 - http://$link2 - http://$link3"
+    set output "http://$link1 $separator http://$link2 $separator http://$link3"
   } elseif {[info exists link2]} {
-    set output "http://$link1 - http://$link2"
+    set output "http://$link1 $separator http://$link2"
   } elseif {[info exists link1]} {
     set output "http://$link1"
   } else {
@@ -110,16 +132,17 @@ proc google:pub {nick uhost hand chan text} {
   regsub -all {%3F} $output {?} output
   regsub -all {%3D} $output {=} output 
 
-  switch -- $google(method) {
-    0 { putquick "PRIVMSG $nick :$output" }
-    1 { putquick "PRIVMSG $chan :$output" }
-    2 { putquick "NOTICE $nick :$output" }
-    3 { putquick "NOTICE $chan :$output" }
-    default { putquick "PRIVMSG $chan :$output" }
+  if {$google(perline) == 1} {
+    foreach line [split $output \n] {
+      google:output $chan $nick [string trim $line]
+    }
+  } else { 
+    google:output $chan $nick [string trim $output]
   }
 
-  catch { unset output t link1 link2 link3 }
+  catch { unset output separator t link1 link2 link3 }
   catch { http::cleanup $google(page) }
+
   return 0
 }
 
