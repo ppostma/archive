@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.4 2003-07-03 17:23:56 peter Exp $
+# $Id: qstat.tcl,v 1.5 2003-07-03 17:26:15 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 03/07/2003 
 # 
@@ -27,7 +27,9 @@
 #    - added BF, Gamespy, QW and UT2003.
 #    - added '-timeout 5' option in qstat exec
 #  2.3 by Peter Postma <peter@webdeveloping.nl>
-#    - trivial changes, make it more logical
+#    - trivial changes, make the script more logical & consistent.
+#    - added flood protection
+#    - added configurable method to send messages
 #
 # Installation steps:
 # 1) Easiest way of installing: put all Qstat related files (players.qstat, 
@@ -178,6 +180,8 @@ proc qstat:pub {nick host hand chan arg} {
   } else {
     catch { set fd [open "|$qstat(path)/qstat -timeout 5 $gametype $arg -Ts $qstat(path)/server.qstat" r] } err
   }
+
+  # error when we ran the program?
   if {$err != ""} {
     putlog "qstat.tcl error: $err"
     putserv "NOTICE $nick :$err"
