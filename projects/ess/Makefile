@@ -1,7 +1,7 @@
-# $Id: Makefile,v 1.6 2003-08-22 01:07:21 peter Exp $
+# $Id: Makefile,v 1.7 2003-10-12 17:01:30 peter Exp $
 
 CC	= gcc
-CFLAGS	= -DRESOLVE -Wall -O
+CFLAGS	= -DRESOLVE -Wall -O2
 #CFLAGS	= -DIPV4_DEFAULT -DRESOLVE -Wall -O
 
 # For Solaris:
