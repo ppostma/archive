@@ -1,4 +1,4 @@
-# $Id: di.tcl,v 1.3 2003-07-03 22:36:13 peter Exp $
+# $Id: di.tcl,v 1.4 2003-07-03 23:36:03 peter Exp $
 
 # Digitally Imported Radio info script for the eggdrop
 # version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -154,7 +154,7 @@ proc pub:di {nick uhost hand chan text} {
     regsub -all "%chantitle"  $outchan $chantitle outchan
     regsub -all "%tracktitle" $outchan $tracktitle outchan
     regsub -all "%plsurl" $outchan $plsurl outchan
-    regsub -all "%since"   $outchan [clock format $starttime -format %H:%M:%S] outchan
+    regsub -all "%since" $outchan [clock format $starttime -format %H:%M:%S] outchan
     regsub -all "%b" $outchan "\002" outchan
     regsub -all "%u" $outchan "\037" outchan
     switch -- $di(method) {
