@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.15 2003-07-01 02:41:58 peter Exp $
+# $Id: gamer.tcl,v 1.16 2003-07-04 00:03:24 peter Exp $
 
 # Gamer.nl Nieuws script voor een eggdrop
 # version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -76,6 +76,7 @@ set gamer(nopub) ""
 set gamer(triggers) "!gamer"
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
+# voor geen flood protectie: zet 't op 0
 set gamer(antiflood) 60
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 

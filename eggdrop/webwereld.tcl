@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.2 2003-07-01 02:41:58 peter Exp $
+# $Id: webwereld.tcl,v 1.3 2003-07-04 00:03:24 peter Exp $
 
 # WebWereld.nl Nieuws script voor een eggdrop
 # version 1.0, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -35,6 +35,7 @@ set webw(nopub) ""
 set webw(triggers) "!webwereld !ww"
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
+# voor geen flood protectie: zet 't op 0
 set webw(antiflood) 60
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 

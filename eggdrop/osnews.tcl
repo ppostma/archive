@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.13 2003-07-01 02:41:58 peter Exp $
+# $Id: osnews.tcl,v 1.14 2003-07-04 00:03:24 peter Exp $
 
 # OSnews.com News Announce Script for an eggdrop
 # version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -46,6 +46,7 @@ set osnews(nopub) ""
 set osnews(triggers) "!osnews"
 
 # flood protection: seconds between use of the triggers
+# to disable: set it to 0
 set osnews(antiflood) 60
 
 # method to send the messages:

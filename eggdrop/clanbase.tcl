@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.14 2003-07-03 14:36:15 peter Exp $
+# $Id: clanbase.tcl,v 1.15 2003-07-04 00:03:24 peter Exp $
 
 # Clanbase.com News Announce Script for an eggdrop
 # version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -46,6 +46,7 @@ set cb(nopub) ""
 set cb(triggers) "!cb !clanbase"
 
 # flood protection: seconds between use of the triggers
+# to disable: set it to 0
 set cb(antiflood) 60
 
 # method to send the messages:

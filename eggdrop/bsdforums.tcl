@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.5 2003-07-01 02:41:58 peter Exp $
+# $Id: bsdforums.tcl,v 1.6 2003-07-04 00:03:24 peter Exp $
 
 # BSDForums.org News Announce Script for an eggdrop
 # version 1.1, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -40,6 +40,7 @@ set bsdforums(nopub) ""
 set bsdforums(triggers) "!bsdforums"
 
 # flood protection: seconds between use of the triggers
+# to disable: set it to 0
 set bsdforums(antiflood) 60
 
 # method to send the messages:
