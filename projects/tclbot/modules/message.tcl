@@ -1,4 +1,4 @@
-# $Id: message.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
+# $Id: message.tcl,v 1.3 2004-02-01 15:19:57 peter Exp $
 
 # TclBot Message module.
 # Provides interface for PRIVMSG
@@ -10,7 +10,7 @@ addproc "irc:privmsg"
 proc irc:privmsg {data} {
 	global botnick lastbind
 
-	if {[regexp "^:(.+)\!(.+)\@(.+) PRIVMSG (#?.+?) :(.+)$" $data t nick user host channel msg]} {
+	if {[regexp "^:(.+?)\!(.+?)\@(.+?)??PRIVMSG??(#?.+?)??:(.+?)$" $data t nick user host channel msg]} {
 
 		set trigger [lindex [split $msg] 0]
 		set text [lrange [split $msg] 1 end]
