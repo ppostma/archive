@@ -1,10 +1,10 @@
-# $Id: ports.tcl,v 1.7 2003-08-02 14:37:06 peter Exp $
+# $Id: ports.tcl,v 1.8 2003-08-24 14:17:54 peter Exp $
 
 # FreeBSD Ports search script for the eggdrop
-# version 0.3, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.3, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 0.3: (??/??/????)
+# 0.3: (24/08/2003)
 #  - code tweaks
 # 0.2: (04/07/2003)
 #  - added several configuration options:
