@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.48 2004-03-06 19:59:33 peter Exp $
+ * $Id: ess.c,v 1.49 2004-09-04 16:24:04 peter Exp $
  */
 
 #include <sys/types.h>
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 	long			 timeout = 0;
 	socklen_t		 len;
 
-	host = port = NULL;
+	host = port = proxy_type = NULL;
 	progname = argv[0];
 
 	while ((ch = getopt(argc, argv, "46abfhinp:rqst:vV")) != -1) {
