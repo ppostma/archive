@@ -1,4 +1,4 @@
-# $Id: devel.tcl,v 1.3 2004-01-30 22:13:22 peter Exp $
+# $Id: devel.tcl,v 1.4 2004-01-30 22:26:04 peter Exp $
 
 # Developer commands for the TclBot.
 # Has some handy functions which makes debugging quite easier.
@@ -28,7 +28,7 @@ proc pub:tcl {nick mask hand chan text} {
 }
 
 proc pub:exec {nick mask hand chan text} {
-	set errnum [catch { exec [join $text] } err]
+	set errnum [catch { exec [lindex $text 0] [lrange $text 1 end] } err]
 	if {$err == ""} {
 		set err "<empty string>"
 	} else {
