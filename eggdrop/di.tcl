@@ -1,11 +1,9 @@
-# $Id: di.tcl,v 1.6 2003-07-10 08:56:18 peter Exp $
+# $Id: di.tcl,v 1.7 2003-07-10 09:03:37 peter Exp $
 
 # Digitally Imported Radio info script for the eggdrop
-# version 0.2, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.3, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 0.3: (??/??/????)
-#  - fixes for TCL 8.0.
 # 0.2: (04/07/2003)
 #  - added several configuration options:
 #  - configurable flags
@@ -59,8 +57,8 @@ package require http
 
 set di(version) 0.3
 
-if {[info tclversion] < 8.0} {
-  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.0 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.1} {
+  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
   return 1
 }
 
@@ -149,7 +147,7 @@ proc pub:di {nick uhost hand chan text} {
   }
   set di(data) [http::data $di(page)]
 
-  if {[regexp -nocase "<CHANNELTITLE>$chantitle</CHANNELTITLE>.*<TRACKTITLE>(.+)</TRACKTITLE>.*<STARTTIME>(.+)</STARTTIME>" $di(data) t tracktitle starttime]} {
+  if {[regexp -nocase "<CHANNELTITLE>$chantitle</CHANNELTITLE>.*?<TRACKTITLE>(.+)</TRACKTITLE>.*?<STARTTIME>(.+)</STARTTIME>" $di(data) t tracktitle starttime]} {
     set outchan $di(layout)
     regsub -all "%chantitle"  $outchan $chantitle outchan
     regsub -all "%tracktitle" $outchan $tracktitle outchan
