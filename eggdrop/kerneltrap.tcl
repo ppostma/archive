@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.26 2003-08-07 18:09:33 peter Exp $
+# $Id: kerneltrap.tcl,v 1.27 2003-08-09 12:45:22 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 07/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -147,7 +147,7 @@ proc kerneltrap:getdata {} {
 
   if {$kerneltrap(log)} { putlog "\[KernelTrap\] Updating data..." }
 
-  set url "http://www.kerneltrap.org/module.php?mod=node&op=feed"
+  set url "http://kerneltrap.org/node/feed"
   set page [::http::config -useragent "Mozilla"]
 
   if {$kerneltrap(proxy) != ""} {
