@@ -1,9 +1,15 @@
-# $Id: google.tcl,v 1.1 2003-07-01 15:01:40 peter Exp $
+# $Id: google.tcl,v 1.2 2003-07-04 00:03:00 peter Exp $
 
 # Google script for the eggdrop
-# version 0.1, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
 
-package require Tcl 8.2
+set google(version) 0.2
+
+if {[info tclversion] < 8.2} {
+  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.2 and you have TCL version [info tclversion]."
+  return 1
+}
+
 package require http
 
 bind pub -|- "!google" pub:google
@@ -48,4 +54,4 @@ proc pub:google {nick uhost hand chan text} {
   return 0
 }
 
-putlog "Google script 0.1 loaded!"
+putlog "Google script $google(version) loaded!"
