@@ -1,4 +1,4 @@
-# $Id: info.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
+# $Id: info.tcl,v 1.3 2004-02-01 14:44:11 peter Exp $
 
 # Info commands for the TclBot.
 # Requires the message.tcl module to be loaded.
@@ -10,7 +10,10 @@ addtrigger pub - "!operator"  pub:operator
 addtrigger pub - "!version"   pub:version
 addtrigger pub - "!date"      pub:date
 addtrigger pub - "!uptime"    pub:uptime 
+addtrigger pub - "!load"      pub:load
 addtrigger pub - "!os"        pub:os
+addtrigger pub - "!timestamp" pub:timestamp
+addtrigger pub - "!unixtime"  pub:timestamp
 addtrigger pub - "!botuptime" pub:botuptime
 
 proc pub:flags {nick mask hand chan text} {
@@ -50,11 +53,31 @@ proc pub:date {nick mask hand chan text} {
 }
 
 proc pub:uptime {nick mask hand chan text} {
-	ircsend "PRIVMSG $chan :[exec uptime]"
+	catch {exec uptime} uptime
+	catch {exec uname -srm} machine
+	catch {exec hostname} hostname
+
+	if {[regexp {up\s(.*?),\s(.*?),} $uptime all days minutes]} {
+		set up "$days, $minutes"
+	} else {
+		set up $uptime
+	}
+	ircsend "PRIVMSG $chan :Server uptime for $hostname ($machine): $up"
+}
+
+proc pub:load {nick mask hand chan text} {
+	catch {exec uptime} load
+
+	regexp {users,\s(.*)$} $load all load
+	ircsend "PRIVMSG $chan :$load"
 }
 
 proc pub:os {nick mask hand chan text} {
 	ircsend "PRIVMSG $chan :I am running on: [exec uname -srm]"
+}
+
+proc pub:timestamp {nick mask hand chan text} {
+	ircsend "PRIVMSG $chan :UNIX time: [clock seconds]"
 }
 
 proc pub:botuptime {nick mask hand chan text} {
