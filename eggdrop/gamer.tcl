@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.28 2003-08-02 14:21:05 peter Exp $
+# $Id: gamer.tcl,v 1.29 2003-08-02 14:27:55 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
 # version 2.0, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -143,9 +143,12 @@ set gamer(log) 1
 
 ### Begin Tcl code ###
 
-package require http
-
 set gamer(version) "2.0"
+
+if {[catch { package require http } err]} {
+  putlog "\[Gamer.nl\] Kan [file tail [info script]] niet laden: Probleem met het laden van de http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.0} {
   putlog "\[Gamer.nl\] Kan [file tail [info script]] niet laden: U heeft minimaal Tcl versie 8.0 nodig en u heeft Tcl versie [info tclversion]."

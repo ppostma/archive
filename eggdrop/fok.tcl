@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.27 2003-08-02 14:21:05 peter Exp $
+# $Id: fok.tcl,v 1.28 2003-08-02 14:27:55 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.0, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -142,9 +142,12 @@ set fok(log) 1
 
 ### Begin Tcl code ###
 
-package require http
-
 set fok(version) "2.0"
+
+if {[catch { package require http } err]} {
+  putlog "\[Fok!\] Kan [file tail [info script]] niet laden: Probleem met het laden van de http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.0} {
   putlog "\[Fok!\] Kan [file tail [info script]] niet laden: U heeft minimaal Tcl versie 8.0 nodig en u heeft Tcl versie [info tclversion]."

@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.24 2003-08-02 14:21:06 peter Exp $
+# $Id: kerneltrap.tcl,v 1.25 2003-08-02 14:27:55 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -110,9 +110,12 @@ set kerneltrap(log) 1
 
 ### Begin Tcl code ###
 
-package require http
-
 set kerneltrap(version) "1.4"
+
+if {[catch { package require http } err]} {
+  putlog "\[KernelTrap\] Cannot load [file tail [info script]]: Problem loading the http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.0} {
   putlog "\[KernelTrap\] Cannot load [file tail [info script]]: You need at least Tcl version 8.0 and you have Tcl version [info tclversion]."

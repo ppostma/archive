@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.14 2003-08-02 14:21:06 peter Exp $
+# $Id: webwereld.tcl,v 1.15 2003-08-02 14:27:55 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 02/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -100,9 +100,12 @@ set webw(log) 1
 
 ### Begin Tcl code ###
 
-package require http
-
 set webw(version) "1.1"
+
+if {[catch { package require http } err]} {
+  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: Probleem met het laden van de http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.0} {
   putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal Tcl versie 8.0 nodig en u heeft Tcl versie [info tclversion]."

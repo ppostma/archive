@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.16 2003-08-02 14:21:05 peter Exp $
+# $Id: bsdforums.tcl,v 1.17 2003-08-02 14:27:55 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -104,9 +104,12 @@ set bsdforums(log) 1
 
 ### Begin Tcl code ###
 
-package require http
-
 set bsdforums(version) "1.2"
+
+if {[catch { package require http } err]} {
+  putlog "\[BSDForums\] Cannot load [file tail [info script]]: Problem loading the http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.0} {
   putlog "\[BSDForums\] Cannot load [file tail [info script]]: You need at least Tcl version 8.0 and you have Tcl version [info tclversion]."

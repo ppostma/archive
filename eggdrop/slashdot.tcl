@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.26 2003-08-02 14:21:06 peter Exp $
+# $Id: slashdot.tcl,v 1.27 2003-08-02 14:27:55 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
 # version 2.0, 02/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -114,9 +114,12 @@ set slashdot(log) 1
 
 ### Begin Tcl code ###
 
-package require http
-
 set slashdot(version) "2.0"
+
+if {[catch { package require http } err]} {
+  putlog "\[Slashdot\] Cannot load [file tail [info script]]: Problem loading the http package: $err"
+  return 1
+}
 
 if {[info tclversion] < 8.0} {
   putlog "\[Slashdot\] Cannot load [file tail [info script]]: You need at least Tcl version 8.0 and you have Tcl version [info tclversion]."
