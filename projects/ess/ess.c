@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ess.c,v 1.51 2004-09-04 18:39:21 peter Exp $
+ * $Id: ess.c,v 1.52 2004-09-04 18:49:41 peter Exp $
  */
 
 #include <sys/types.h>
@@ -46,14 +46,8 @@
 #define BANNER_TIMEOUT	1000	/* milliseconds after last banner recv */
 #define CONNECT_TIMEOUT	3000	/* milliseconds when connect timeouts  */
 
-/*
- * This setting will be used if the reverse name of this machine
- * cannot be determined.
- */
-#define DOMAIN_NAME	"example.com"
-
 #define HTTP_REQUEST	"HEAD / HTTP/1.0\r\n\r\n"
-#define VERSION		"0.4.0-beta"
+#define VERSION		"0.3.6"
 
 static int	   tconnect(int, struct sockaddr *, socklen_t, long);
 static size_t	   readln(int, char *, size_t);
@@ -94,9 +88,13 @@ main(int argc, char *argv[])
 	struct sockaddr_storage	 ss;
 	struct addrinfo		*res, *ai, hints;
 	const char		*host, *port, *progname; 
-	char			 ip[NI_MAXHOST], name[NI_MAXHOST];
-	char			 portnr[NI_MAXSERV], service[NI_MAXSERV];
-	char			 result[128], owner[128], *proxy_type, *p;
+	char			 ip[NI_MAXHOST];
+	char			 name[NI_MAXHOST];
+	char			 myname[NI_MAXHOST];
+	char			 portnr[NI_MAXSERV];
+	char			 service[NI_MAXSERV];
+	char			 result[128], owner[128];
+	char			*proxy_type, *p;
 	int			 ch, error, ret = 70, ssock = -1;
 	int			 all_flag = 0;
 	int			 ftp_flag = 0;
@@ -286,12 +284,15 @@ main(int argc, char *argv[])
 			if (verbose_flag)
 				printf("\n");
 		} else if (relay_flag) {
-			char myip[NI_MAXHOST], myhost[NI_MAXHOST];
-
-			strncpy(myip, get_myaddr(ssock, 0), sizeof(myip));
-			strncpy(myhost, get_myaddr(ssock, 1), sizeof(myhost));
-			if (strcmp(myip, myhost) == 0)
-				strncpy(myhost, DOMAIN_NAME, sizeof(myhost));
+			/*
+			 * Get our own ip and name. If we don't have a reverse name
+			 * then use the hostname.
+			 */
+			strncpy(myname, get_myaddr(ssock, 1), sizeof(myname));
+			if (strcmp(get_myaddr(ssock, 0), myname) == 0) {
+				gethostname(myname, sizeof(myname) - 1);
+				myname[sizeof(myname) - 1] = '\0';
+			}
 			if (relay_flag > 1) {
 				strncpy(ip, get_addr(ai->ai_addr,
 				    ai->ai_addrlen, 0), sizeof(ip));
@@ -300,10 +301,10 @@ main(int argc, char *argv[])
 					    ai->ai_addrlen, 1), sizeof(name));
 				else
 					strncpy(name, host, sizeof(name));
-				ret = relay_scan(ssock, name, ip, myhost,
+				ret = relay_scan(ssock, name, ip, myname,
 				    relay_flag);
 			} else {
-				ret = relay_scan(ssock, NULL, NULL, myhost,
+				ret = relay_scan(ssock, NULL, NULL, myname,
 				    relay_flag);
 			}
 			switch (ret) {
@@ -643,7 +644,7 @@ ident_scan(const char *ip, int ai_family, uint16_t remoteport,
 	while (*++temp && isspace((unsigned char)*temp))
 		continue;
 
-	if ((p = strpbrk(temp, "\r\n")))
+	if ((p = strpbrk(temp, "\r\n")) != NULL)
 		*p = '\0';
 
 	strncpy(owner, temp, len);
@@ -716,11 +717,11 @@ relay_scan(int sock, const char *host, const char *ip, const char *from,
 	 */
 	sprintf(s[0].from,  "<test@%s>", from);
 	sprintf(s[0].rcpt,  "<test@%s>", from);
-	strcpy (s[1].from,  "<test@localhost>");
+	sprintf(s[1].from,  "<test@localhost>");
 	sprintf(s[1].rcpt,  "<test@%s>", from);
-	strcpy (s[2].from,  "<test>");
+	sprintf(s[2].from,  "<test>");
 	sprintf(s[2].rcpt,  "<test@%s>", from);
-	strcpy (s[3].from,  "<>");
+	sprintf(s[3].from,  "<>");
 	sprintf(s[3].rcpt,  "<test@%s>", from);
 	sprintf(s[4].from,  "<test@%s>", host);
 	sprintf(s[4].rcpt,  "<test@%s>", from);
