@@ -1,4 +1,4 @@
-WebFTP client v0.72 by Peter Postma <peter@webdeveloping.nl>
+WebFTP client v0.8 by Peter Postma <peter@webdeveloping.nl>
 
 1. Installation:
 
@@ -40,7 +40,7 @@ If you've problems with uploading files >2MB then change the setting
 
 4. History:
 
-v0.72 (09/03/2003)
+v0.8 (09/03/2003)
  - added: set temporary file directory
  - added: set timeout for cookies
  - delete form, shows directory
@@ -55,4 +55,4 @@ v0.6 (03/08/2001)
  - first release, very poor written code.
 
 
-$Id: README,v 1.4 2003-05-10 18:04:35 peter Exp $
+$Id: README,v 1.5 2003-06-15 17:17:34 peter Exp $
