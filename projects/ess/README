@@ -22,7 +22,8 @@ Options:
   -4      Force the use of IPv4 only.
   -6      Force the use of IPv6 only.
   -a      When resolved to multiple addresses, scan them all.
-  -b      Grab the banner from an open port.
+  -b      Grab the banner from an open port.  If you specify this
+          option twice then special characters won't be translated.
   -f      Anonymous FTP scan, checks if the server allows anonymous logins.
   -i      Ident scan, queries ident/auth (port 113) and tries to get the
           identity of the service we're connecting to.

@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.37 2003-11-06 19:34:22 peter Exp $
+ * $Id: ess.c,v 1.38 2003-11-06 22:41:45 peter Exp $
  */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ void	 fatal(int);
 int	ssock, isock;
 int	timedout = 0;
 int	verbose_flag = 0;
+int	banner_flag = 0;
 int	relay_flag = 0;
 int	quiet_flag = 0;
 
@@ -85,7 +86,6 @@ main(int argc, char *argv[])
 	char		 result[128], owner[128];
 	int		 ch, err, ret = 70;
 	int		 all_flag = 0;
-	int		 banner_flag = 0;
 	int		 ftp_flag = 0;
 	int		 ident_flag = 0;
 	u_short		 remoteport, localport;
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 			all_flag = 1;
 			break;
 		case 'b':
-			banner_flag = 1;
+			banner_flag++;
 			break;
 		case 'f':
 			ftp_flag = 1;
@@ -440,8 +440,9 @@ banner_scan(u_short port)
 {
 	struct timeval	 tv;
 	fd_set		 read_fds;
-	char		*buf;
+	char		*buf, *save;
 	int		 count;
+	char		 ch;
 
 	tv.tv_sec = BANNER_TIMEOUT;
 	tv.tv_usec = 0;
@@ -465,7 +466,26 @@ banner_scan(u_short port)
 		if (count < 1)
 			goto cleanup;
 		buf[count] = '\0';
-		printf("%s", buf);
+		if (banner_flag > 1) {
+			printf("%s", buf);
+			fflush(stdout);
+			continue;
+		}
+		save = buf;
+		while ((ch = *save++) != '\0' && count-- > 0) {
+			if (ch == '\r')
+				printf("\\r");
+			else if (ch == '\n')
+				printf("\\n\n"); /* +newline for nice output */
+			else if (ch == '\t')
+				printf("\\t");
+			else if (ch == '\\')
+				printf("\\\\");
+			else if (isprint((int)ch))
+				printf("%c", ch);
+			else
+				printf("\\%03d", (int)ch);
+		}
 		fflush(stdout);
 	}
 
@@ -696,7 +716,8 @@ usage(char *progname)
 "  -4      Force the use of IPv4 only.\n"
 "  -6      Force the use of IPv6 only.\n"
 "  -a      When resolved to multiple addresses, scan them all.\n"
-"  -b      Grab the banner from an open port.\n"
+"  -b      Grab the banner from an open port.  If you specify this\n"
+"          option twice then special characters won't be translated.\n"
 "  -f      Anonymous FTP scan, checks if the server allows anonymous logins.\n"
 "  -i      Ident scan, queries ident/auth (port 113) and tries to get the\n"
 "          identity of the service we're connecting to.\n"
