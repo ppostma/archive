@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ess.c,v 1.54 2004-09-04 19:03:12 peter Exp $
+ * $Id: ess.c,v 1.55 2004-09-04 19:10:50 peter Exp $
  */
 
 #include <sys/types.h>
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			timeout = (int)strtol(optarg, &p, 10);
-			if (optarg[0] == '\0' || *p == '\0')
+			if (optarg[0] == '\0' || *p != '\0')
 				errx(64, "Invalid timeout value '%s'", optarg);
 			break;
 		case 'v':
