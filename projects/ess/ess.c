@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.20 2003-08-22 01:04:46 peter Exp $
+ * $Id: ess.c,v 1.21 2003-08-22 01:11:37 peter Exp $
  */
 
 #include <sys/types.h>
@@ -649,7 +649,8 @@ timeout_handler(s)
 }
 
 void
-usage(char *progname)
+usage(progname)
+	char	*progname;
 {
 	fprintf(stderr,
 "Usage: %s [options] hostname port\n"
