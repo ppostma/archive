@@ -1,10 +1,10 @@
-# $Id: ports.tcl,v 1.3 2003-07-03 22:16:37 peter Exp $
+# $Id: ports.tcl,v 1.4 2003-07-04 13:49:09 peter Exp $
 
-# FreeBSD Port search script for the eggdrop
+# FreeBSD Ports search script for the eggdrop
 # version 0.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 0.2: (04/07/03)
+# 0.2: (04/07/2003)
 #  - added several configuration options:
 #  - configurable flags
 #  - nopub, where the bot doesn't speak
@@ -14,7 +14,7 @@
 #    /usr/ports/INDEX or the FreeBSD webpage
 #  - method to send message
 #  - added changelog & version bumped to 0.2
-# 0.1: (01/07/03)
+# 0.1: (01/07/2003)
 #  - first version 
 #
 
@@ -54,8 +54,8 @@ if {$ports(info) == "web"} { package require http }
 
 set ports(version) 0.2
 
-if {[info tclversion] < 8.2} {
-  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.2 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.1} {
+  putlog "Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
   return 1
 }
 
@@ -127,4 +127,4 @@ proc pub:ports {nick uhost hand chan text} {
   return 0
 }
 
-putlog "FreeBSD Port search script $ports(version) loaded!"
+putlog "FreeBSD Ports search script $ports(version) loaded!"

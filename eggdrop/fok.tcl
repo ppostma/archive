@@ -1,50 +1,50 @@
-# $Id: fok.tcl,v 1.16 2003-07-04 00:03:24 peter Exp $
+# $Id: fok.tcl,v 1.17 2003-07-04 13:49:09 peter Exp $
 
-# fok.nl Nieuws script voor een eggdrop
-# version 1.9, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# fok.nl Nieuws script voor de eggdrop
+# version 1.9, 04/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.9: (??/??/????) [changes]
+# 1.9: (04/07/2003) [changes]
 #  - check voor goede TCL versie & alltools.tcl
 #  - flood protectie toegevoegd.
 #  - url voor laatste versie toegevoegd.
-#  - style changes.
-# 1.8: (26/05/03) [bugfix]
+#  - code style changes.
+# 1.8: (26/05/2003) [bugfix]
 #  - 3de poging om de bug met & teken te fixen.
-# 1.7: (20/05/03) [changes]
+# 1.7: (20/05/2003) [changes]
 #  - de vreemde bug met het & teken is nu op een nettere manier gefixed.
 #  - kleine aanpassingen om het script nog wat robuuster te maken.
-# 1.6: (17/05/03) [bugfixes]
+# 1.6: (17/05/2003) [bugfixes]
 #  - fix memory leak!!! (ongebruikte variabelen unsetten en 
 #    de belangrijkste: de ::http::cleanup functie!
 #  - veel kleine TCL changes/fixes
-# 1.5: (12/10/02) [features/changes]
+# 1.5: (12/10/2002) [features/changes]
 #  - extra check in de getdata procedure (voor HTTP errors zoals 404, etc..)
 #  - triggers/functie toegevoegd om de aankondiger aan en uit te zetten.
 #  - stukjes code netter en beter geschreven.
 #  - meer gebruiksvriendelijke error en log berichten.
-# 1.4a: (09/10/02) [bugfixes]
+# 1.4a: (09/10/2002) [bugfixes]
 #  - bugje gefixed met het & teken. regsub zet &amp; om naar %titamp; 
 #    ik heb geen idee waarom, maar de output is iig gefixed :-)  
 #  - wat fouten gefixed in de getdata procedure. checks werken nu helemaal ok.
 #  - timer opnieuw instellen wanneer er een http error is, is gefixed.
-# 1.4: (08/10/02) [features/changes]
+# 1.4: (08/10/2002) [features/changes]
 #  - methode om berichten te sturen is nu in te stellen.
 #  - check op timestamp ipv. id ! (dit had ik eerder moeten bedenken >:) 
 #  - extra layout opties toegevoegd.
 #  - updates minimaal 300 seconden!
 #  - checkt of fok.nl down is. als dit niet wordt gecheckt dan
 #    blijft het script hangen en moet de bot opnieuw gestart worden.
-# 1.3: (06/10/02) [features/changes]
+# 1.3: (06/10/2002) [features/changes]
 #  - triggers in te stellen.
 #  - kanalen in te stellen waar de triggers gebruikt mogen worden.
 #  - layout in te stellen.
 #  - automatisch nieuws naar het kanaal sturen (kanalen in te stellen).
 #  - automatische updates in te stellen (om de hoeveel seconden).
-# 1.2: (03/10/02) [rewrote 1.1]
+# 1.2: (03/10/2002) [rewrote 1.1]
 #  - helemaal opnieuw geschreven.
 #  - betere code (regexp, regsub, http)
-# 1.1: (21/08/02) [first version]
+# 1.1: (21/08/2002) [first version]
 #  - eerste (goed werkende) versie. 
 #  - script had alleen triggers, verder nog helemaal niets :-)
 #
@@ -54,7 +54,7 @@
 # Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
 # Zet http.tcl *niet* in je eggdrop configuratie!
 #
-# Het fok.tcl script werkt het best met TCL versies vanaf 8.2.
+# Het fok.tcl script werkt het best met TCL versies vanaf 8.1.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 #
@@ -135,8 +135,8 @@ package require http
 
 set fok(version) "1.9"
 
-if {[info tclversion] < 8.2} {
-  putlog "\[Fok!\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.2 nodig en u heeft TCL versie [info tclversion]."
+if {[info tclversion] < 8.1} {
+  putlog "\[Fok!\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
   return 1
 }
 

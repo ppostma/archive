@@ -1,10 +1,10 @@
-# $Id: dictionary.tcl,v 1.4 2003-07-03 23:48:49 peter Exp $
+# $Id: dictionary.tcl,v 1.5 2003-07-04 13:49:09 peter Exp $
 
-# Dictionary script for an eggdrop
-# version 0.8.4, 03/06/2003, by Peter Postma <peter@webdeveloping.nl>    
+# Dictionary script for the eggdrop
+# version 0.8.4, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>    
 #
 # Changelog:
-#  0.8.4: (??/??/????)
+#  0.8.4: (04/07/2003)
 #   - fixed probs with strings/lists by using 'join' correctly.
 #   - lot of code/style changes.
 #  0.8.3: (24/08/2002)
@@ -143,7 +143,7 @@ proc dict:explain {nick uhost hand chan text} {
   set fd [open $dict(dbfile) r]
   while {[gets $fd line] >= 0} {
     if {[string match -nocase "\002$word\002:*" $line]} {
-      putquick "PRIVMSG $chan :$line"
+      putquick "PRIVMSG $chan :[join $line]"
       close $fd
       return 0
     } 

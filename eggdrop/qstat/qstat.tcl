@@ -1,6 +1,6 @@
-# $Id: qstat.tcl,v 1.5 2003-07-03 17:26:15 peter Exp $
+# $Id: qstat.tcl,v 1.6 2003-07-04 13:49:09 peter Exp $
 
-# Qstat script for the eggdrop, version 2.3, 03/07/2003 
+# Qstat script for the eggdrop, version 2.3, 04/07/2003 
 # 
 # This script will query gameservers using the qstat program to
 # display server status and players using public commands. 

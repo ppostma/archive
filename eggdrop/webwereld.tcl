@@ -1,10 +1,10 @@
-# $Id: webwereld.tcl,v 1.3 2003-07-04 00:03:24 peter Exp $
+# $Id: webwereld.tcl,v 1.4 2003-07-04 13:49:09 peter Exp $
 
-# WebWereld.nl Nieuws script voor een eggdrop
-# version 1.0, 01/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# WebWereld.nl Nieuws script voor de eggdrop
+# version 1.0, 04/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.0: (01/07/03)
+# 1.0: (04/07/2003)
 #   - eerste versie, gebaseerd op tweakers.tcl v1.9
 #
 # Dit script maakt gebruik van een functie uit alltools.tcl.
@@ -13,7 +13,7 @@
 # Dit script gebruikt ook http.tcl. Deze moet op je systeem aanwezig zijn.
 # Zet http.tcl *niet* in je eggdrop configuratie!
 #
-# Het webwereld.tcl script werkt het best met TCL versies vanaf 8.2.
+# Het webwereld.tcl script werkt het best met TCL versies vanaf 8.1.
 #
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
@@ -93,8 +93,8 @@ package require http
 
 set webw(version) "1.0"
 
-if {[info tclversion] < 8.2} {
-  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.2 nodig en u heeft TCL versie [info tclversion]."
+if {[info tclversion] < 8.1} {
+  putlog "\[WebWereld\] Kan [file tail [info script]] niet laden: U heeft minimaal TCL versie 8.1 nodig en u heeft TCL versie [info tclversion]."
   return 1
 }
 

@@ -1,10 +1,10 @@
-# $Id: osnews.tcl,v 1.14 2003-07-04 00:03:24 peter Exp $
+# $Id: osnews.tcl,v 1.15 2003-07-04 13:49:09 peter Exp $
 
-# OSnews.com News Announce Script for an eggdrop
-# version 1.3, 01/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# OSnews.com News Announce Script for the eggdrop
+# version 1.3, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.3: (??/??/????) [changes]
+# 1.3: (04/07/2003) [changes]
 #  - check for correct TCL version & alltools.tcl
 #  - added flood protection.
 #  - added url for latest version.
@@ -23,7 +23,7 @@
 # This script also uses http.tcl. You *don't* need to put http.tcl
 # your eggdrop configuration!
 #
-# You need at least TCL version 8.2 to get this script running!
+# You need at least TCL version 8.1 to get this script running!
 #
 # For questions/suggestions/bug/etc: peter@webdeveloping.nl
 # If you found spelling/grammatical errors, please also mail me!
@@ -103,8 +103,8 @@ package require http
 
 set osnews(version) "1.3"
 
-if {[info tclversion] < 8.2} {
-  putlog "\[OSNews\] Cannot load [file tail [info script]]: You need at least TCL version 8.2 and you have TCL version [info tclversion]."
+if {[info tclversion] < 8.1} {
+  putlog "\[OSNews\] Cannot load [file tail [info script]]: You need at least TCL version 8.1 and you have TCL version [info tclversion]."
   return 1
 }
 
