@@ -1,4 +1,4 @@
-# $Id: slashdot.tcl,v 1.22 2003-07-10 08:35:32 peter Exp $
+# $Id: slashdot.tcl,v 1.23 2003-07-10 09:56:06 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
 # version 2.0, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -150,7 +150,7 @@ proc slashdot:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$slashdot(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $slashdot(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $slashdot(proxy) trash proxyhost proxyport]} {
       putlog "\[Slashdot\] Wrong proxy configuration ($slashdot(proxy))"
       return -1
     }

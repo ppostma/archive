@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.20 2003-07-10 08:35:32 peter Exp $
+# $Id: kerneltrap.tcl,v 1.21 2003-07-10 09:56:06 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -146,7 +146,7 @@ proc kerneltrap:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$kerneltrap(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $kerneltrap(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $kerneltrap(proxy) trash proxyhost proxyport]} {
       putlog "\[KernelTrap\] Wrong proxy configuration ($kerneltrap(proxy))"
       return -1
     }

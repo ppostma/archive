@@ -1,4 +1,4 @@
-# $Id: gamer.tcl,v 1.23 2003-07-10 08:16:54 peter Exp $
+# $Id: gamer.tcl,v 1.24 2003-07-10 09:56:06 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -179,7 +179,7 @@ proc gamer:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$gamer(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $gamer(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $gamer(proxy) trash proxyhost proxyport]} {
       putlog "\[Gamer.nl\] Wrong proxy configuration ($gamer(proxy))"
       return -1
     }

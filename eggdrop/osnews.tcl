@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.20 2003-07-10 08:35:32 peter Exp $
+# $Id: osnews.tcl,v 1.21 2003-07-10 09:56:06 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -146,7 +146,7 @@ proc osnews:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$osnews(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $osnews(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $osnews(proxy) trash proxyhost proxyport]} {
       putlog "\[Clanbase\] Wrong proxy configuration ($osnews(proxy))"
       return -1
     }

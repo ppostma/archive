@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.25 2003-07-10 08:16:54 peter Exp $
+# $Id: tweakers.tcl,v 1.26 2003-07-10 09:56:06 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -182,7 +182,7 @@ proc tnet:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$tnet(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $tnet(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $tnet(proxy) trash proxyhost proxyport]} {
       putlog "\[T.Net\] Wrong proxy configuration ($tnet(proxy))"
       return -1
     }

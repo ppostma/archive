@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.12 2003-07-10 08:35:32 peter Exp $
+# $Id: bsdforums.tcl,v 1.13 2003-07-10 09:56:06 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -140,7 +140,7 @@ proc bsdforums:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$bsdforums(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $bsdforums(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $bsdforums(proxy) trash proxyhost proxyport]} {
       putlog "\[BSDForums\] Wrong proxy configuration ($bsdforums(proxy))"
       return -1
     }

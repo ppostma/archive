@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.10 2003-07-10 08:16:54 peter Exp $
+# $Id: webwereld.tcl,v 1.11 2003-07-10 09:56:06 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -136,7 +136,7 @@ proc webw:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$webw(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $webw(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $webw(proxy) trash proxyhost proxyport]} {
       putlog "\[WebWereld\] Wrong proxy configuration ($webw(proxy))"
       return -1
     }

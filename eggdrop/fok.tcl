@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.23 2003-07-10 08:16:54 peter Exp $
+# $Id: fok.tcl,v 1.24 2003-07-10 09:56:06 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -178,7 +178,7 @@ proc fok:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$fok(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $fok(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $fok(proxy) trash proxyhost proxyport]} {
       putlog "\[Fok!\] Wrong proxy configuration ($fok(proxy))"
       return -1
     }

@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.21 2003-07-10 08:35:32 peter Exp $
+# $Id: clanbase.tcl,v 1.22 2003-07-10 09:56:06 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -146,7 +146,7 @@ proc cb:getdata {} {
   set page [::http::config -useragent "Mozilla"]
 
   if {$cb(proxy) != ""} {
-    if {![regexp {(.+):([0-9].*)} $cb(proxy) trash proxyhost proxyport]} {
+    if {![regexp {(.+):([0-9]+)} $cb(proxy) trash proxyhost proxyport]} {
       putlog "\[Clanbase\] Wrong proxy configuration ($cb(proxy))"
       return -1
     }
