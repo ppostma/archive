@@ -1,4 +1,4 @@
-# $Id: portscanner.tcl,v 1.3 2003-03-30 15:40:31 peter Exp $
+# $Id: portscanner.tcl,v 1.4 2003-05-17 16:25:33 peter Exp $
 
 # portscanner.tcl / portscanner script for an eggdrop 
 # version 0.4beta / 30/03/2003 / by Peter Postma <peter@webdeveloping.nl>
@@ -36,7 +36,7 @@ set scan6_trigger "!portscan6"
 bind pub $scan_flags $scan_trigger pub:portscan
 bind pub $scan_flags $scan6_trigger pub:portscan
 
-set portscan_version "0.4beta"
+set portscan_version "0.4"
 
 proc pub:portscan {nick uhost hand chan text} {
   global lastbind scanprog scan_ports scan_nopub scan6_trigger
