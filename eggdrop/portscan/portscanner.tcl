@@ -1,7 +1,7 @@
-# $Id: portscanner.tcl,v 1.5 2003-06-22 12:28:08 peter Exp $
+# $Id: portscanner.tcl,v 1.6 2003-06-22 13:12:20 peter Exp $
 
 # Portscan script for an eggdrop 
-# version 0.4, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4.1, 22/06/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Use like this:
 #  !portscan localhost        (scans localhost)
@@ -14,8 +14,8 @@
 
 ### Configuration
 
-# Full path to the scan progra
-set scanprog "/usr/home/peter/eggdrop/scripts/my/pscan/scan"
+# Full path to the scan program
+set scanprog "/usr/home/peter/eggdrop/scripts/portscan/scan"
 
 # Flags needed to use the command
 set scan_flags "f|f"
@@ -36,7 +36,7 @@ set scan6_trigger "!portscan6"
 bind pub $scan_flags $scan_trigger pub:portscan
 bind pub $scan_flags $scan6_trigger pub:portscan
 
-set portscan_version "0.4"
+set portscan_version "0.4.1"
 
 proc pub:portscan {nick uhost hand chan text} {
   global lastbind scanprog scan_ports scan_nopub scan6_trigger
@@ -77,7 +77,7 @@ proc pub:portscan {nick uhost hand chan text} {
         catch {exec $scanprog $host [lindex $scan_ports $i]} status
       }
 
-      if {[regexp "^FAILED.+\[\(\](.*?)\[\)\]$" $status foo error]} {
+      if {[regexp "^FAILED \[\(\](.*?)\[\)\]$" $status foo error]} {
         putquick "PRIVMSG $chan :* error: $error"
         return 0
       }
@@ -86,36 +86,36 @@ proc pub:portscan {nick uhost hand chan text} {
         incr closed
       } elseif {[regexp "^TIMEOUT.*$" $status]} {
         incr stealth
-      } elseif {[regexp "^OPEN.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
+      } elseif {[regexp "^OPEN \[\(\](.*?)\[\)\]$" $status foo strport]} {
         incr open
-        putquick "PRIVMSG $chan :* [lindex $scan_ports $i] ($strport)"
+        putquick "PRIVMSG $chan :* $strport"
       } else {
-        putquick "PRIVMSG $chan :* hmmm... this shouldn't happen...quitting."
+        putquick "PRIVMSG $chan :* oops... something went wrong.. :("
         return 0
       }
     }
 
-    putquick "PRIVMSG $chan :* done! [llength $scan_ports] ports scanned. (open: $open, closed: $closed, stealth: $stealth)"
+    putquick "PRIVMSG $chan :* scan finished! [llength $scan_ports] ports scanned. (open: $open, closed: $closed, stealth: $stealth)"
   } else {
 
     if {$lastbind == $scan6_trigger} {
-      putquick "PRIVMSG $chan :* start scanning \[$host\]:$port"
+#      putquick "PRIVMSG $chan :* start scanning \[$host\]:$port"
       catch {exec $scanprog -6 $host $port} status
     } else {
-      putquick "PRIVMSG $chan :* start scanning $host:$port"   
+#      putquick "PRIVMSG $chan :* start scanning $host:$port"   
       catch {exec $scanprog $host $port} status
     }
 
-    if {[regexp "^FAILED.+\[\(\](.*?)\[\)\]$" $status foo error]} {
+    if {[regexp "^FAILED \[\(\](.*?)\[\)\]$" $status foo error]} {
       putquick "PRIVMSG $chan :* error: $error"
       return 0
     }
 
-    if {[regexp "^CLOSED.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
-      putquick "PRIVMSG $chan :* port $port ($strport) is CLOSED"
-    } elseif {[regexp "^TIMEOUT.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
-      putquick "PRIVMSG $chan :* no response from port $port ($strport)"
-    } elseif {[regexp "^OPEN.+\[\(\](.*?)\[\)\].*$" $status foo strport]} {
+    if {[regexp "^CLOSED \[\(\](.*?)\[\)\]$" $status foo strport]} {
+      putquick "PRIVMSG $chan :* port $strport is CLOSED"
+    } elseif {[regexp "^TIMEOUT \[\(\](.*?)\[\)\]$" $status foo strport]} {
+      putquick "PRIVMSG $chan :* no response from port $strport"
+    } elseif {[regexp "^OPEN \[\(\](.*?)\[\)\]$" $status foo strport]} {
       if {[lindex $text 0] == "-v" || [lindex $text 0] == "-b"} {
         if {$lastbind == $scan6_trigger} {
           set pf [open "| $scanprog -6b $host $port" r]
@@ -123,18 +123,18 @@ proc pub:portscan {nick uhost hand chan text} {
           set pf [open "| $scanprog -b $host $port" r]
         }
         while {[gets $pf line] >= 0} {
-          if {[regexp "^NOBANNER.+\[\(\](.*?)\[\)\].*$" $line foo strport]} {
-            putquick "PRIVMSG $chan :* no banner on port $port ($strport) ?"
+          if {[regexp "^NOBANNER \[\(\](.*?)\[\)\]$" $line foo strport]} {
+            putquick "PRIVMSG $chan :* no banner on port $strport ?"
             return 0
           }
           putquick "PRIVMSG $chan :* $line"
         }
         close $pf
       } else {
-        putquick "PRIVMSG $chan :* port $port ($strport) is OPEN"
+        putquick "PRIVMSG $chan :* port $strport is OPEN"
       }
     } else {
-      putquick "PRIVMSG $chan :* hmmm... something went wrong... :/"
+      putquick "PRIVMSG $chan :* oops... something went wrong.. :("
     }
   }
 }
