@@ -1,4 +1,4 @@
-Playlist2HTML v0.5 by Peter Postma <peter@webdeveloping.nl>
+Playlist2HTML v0.6 by Peter Postma <peter@webdeveloping.nl>
 
 With this program you can convert your M3U playlist files to HTML files.
 
@@ -10,8 +10,7 @@ On Unix you first need to compile the program.
 To do this, you need a C++ Compiler. Typ 'make' to start the compiling
 process. The makefile will use the GNU C++ compiler (g++) by default.
 
-The Windows executable is compiled in Borland C++ Builder 6.0 as
-a static linked console program.
+The Windows executable is compiled in Microsoft Visual Studio .NET.
 
 This version can be downloaded here:
-http://www.pointless.nl/~peter/development/playlist-0.5.tar.gz
+http://www.pointless.nl/~peter/projects/playlist-0.6.tar.gz
