@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: playlist.cc,v 1.5 2003-05-12 01:31:41 peter Exp $
+ * $Id: playlist.cc,v 1.6 2003-05-12 13:12:30 peter Exp $
  */
 
 #include <stdlib.h>
@@ -32,6 +32,15 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#define TITLE			"My MP3 Playlist"
+#define HILITE(s)		"<span style='color: #FFBF00;'>" + s + "</span>"
+#define DIV_STATS		"<div style='color: #409FFF; font-size: 8pt;'>"
+#define DIV_LISTFILES		"<div style='color: #FFBF00; font-size: 16pt;'>"
+#define DIV_LIST		"<div style='text-align: left; margin-left: 10px;'>"
+#define DIV_CLOSE		"</div>"
+#define HR			"<hr style='height: 1px; border-bottom: none;' />"
+#define BR			"<br />"
 
 using namespace std;
 
@@ -111,15 +120,22 @@ void Playlist::Output()
 {
 	PlaylistEntry *tail = head;
 
+	cout << DIV_LISTFILES << "Playlist files:" << DIV_CLOSE << endl;
+	cout << HR << endl;
+	cout << DIV_LIST << endl;
+
 	for (long i=1; i; i++) {
 		cout << i << ". " << tail->track;
 		if (tail->time.size() != 0)
 			cout << " (" << tail->time << ")";
-		cout << "<br />" << endl;
+		cout << BR << endl;
 
 		if (tail->next == NULL) break;
 		tail = tail->next;
 	}
+
+	cout << DIV_CLOSE << endl;
+	cout << HR << endl;
 }
 
 void Playlist::PrintHeader()
@@ -129,7 +145,7 @@ void Playlist::PrintHeader()
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" >\n"
 "<head>\n"
-"  <title>My Playlist</title>\n"
+"  <title>" << TITLE << "</title>\n"
 "  <style type=\"text/css\">\n"
 "  <!--\n"
 "    body,td { background: #000040; font-family: Verdana, Helvetica, Arial; color: #FFFFFF; font-size: 10pt; }\n"
@@ -137,21 +153,15 @@ void Playlist::PrintHeader()
 "  </style>\n"
 "</head>\n"
 "<body>\n"
-"<div style='color: #FFBF00; font-size: 14pt;'>\n"
-"<b>My Playlist</b>\n"
-"</div>\n"
-"<table border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n"
-"<tr>\n"
-"<td style='width: 20px;'></td>\n"
-"<td>\n";
+"<div style='color: #FFBF00; font-size: 18pt;'><b>" << TITLE << "</b></div>\n"
+"<div style='text-align: left; margin-left: 20px;'>\n"
+"<br />\n";
 }
 
 void Playlist::PrintFooter()
 {
 	cout <<
-"</td>\n"
-"</tr>\n"
-"</table>\n"
+"</div>\n"
 "</body>\n"
 "</html>\n";
 }
@@ -167,8 +177,10 @@ string itos(int i)
 
 string time2texts(long time)
 {
-	string	temp = "";
+	string	temp;
 	int	days, hours, mins, secs;
+
+	if (time < 1) return "";
 
 	days  = time / 86400;
 	time %= 86400;
@@ -194,8 +206,10 @@ string time2texts(long time)
 
 string time2textl(long time)
 {
-	string	temp = "";
+	string	temp;
 	int	days, hours, mins, secs;
+
+	if (time < 1) return "";
 
 	days  = time / 86400;
 	time %= 86400;
@@ -205,13 +219,13 @@ string time2textl(long time)
 	secs  = time % 60;
 
 	if (days > 0)
-		temp += itos(days) + " day" + ((days > 1) ? "s" : "") + " ";
+		temp += HILITE(itos(days)) + " day" + ((days > 1) ? "s" : "") + " ";
 	if (hours > 0)
-		temp += itos(hours) + " hour" + ((hours > 1) ? "s" : "") + " ";
+		temp += HILITE(itos(hours)) + " hour" + ((hours > 1) ? "s" : "") + " ";
 	if (mins > 0)
-		temp += itos(mins) + " minute" + ((mins > 1) ? "s" : "") + " ";
+		temp += HILITE(itos(mins)) + " minute" + ((mins > 1) ? "s" : "") + " ";
 	if (secs > 0)
-		temp += itos(secs) + " second" + ((secs > 1) ? "s" : "");
+		temp += HILITE(itos(secs)) + " second" + ((secs > 1) ? "s" : "");
 
 	return (temp);
 }
@@ -288,7 +302,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (List.Append(track, time2texts(atol(time.c_str()))) == false) {
-			cerr << "Can't reserve memory!" << endl;
+			cerr << "Fatal: Can't reserve memory!" << endl;
 			input.close();
 			exit(1);
 		}
@@ -310,19 +324,20 @@ int main(int argc, char *argv[])
 
 	List.PrintHeader();
 
-	cout << "<p>\n";
-	cout << totaltracks << " tracks in playlist, average track length: ";
-	cout << time2texts(totaltime / (totaltracks - unknownlength));
-	cout << "<br />" << endl;
+	cout << DIV_STATS;
+	cout << HILITE(itos(totaltracks)) << " tracks in playlist, average track length: ";
+	cout << HILITE(time2texts(totaltime / (totaltracks - unknownlength)));
+	cout << BR << endl;
 
 	if (unknownlength > 0) {
-		cout << unknownlength << " track";
-		cout << ((unknownlength > 1) ? "s" : "");
-		cout << " of unknown length" << "<br />" << endl;
+		cout << HILITE(itos(unknownlength));
+		cout << " track" << ((unknownlength > 1) ? "s" : "");
+		cout << " of unknown length" << BR << endl;
 	}
 
 	cout << "Playlist length: " << time2textl(totaltime) << endl;
-	cout << "</p>\n";
+	cout << DIV_CLOSE << endl;
+	cout << BR << endl;
 
 	List.Output();
 	List.PrintFooter();
