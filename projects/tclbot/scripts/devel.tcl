@@ -1,15 +1,16 @@
-# $Id: devel.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
+# $Id: devel.tcl,v 1.3 2004-01-30 22:13:22 peter Exp $
 
 # Developer commands for the TclBot.
 # Has some handy functions which makes debugging quite easier.
 # Requires the message.tcl module to be loaded.
 
-addtrigger pub n "@irc"    pub:irc
-addtrigger pub n "@tcl"	   pub:tcl
-addtrigger pub n "@exec"   pub:exec
-addtrigger pub n "@reload" pub:reload
-addtrigger msg n "reload"  pub:reload
-addtrigger msg n "say"     msg:say
+addtrigger pub n "@irc"		pub:irc
+addtrigger pub n "@tcl"		pub:tcl
+addtrigger pub n "@exec"	pub:exec
+addtrigger pub n "@reload"	pub:reload
+addtrigger pub n "@shutdown"	pub:shutdown
+addtrigger msg n "reload"	pub:reload
+addtrigger msg n "say"		msg:say
 
 proc pub:irc {nick mask hand chan text} {
 	ircsend [join $text]
@@ -47,6 +48,10 @@ proc msg:say {nick mask hand nick text} {
 	set txt [lrange $text 1 end]
 	if {$txt == ""} { return }
 	ircsend "PRIVMSG $dest :[join $txt]"
+}
+
+proc pub:shutdown {nick mask hand chan text} {
+	shutdown
 }
 
 log "Development (irc/tcl/exec) commands: Loaded."

@@ -1,4 +1,4 @@
-# $Id: tclbot.tcl,v 1.3 2003-08-02 23:50:50 peter Exp $
+# $Id: tclbot.tcl,v 1.4 2004-01-30 22:13:22 peter Exp $
 
 #
 # Copyright (c) 2003 Peter Postma <peter@webdeveloping.nl>
@@ -155,6 +155,13 @@ proc nickisowner {nick} {
 		if {[string compare [string tolower $nick] $i] == 0} { return 1 }
 	}
 	return 0
+}
+
+# Exit cleanly, argument is optional
+proc shutdown {{text ""}} {
+	ircsend "QUIT :$text"
+	putlog "Shutting down..."
+	exit 0
 }
 
 # Send text with timestamp to stdout
