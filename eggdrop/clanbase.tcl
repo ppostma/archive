@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.23 2003-07-10 10:24:52 peter Exp $
+# $Id: clanbase.tcl,v 1.24 2003-07-10 11:13:21 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -255,30 +255,30 @@ proc cb:update {} {
 
   if {[cb:getdata] != -1} {
 
-    if {![info exists cbdata(title,0)]} {
+    if {![info exists cbdata(link,0)]} {
       putlog "\[Clanbase\] Something went wrong while updating..."
       return -1
     }
 
     if {![info exists cb(lastitem)]} {
       set cb(lastitem) $cbdata(title,0)
-      if {$cb(log)} { putlog "\[Clanbase\] Last news item set to '$cbdata(title,0)'." }
+      if {$cb(log)} { putlog "\[Clanbase\] Last news item set to '$cbdata(link,0)'." }
     } else {
-      if {$cb(log)} { putlog "\[Clanbase\] Last news item is '$cbdata(title,0)'." }
+      if {$cb(log)} { putlog "\[Clanbase\] Last news item is '$cbdata(link,0)'." }
     }
 
-    if {$cbdata(title,0) != $cb(lastitem)} {
+    if {$cbdata(link,0) != $cb(lastitem)} {
       if {$cb(log)} { putlog "\[Clanbase\] There's news!" }
       for {set i 0} {$i < $cb(automax)} {incr i} {
-        if {![info exists cbdata(title,$i)]} { break }
-        if {$cbdata(title,$i) == $cb(lastitem)} { break }
+        if {![info exists cbdata(link,$i)]} { break }
+        if {$cbdata(link,$i) == $cb(lastitem)} { break }
         foreach chan [split $cb(autonewschan)] { cb:put $chan $chan $i 1 }
       }
     } else {
       if {$cb(log)} { putlog "\[Clanbase\] No news." } 
     }
 
-    set cb(lastitem) $cbdata(title,0)
+    set cb(lastitem) $cbdata(link,0)
   }
 
   if {$cb(updates) < 30} {
