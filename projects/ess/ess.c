@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ess.c,v 1.25 2003-10-11 00:58:41 peter Exp $
+ * $Id: ess.c,v 1.26 2003-10-11 16:14:43 peter Exp $
  */
 
 #include <sys/types.h>
@@ -41,8 +41,8 @@ int	 readcode(int);
 char	*get_af(int);
 char	*get_addr(struct sockaddr *, size_t, int);
 char	*get_serv(char *);
-char	*ident_scan(char *, int, u_short, u_short);
 char	*banner_scan(u_short);
+int	 ident_scan(char *, int, u_short, u_short, char *, size_t);
 int	 ftp_scan(char *);
 int	 relay_scan(char *, char *);
 void	 timeout_handler(int);
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	char		 ip[NI_MAXHOST];
 	char		 name[NI_MAXHOST];
 	char		 sbuf[NI_MAXSERV];
-	char		 result[128];
+	char		 result[128], owner[128];
 	int		 ch, err, ret = 70;
 	int		 all_flag = 0;
 	int		 banner_flag = 0;
@@ -219,8 +219,17 @@ main(int argc, char *argv[])
 			else
 				remoteport = atoi(port);
 			localport = atoi(sbuf);
-			sprintf(result, "owner: %s", ident_scan(host,
-			    ai->ai_family, remoteport, localport));
+			memset(&owner, 0, sizeof(owner));
+			ret = ident_scan(host, ai->ai_family, remoteport,
+			    localport, owner, sizeof(owner));
+			switch (ret) {
+			case 0:
+				sprintf(result, "owner: %s", owner);
+				break;
+			case 1:
+				strcpy(result, "owner: ?");
+				break;
+			}
 		} else if (ftp_flag) {
 			ret = ftp_scan("anonymous");
 			switch (ret) {
@@ -396,17 +405,16 @@ name:
 	return buf;
 }
 
-char *
-ident_scan(char *host, int ai_family, u_short remoteport, u_short localport)
+int
+ident_scan(char *host, int ai_family, u_short remoteport, u_short localport,
+	   char *owner, size_t len)
 {
 	struct addrinfo	 hints;
 	struct addrinfo *res, *ai;
-	static char	*owner = NULL;
+	char		*temp, *p;
 	char		 request[16], response[1024];
 	int		 err, bytes;
 
-	memset(&request, 0, sizeof(request));
-	memset(&response, 0, sizeof(response));
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = ai_family;
 	hints.ai_socktype = SOCK_STREAM;
@@ -429,30 +437,33 @@ ident_scan(char *host, int ai_family, u_short remoteport, u_short localport)
 	}
 	if (isock < 0) {
 		fprintf(stderr, "Cannot connect to ident!\n");
-		return "?";
+		return 1;
 	}
 	snprintf(request, sizeof(request), "%u,%u\r\n", remoteport, localport);
-	if (send(isock, request, strlen(request), 0) < 0) {
-		perror("send");
-		exit(255);
-	}
+	send(isock, request, strlen(request), 0); 
 	bytes = recv(isock, response, sizeof(response), 0);
-	if (bytes < 0) {
-		perror("recv");
-		exit(255);
-	} else if (bytes == 0)
-		return "?";
+	if (bytes < 0)
+		return 255;
+	else if (bytes == 0)
+		return 1;
 
 	close(isock);
 	freeaddrinfo(res);
 
-	response[--bytes] = '\0';
+	response[bytes] = '\0';
 
-	owner = strrchr(response, ':');
-	while (*(++owner) == ' ')
+	temp = strrchr(response, ':');
+	while (*(++temp) == ' ')
 		;
 
-	return owner;
+	if ((p = strchr(temp, '\r')))
+		*p = '\0';
+	if ((p = strchr(temp, '\n')))
+		*p = '\0';
+
+	strncpy(owner, temp, len);
+
+	return 0;
 }
 
 char *
