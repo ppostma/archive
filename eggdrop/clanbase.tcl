@@ -1,7 +1,7 @@
-# $Id: clanbase.tcl,v 1.24 2003-07-10 11:13:21 peter Exp $
+# $Id: clanbase.tcl,v 1.25 2003-07-30 19:36:48 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
-# version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 30/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -47,32 +47,28 @@
 # enter the info like: "host.isp.com:port" or let it empty for no proxy
 set cb(proxy) ""
 
+# the triggers: [seperate with spaces]
+set cb(triggers) "!cb !clanbase"
+
 # flags needed to use the trigger [default=everyone]
 set cb(flags) "-|-"
 
 # channels where the bot doesn't respond to triggers [seperate with spaces]
 set cb(nopub) "" 
 
-# the triggers: [seperate with spaces]
-set cb(triggers) "!cb !clanbase"
-
-# flood protection: seconds between use of the triggers
-# to disable: set it to 0
-set cb(antiflood) 10
-
 # method to send the messages:
 # 0 = Private message
-# 1 = Public message 
-# 2 = Private notice 
+# 1 = Public message
+# 2 = Private notice
 # 3 = Public notice
 set cb(method) 1
 
 # display n headlines when a trigger is used [> 1]
 set cb(headlines) 2
 
-# check for news after n minutes? [min. 30]
-# this value is being used by the trigger and the autonews.
-set cb(updates) 60
+# flood protection: seconds between use of the triggers
+# to disable: set it to 0
+set cb(antiflood) 10
 
 # below you can change the layout of the output:
 # %title = title from article
@@ -80,6 +76,10 @@ set cb(updates) 60
 # %b   = bold text
 # %u   = underlined text
 set cb(layout) "\[%bClanbase%b\] %title - %link"
+
+# check for news after n minutes? [min. 30]
+# this value is being used by the trigger and the autonews.
+set cb(updates) 60
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
 set cb(autonews) 0

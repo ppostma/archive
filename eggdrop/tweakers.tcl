@@ -1,7 +1,7 @@
-# $Id: tweakers.tcl,v 1.27 2003-07-10 10:24:52 peter Exp $
+# $Id: tweakers.tcl,v 1.28 2003-07-30 19:36:48 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
-# version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 30/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -77,32 +77,28 @@
 # stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
 set tnet(proxy) ""
 
+# de triggers: [scheiden met een spatie]
+set tnet(triggers) "!tnet !tweakers"
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set tnet(flags) "-|-"
 
 # kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
 set tnet(nopub) "" 
 
-# de triggers: [scheiden met een spatie]
-set tnet(triggers) "!tnet !tweakers"
+# stuur berichten public of private wanneer er een trigger wordt gebruikt?
+# 0 = Private message
+# 1 = Public message
+# 2 = Private notice
+# 3 = Public notice
+set tnet(method) 1
+
+# aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1]
+set tnet(headlines) 2
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
 # voor geen flood protectie: zet 't op 0
 set tnet(antiflood) 10
-
-# stuur berichten public of private wanneer er een trigger wordt gebruikt? 
-# 0 = Private message
-# 1 = Public message 
-# 2 = Private notice 
-# 3 = Public notice
-set tnet(method) 1
-
-# aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
-set tnet(headlines) 2
-
-# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
-# deze waarde wordt gebruikt door zowel de triggers als het autonews.
-set tnet(updates) 5
 
 # hieronder kun je de layout aanpassen voor de output:
 # %tyd = tijd
@@ -116,6 +112,10 @@ set tnet(updates) 5
 # %b   = bold (dikgedrukte) tekst
 # %u   = underlined (onderstreepte) tekst
 set tnet(layout) "\[%bT.Net%b\] (%cat) %tit - http://tweakers.net/nieuws/%id"
+
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set tnet(updates) 5
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
 set tnet(autonews) 0

@@ -1,7 +1,7 @@
-# $Id: bsdforums.tcl,v 1.14 2003-07-10 10:24:52 peter Exp $
+# $Id: bsdforums.tcl,v 1.15 2003-07-30 19:36:47 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
-# version 1.2, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 30/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -41,32 +41,28 @@
 # enter the info like: "host.isp.com:port" or let it empty for no proxy
 set bsdforums(proxy) ""
 
+# the triggers: [seperate with spaces]
+set bsdforums(triggers) "!bsdforums"
+
 # flags needed to use the trigger [default=everyone]
 set bsdforums(flags) "-|-"
 
 # channels where the bot doesn't respond to triggers [seperate with spaces]
 set bsdforums(nopub) "" 
 
-# the triggers: [seperate with spaces]
-set bsdforums(triggers) "!bsdforums"
-
-# flood protection: seconds between use of the triggers
-# to disable: set it to 0
-set bsdforums(antiflood) 10
-
 # method to send the messages:
 # 0 = Private message
-# 1 = Public message 
-# 2 = Private notice 
+# 1 = Public message
+# 2 = Private notice
 # 3 = Public notice
 set bsdforums(method) 1
 
 # display n headlines when a trigger is used [> 1]
 set bsdforums(headlines) 2
 
-# check for news after n minutes? [minimal 120]
-# this value is being used by the trigger and the autonews.
-set bsdforums(updates) 120
+# flood protection: seconds between use of the triggers
+# to disable: set it to 0
+set bsdforums(antiflood) 10
 
 # below you can change the layout of the output:
 # %title = titel of article
@@ -74,6 +70,10 @@ set bsdforums(updates) 120
 # %b   = bold text
 # %u   = underlined text
 set bsdforums(layout) "\[%bBSDForums%b\] %title - %link"
+
+# check for news after n minutes? [minimal 120]
+# this value is being used by the trigger and the autonews.
+set bsdforums(updates) 120
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
 set bsdforums(autonews) 0

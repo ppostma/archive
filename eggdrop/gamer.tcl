@@ -1,7 +1,7 @@
-# $Id: gamer.tcl,v 1.26 2003-07-23 16:50:17 peter Exp $
+# $Id: gamer.tcl,v 1.27 2003-07-30 19:36:48 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 2.0, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 30/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -77,32 +77,28 @@
 # stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
 set gamer(proxy) ""
 
+# de triggers: [scheiden met een spatie]
+set gamer(triggers) "!gamer"
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set gamer(flags) "-|-"
 
 # kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
 set gamer(nopub) "" 
 
-# de triggers: [scheiden met een spatie]
-set gamer(triggers) "!gamer"
+# stuur berichten public of private wanneer er een trigger wordt gebruikt?
+# 0 = Private message
+# 1 = Public message
+# 2 = Private notice
+# 3 = Public notice
+set gamer(method) 1
+
+# aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1]
+set gamer(headlines) 2
 
 # flood protectie: aantal seconden tussen gebruik van de triggers
 # voor geen flood protectie: zet 't op 0
 set gamer(antiflood) 10
-
-# stuur berichten public of private wanneer er een trigger wordt gebruikt? 
-# 0 = Private message
-# 1 = Public message 
-# 2 = Private notice 
-# 3 = Public notice
-set gamer(method) 1
-
-# aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
-set gamer(headlines) 2
-
-# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
-# deze waarde wordt gebruikt door zowel de triggers als het autonews.
-set gamer(updates) 5
 
 # hieronder kun je de layout aanpassen voor de output:
 # %tyd = tijd
@@ -113,6 +109,10 @@ set gamer(updates) 5
 # %b   = bold (dikgedrukte) tekst
 # %u   = underlined (onderstreepte) tekst
 set gamer(layout) "\[%bGamer.nl%b\] %tit - http://gamer.nl/nieuws/%id"
+
+# om de hoeveel minuten checken of er nieuws is? [minimaal 5]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set gamer(updates) 5
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
 set gamer(autonews) 0

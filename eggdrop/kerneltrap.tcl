@@ -1,7 +1,7 @@
-# $Id: kerneltrap.tcl,v 1.22 2003-07-10 10:24:52 peter Exp $
+# $Id: kerneltrap.tcl,v 1.23 2003-07-30 19:36:48 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
-# version 1.4, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 30/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.4: (??/??/????)
@@ -47,32 +47,28 @@
 # enter the info like: "host.isp.com:port" or let it empty for no proxy
 set kerneltrap(proxy) ""
 
+# the triggers: [seperate with spaces]
+set kerneltrap(triggers) "!kerneltrap"
+
 # flags needed to use the trigger [default=everyone]
 set kerneltrap(flags) "-|-"
 
 # channels where the bot doesn't respond to triggers [seperate with spaces]
 set kerneltrap(nopub) "" 
 
-# the triggers: [seperate with spaces]
-set kerneltrap(triggers) "!kerneltrap"
-
-# flood protection: seconds between use of the triggers
-# to disable: set it to 0
-set kerneltrap(antiflood) 10
-
 # method to send the messages:
 # 0 = Private message
-# 1 = Public message 
-# 2 = Private notice 
+# 1 = Public message
+# 2 = Private notice
 # 3 = Public notice
 set kerneltrap(method) 1
 
 # display n headlines when a trigger is used [> 1]
 set kerneltrap(headlines) 2
 
-# check for news after n minutes? [min. 30]
-# this value is being used by the trigger and the autonews.
-set kerneltrap(updates) 60
+# flood protection: seconds between use of the triggers
+# to disable: set it to 0
+set kerneltrap(antiflood) 10
 
 # below you can change the layout of the output:
 # %title = titel of article
@@ -80,6 +76,10 @@ set kerneltrap(updates) 60
 # %b   = bold text
 # %u   = underlined text
 set kerneltrap(layout) "\[%bKernelTrap%b\] %title - %link"
+
+# check for news after n minutes? [min. 30]
+# this value is being used by the trigger and the autonews.
+set kerneltrap(updates) 60
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
 set kerneltrap(autonews) 0

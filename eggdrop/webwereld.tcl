@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.12 2003-07-10 10:24:52 peter Exp $
+# $Id: webwereld.tcl,v 1.13 2003-07-30 19:36:48 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.1, 10/07/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 30/07/2003, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 1.1: (??/??/????)
@@ -36,18 +36,14 @@
 # stel op deze manier in: "host.isp.com:port" of laat 't leeg voor geen proxy
 set webw(proxy) ""
 
+# de triggers: [scheiden met een spatie]
+set webw(triggers) "!webwereld !ww"
+
 # benodigde flags om de triggers te kunnen gebruiken. [default=iedereen]
 set webw(flags) "-|-"
 
 # kanalen waar de bot niet op de triggers zal reageren [scheiden met spatie]
 set webw(nopub) "" 
-
-# de triggers: [scheiden met een spatie]
-set webw(triggers) "!webwereld !ww"
-
-# flood protectie: aantal seconden tussen gebruik van de triggers
-# voor geen flood protectie: zet 't op 0
-set webw(antiflood) 10
 
 # stuur berichten public of private wanneer er een trigger wordt gebruikt? 
 # 0 = Private message
@@ -59,9 +55,9 @@ set webw(method) 1
 # aantal headlines weergeven wanneer een trigger wordt gebruikt. [>1] 
 set webw(headlines) 2
 
-# om de hoeveel minuten checken of er nieuws is? [minimaal 30]
-# deze waarde wordt gebruikt door zowel de triggers als het autonews.
-set webw(updates) 30
+# flood protectie: aantal seconden tussen gebruik van de triggers
+# voor geen flood protectie: zet 't op 0
+set webw(antiflood) 10
 
 # hieronder kun je de layout aanpassen voor de output:
 # %title = titel van artikel
@@ -70,6 +66,10 @@ set webw(updates) 30
 # %b     = bold (dikgedrukte) tekst
 # %u     = underlined (onderstreepte) tekst
 set webw(layout) "\[%bWebWereld%b\] %title - %link"
+
+# om de hoeveel minuten checken of er nieuws is? [minimaal 30]
+# deze waarde wordt gebruikt door zowel de triggers als het autonews.
+set webw(updates) 30
 
 # het nieuws automatisch weergeven in de kanalen? [0=nee / 1=ja] 
 set webw(autonews) 0

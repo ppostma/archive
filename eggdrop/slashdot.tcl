@@ -1,7 +1,7 @@
-# $Id: slashdot.tcl,v 1.24 2003-07-10 10:24:52 peter Exp $
+# $Id: slashdot.tcl,v 1.25 2003-07-30 19:36:48 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 10/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 30/07/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
 # 2.0: (??/??/????)
@@ -47,18 +47,14 @@
 # enter the info like: "host.isp.com:port" or let it empty for no proxy
 set slashdot(proxy) ""
 
+# the triggers: [seperate with spaces]
+set slashdot(triggers) "!slashdot /."
+
 # flags needed to use the trigger [default=everyone]
 set slashdot(flags) "-|-"
 
 # channels where the bot doesn't respond to triggers [seperate with spaces]
 set slashdot(nopub) "" 
-
-# the triggers: [seperate with spaces]
-set slashdot(triggers) "!slashdot /."
-
-# flood protection: seconds between use of the triggers
-# to disable: set it to 0
-set slashdot(antiflood) 10
 
 # method to send the messages:
 # 0 = Private message
@@ -70,9 +66,9 @@ set slashdot(method) 1
 # display n headlines when a trigger is used [> 1]
 set slashdot(headlines) 2
 
-# check for news after n minutes? [min. 30]
-# this value is being used by the trigger and the autonews.
-set slashdot(updates) 60
+# flood protection: seconds between use of the triggers
+# to disable: set it to 0
+set slashdot(antiflood) 10
 
 # below you can change the layout of the output:
 # %tim = time
@@ -84,6 +80,10 @@ set slashdot(updates) 60
 # %b   = bold text
 # %u   = underlined text
 set slashdot(layout) "\[%bSlashdot%b\] (%sec) %tit - %url"
+
+# check for news after n minutes? [min. 30]
+# this value is being used by the trigger and the autonews.
+set slashdot(updates) 60
 
 # announce the news automaticly in the channels? [0=no / 1=yes]
 set slashdot(autonews) 0
