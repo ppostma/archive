@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.19 2003-07-09 15:17:52 peter Exp $
+# $Id: clanbase.tcl,v 1.20 2003-07-09 15:39:48 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -210,7 +210,7 @@ proc cb:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists cb(lastupdate)]} {
-    if {[expr [clock seconds] - $cb(lastupdate)] > [expr $cb(updates) * 60]} {
+    if {[expr [clock seconds] - $cb(lastupdate)] >= [expr $cb(updates) * 60]} {
       set ret [cb:getdata]
     }
   } elseif {![info exists cbdata(title,0)]} {

@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.22 2003-07-09 15:17:52 peter Exp $
+# $Id: tweakers.tcl,v 1.23 2003-07-09 15:39:48 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -248,7 +248,7 @@ proc tnet:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists tnet(lastupdate)]} {
-    if {[expr [clock seconds] - $tnet(lastupdate)] > [expr $tnet(updates) * 60]} {
+    if {[expr [clock seconds] - $tnet(lastupdate)] >= [expr $tnet(updates) * 60]} {
       set ret [tnet:getdata]
     }
   } elseif {![info exists tnetdata(ts,0)]} {

@@ -1,4 +1,4 @@
-# $Id: webwereld.tcl,v 1.7 2003-07-09 15:17:52 peter Exp $
+# $Id: webwereld.tcl,v 1.8 2003-07-09 15:39:48 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
 # version 1.1, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -201,7 +201,7 @@ proc webw:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists webw(lastupdate)]} {
-    if {[expr [clock seconds] - $webw(lastupdate)] > [expr $webw(updates) * 60]} {
+    if {[expr [clock seconds] - $webw(lastupdate)] >= [expr $webw(updates) * 60]} {
       set ret [webw:getdata]
     }
   } elseif {![info exists webwdata(link,0)]} {

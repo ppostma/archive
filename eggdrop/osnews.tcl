@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.18 2003-07-09 15:14:07 peter Exp $
+# $Id: osnews.tcl,v 1.19 2003-07-09 15:39:48 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -210,7 +210,7 @@ proc osnews:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists osnews(lastupdate)]} {
-    if {[expr [clock seconds] - $osnews(lastupdate)] > [expr $osnews(updates) * 60]} {
+    if {[expr [clock seconds] - $osnews(lastupdate)] >= [expr $osnews(updates) * 60]} {
       set ret [osnews:getdata]
     }
   } elseif {![info exists osnewsbdata(title,0)]} {

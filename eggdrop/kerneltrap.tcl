@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.18 2003-07-09 15:14:07 peter Exp $
+# $Id: kerneltrap.tcl,v 1.19 2003-07-09 15:39:48 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -210,7 +210,7 @@ proc kerneltrap:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists kerneltrap(lastupdate)]} {
-    if {[expr [clock seconds] - $kerneltrap(lastupdate)] > [expr $kerneltrap(updates) * 60]} {
+    if {[expr [clock seconds] - $kerneltrap(lastupdate)] >= [expr $kerneltrap(updates) * 60]} {
       set ret [kerneltrap:getdata]
     }
   } elseif {![info exists kerneltrapdata(title,0)]} {

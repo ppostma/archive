@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.10 2003-07-09 15:14:07 peter Exp $
+# $Id: bsdforums.tcl,v 1.11 2003-07-09 15:39:48 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 09/07/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -204,7 +204,7 @@ proc bsdforums:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists bsdforums(lastupdate)]} {
-    if {[expr [clock seconds] - $bsdforums(lastupdate)] > [expr $bsdforums(updates) * 60]} {
+    if {[expr [clock seconds] - $bsdforums(lastupdate)] >= [expr $bsdforums(updates) * 60]} {
       set ret [bsdforums:getdata]
     }
   } elseif {![info exists bsdforumsdata(title,0)]} {

@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.20 2003-07-09 15:17:52 peter Exp $
+# $Id: fok.tcl,v 1.21 2003-07-09 15:39:48 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.0, 09/07/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -240,7 +240,7 @@ proc fok:pub {nick uhost hand chan text} {
 
   set ret 0
   if {[info exists fok(lastupdate)]} {
-    if {[expr [clock seconds] - $fok(lastupdate)] > [expr $fok(updates) * 60]} {
+    if {[expr [clock seconds] - $fok(lastupdate)] >= [expr $fok(updates) * 60]} {
       set ret [fok:getdata]
     }
   } elseif {![info exists fokdata(id,0)]} {
