@@ -1,4 +1,4 @@
-# $Id: eggdrop.tcl,v 1.2 2003-08-01 23:42:33 peter Exp $
+# $Id: eggdrop.tcl,v 1.3 2003-08-06 18:28:52 peter Exp $
 
 # Eggdrop compatibility module for the TclBot.
 # This script adds the eggdrop specific functions to TclBot.
@@ -90,6 +90,11 @@ proc utimerexists {procname} {
 # Bind/Add a trigger
 proc bind {type flags trigger procname} {
 	addtrigger $type $flags $trigger $procname
+}
+
+proc channels {} {
+	global channels
+	return $channels
 }
 
 # Send msg to IRC (should use a queue)
