@@ -1,10 +1,10 @@
-# $Id: kerneltrap.tcl,v 1.30 2003-08-18 20:36:43 peter Exp $
+# $Id: kerneltrap.tcl,v 1.31 2003-08-24 14:00:03 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
-# version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.4: (??/??/????)
+# 1.4: (24/08/2003)
 #  - changed the update method somewhat.
 #    the kerneltrap(updates) it now also being used by the triggers
 #    to check how long to cache the data.

@@ -1,10 +1,10 @@
-# $Id: clanbase.tcl,v 1.31 2003-08-18 20:36:43 peter Exp $
+# $Id: clanbase.tcl,v 1.32 2003-08-24 13:58:30 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
-# version 1.4, 09/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.4, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.4: (??/??/????)
+# 1.4: (24/08/2003)
 #  - changed the update method somewhat.
 #    the cb(updates) it now also being used by the triggers
 #    to check how long to cache the data.
