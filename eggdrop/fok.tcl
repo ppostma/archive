@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.35 2004-02-27 20:36:43 peter Exp $
+# $Id: fok.tcl,v 1.36 2004-08-25 23:12:28 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.1, 27/02/2004, door Peter Postma <peter@webdeveloping.nl>
@@ -69,7 +69,7 @@
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 #
 # De laatste versie van dit script kan je hier vinden:
-#   http://www.pointless.nl/?page=eggdrop
+#   http://www.pointless.nl/eggdrop.php
 #
 # Pas aub. de configuratie hieronder aan:
 #

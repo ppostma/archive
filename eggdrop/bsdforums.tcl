@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.23 2003-08-24 13:55:26 peter Exp $
+# $Id: bsdforums.tcl,v 1.24 2004-08-25 23:12:28 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -31,7 +31,7 @@
 # If you found spelling/grammatical errors, please also mail me!
 #
 # You can always find the latest version of this script on this page:
-#   http://www.pointless.nl/?page=eggdrop
+#   http://www.pointless.nl/eggdrop.php
 #
 # Please change the configuration setting below:
 #

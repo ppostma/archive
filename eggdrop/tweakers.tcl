@@ -1,4 +1,4 @@
-# $Id: tweakers.tcl,v 1.35 2003-08-24 13:54:41 peter Exp $
+# $Id: tweakers.tcl,v 1.36 2004-08-25 23:12:28 peter Exp $
 
 # Tweakers.net Nieuws script voor de eggdrop
 # version 2.0, 24/08/2003, door Peter Postma <peter@webdeveloping.nl>
@@ -67,7 +67,7 @@
 # Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
 # 
 # De laatste versie van dit script kan je hier vinden:
-#   http://www.pointless.nl/?page=eggdrop
+#   http://www.pointless.nl/eggdrop.php
 #
 # Pas aub. de configuratie hieronder aan:
 #

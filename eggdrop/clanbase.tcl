@@ -1,4 +1,4 @@
-# $Id: clanbase.tcl,v 1.32 2003-08-24 13:58:30 peter Exp $
+# $Id: clanbase.tcl,v 1.33 2004-08-25 23:12:28 peter Exp $
 
 # Clanbase.com News Announce Script for the eggdrop
 # version 1.4, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -37,7 +37,7 @@
 # If you found spelling/grammatical errors, please also mail me!
 #
 # You can always find the latest version of this script on this page:
-#   http://www.pointless.nl/?page=eggdrop
+#   http://www.pointless.nl/eggdrop.php
 #
 # Please change the configuration setting below:
 #
