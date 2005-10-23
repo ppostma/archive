@@ -1,4 +1,4 @@
-# $Id: osnews.tcl,v 1.31 2004-08-25 23:12:28 peter Exp $
+# $Id: osnews.tcl,v 1.32 2005-10-23 13:59:56 peter Exp $
 
 # OSnews.com News Announce Script for the eggdrop
 # version 1.4, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -189,10 +189,10 @@ proc osnews:getdata {} {
   foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
-    if {[regexp "</item>" $line]} { set item 0 }
+    if {[regexp "</item>" $line]} { set item 0; incr count }
     if {$item == 1} {
       regexp "<title>(.*)</title>" $line trash osnewsdata(title,$count)
-      if {[regexp "<link>(.*)</link>" $line trash osnewsdata(link,$count)]} { incr count }
+      regexp "<link>(.*)</link>" $line trash osnewsdata(link,$count)
     }
   }
 

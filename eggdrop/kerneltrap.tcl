@@ -1,4 +1,4 @@
-# $Id: kerneltrap.tcl,v 1.32 2004-08-25 23:12:28 peter Exp $
+# $Id: kerneltrap.tcl,v 1.33 2005-10-23 13:59:56 peter Exp $
 
 # KernelTrap.org News Announce Script for the eggdrop
 # version 1.4, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -189,10 +189,10 @@ proc kerneltrap:getdata {} {
   foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
-    if {[regexp "</item>" $line]} { set item 0 }
+    if {[regexp "</item>" $line]} { set item 0; incr count }
     if {$item == 1} {
       regexp "<title>(.*)</title>" $line trash kerneltrapdata(title,$count)
-      if {[regexp "<link>(.*)</link>" $line trash kerneltrapdata(link,$count)]} { incr count }
+      regexp "<link>(.*)</link>" $line trash kerneltrapdata(link,$count)
     }
   }
 

@@ -1,4 +1,4 @@
-# $Id: bsdforums.tcl,v 1.24 2004-08-25 23:12:28 peter Exp $
+# $Id: bsdforums.tcl,v 1.25 2005-10-23 13:59:56 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
 # version 1.2, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
@@ -183,10 +183,10 @@ proc bsdforums:getdata {} {
   foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item .+>" $line]} { set item 1 }
-    if {[regexp "</item>" $line]} { set item 0 }
+    if {[regexp "</item>" $line]} { set item 0; incr count }
     if {$item == 1} {
       regexp "<title>(.*)</title>" $line trash bsdforumsdata(title,$count)
-      if {[regexp "<link>(.*)</link>" $line trash bsdforumsdata(link,$count)]} { incr count }
+      regexp "<link>(.*)</link>" $line trash bsdforumsdata(link,$count)
     }
   }
 

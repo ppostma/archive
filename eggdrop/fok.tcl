@@ -1,4 +1,4 @@
-# $Id: fok.tcl,v 1.36 2004-08-25 23:12:28 peter Exp $
+# $Id: fok.tcl,v 1.37 2005-10-23 13:59:56 peter Exp $
 
 # fok.nl Nieuws script voor de eggdrop
 # version 2.1, 27/02/2004, door Peter Postma <peter@webdeveloping.nl>
@@ -222,11 +222,11 @@ proc fok:getdata {} {
   foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
-    if {[regexp "</item>" $line]} { set item 0 }
+    if {[regexp "</item>" $line]} { set item 0; incr count }
     if {$item == 1} {
       regexp "<title>(.*)</title>" $line trash fokdata(titel,$count)
       regexp "<pubDate>(.*)</pubDate>" $line trash fokdata(datum,$count)
-      if {[regexp "<link>(.*)</link>" $line trash fokdata(link,$count)]} { incr count }
+      regexp "<link>(.*)</link>" $line trash fokdata(link,$count)
     }
   }
 
