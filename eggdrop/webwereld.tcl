@@ -1,10 +1,12 @@
-# $Id: webwereld.tcl,v 1.23 2004-08-25 23:12:28 peter Exp $
+# $Id: webwereld.tcl,v 1.24 2005-10-23 13:50:31 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# version 1.2, 16/10/2003, door Peter Postma <peter@webdeveloping.nl>
+# release 1.3, 23/10/2005, door Peter Postma <peter@webdeveloping.nl>
 #
 # Changelog:
-# 1.2: (16/10/2002)
+# 1.3: (23/10/2005)
+#  - script werkt weer met de nieuwe site.
+# 1.2: (16/10/2003)
 #  - autonews werkt weer (typo in var. naam)
 # 1.1: (24/08/2003)
 #  - de manier van het updaten is wat veranderd.
@@ -181,11 +183,11 @@ proc webw:getdata {} {
   foreach line [split $data \n] {
     regsub -all "\\&" $line "\\\\&" line
     if {[regexp "<item>" $line]} { set item 1 }
-    if {[regexp "</item>" $line]} { set item 0 }
+    if {[regexp "</item>" $line]} { set item 0; incr count }
     if {$item == 1} {
       regexp "<title>(.*)</title>" $line trash webwdata(title,$count)
       regexp "<link>(.*)</link>" $line trash webwdata(link,$count)
-      if {[regexp "<description>(.*)</description>" $line trash webwdata(descr,$count)]} { incr count }
+      regexp "<description>(.*)</description>" $line trash webwdata(descr,$count)
     }
   }
 
