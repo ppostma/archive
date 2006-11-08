@@ -1,7 +1,7 @@
-# $Id: portscanner.tcl,v 1.10 2003-07-04 13:49:09 peter Exp $
+# $Id: portscanner.tcl,v 1.11 2006-11-08 22:20:50 peter Exp $
 
 # Portscan script for the eggdrop 
-# version 0.4.2, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4.2, 04/07/2003, by Peter Postma <peter@pointless.nl>
 #
 # Use like this:
 #  !portscan localhost        (scans localhost)
@@ -10,7 +10,7 @@
 #  !portscan6 localhost       (scans localhost using IPv6)
 #
 # Original idea & script: SilverSliver <silversliver2000@hotmail.com>
-# Improvements, bugfixes & banner grabbing: Peter <peter@webdeveloping.nl>
+# Improvements, bugfixes & banner grabbing: Peter <peter@pointless.nl>
 
 ### Configuration ###
 

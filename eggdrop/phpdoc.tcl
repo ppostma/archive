@@ -1,7 +1,7 @@
-# $Id: phpdoc.tcl,v 1.6 2003-08-24 14:14:28 peter Exp $
+# $Id: phpdoc.tcl,v 1.7 2006-11-08 22:20:50 peter Exp $
 
 # PHP Doc for the eggdrop
-# version 0.4, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.4, 24/08/2003, by Peter Postma <peter@pointless.nl>
 
 ### Configuration settings ###
 

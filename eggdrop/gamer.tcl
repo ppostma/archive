@@ -1,7 +1,7 @@
-# $Id: gamer.tcl,v 1.35 2004-08-25 23:12:28 peter Exp $
+# $Id: gamer.tcl,v 1.36 2006-11-08 22:20:50 peter Exp $
 
 # Gamer.nl Nieuws script voor de eggdrop
-# version 2.0, 24/08/2003, door Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 24/08/2003, door Peter Postma <peter@pointless.nl>
 #
 # Changelog:
 # 2.0: (24/08/2003)
@@ -64,7 +64,7 @@
 #
 # Het gamer.tcl script werkt het best met Tcl versies vanaf 8.0.
 #
-# Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
+# Voor vragen/suggesties/bugs/etc: peter@pointless.nl
 #
 # De laatste versie van dit script kan je hier vinden:
 #   http://www.pointless.nl/eggdrop.php

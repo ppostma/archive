@@ -1,3 +1,5 @@
+/* $Id: ess.c,v 1.57 2006-11-08 22:23:08 peter Exp $ */
+
 /*
  * Copyright (c) 2003, 2004 Peter Postma <peter@pointless.nl>
  * All rights reserved.
@@ -22,8 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: ess.c,v 1.56 2004-09-04 19:12:16 peter Exp $
  */
 
 #include <sys/types.h>
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 			break;
 		case 'V':
 			errx(99, "Easy Service Scan v%s by Peter Postma "
-				 "<peter@webdeveloping.nl>", VERSION);
+				 "<peter@pointless.nl>", VERSION);
 			/* NOTREACHED */
 		case 'h':
 		case '?':

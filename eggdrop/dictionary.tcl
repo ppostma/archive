@@ -1,7 +1,7 @@
-# $Id: dictionary.tcl,v 1.7 2003-08-24 14:24:59 peter Exp $
+# $Id: dictionary.tcl,v 1.8 2006-11-08 22:20:50 peter Exp $
 
 # Dictionary script for the eggdrop
-# version 0.8.5, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>    
+# version 0.8.5, 24/08/2003, by Peter Postma <peter@pointless.nl>    
 #
 # Changelog:
 #  0.8.5: (24/08/2003)

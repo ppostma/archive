@@ -1,4 +1,4 @@
-# $Id: qstat.tcl,v 1.12 2003-08-02 14:21:06 peter Exp $
+# $Id: qstat.tcl,v 1.13 2006-11-08 22:20:50 peter Exp $
 
 # Qstat script for the eggdrop, version 2.3, 09/07/2003 
 # 
@@ -8,25 +8,25 @@
 # History:
 #  1.0 (original) by Mikael Blomqvist <micke@peachpuff.com>
 #  1.5 by ST8 <st8@q3f.net> and in part by Ad <ad@contempt.org.uk>
-#  1.7 by Peter Postma <peter@webdeveloping.nl>
+#  1.7 by Peter Postma <peter@pointless.nl>
 #    - security hole fixed. (passing bad arguments to Tcl's exec)
 #    - display players fixed. 
-#  1.8 Peter Postma <peter@webdeveloping.nl>
+#  1.8 Peter Postma <peter@pointless.nl>
 #    - doesn't need a temp file anymore to display player info
 #    - use regsub for input checking 
 #    - better error checking / error messages
 #    - lot of clean up
-#  2.0 by Peter Postma <peter@webdeveloping.nl>
+#  2.0 by Peter Postma <peter@pointless.nl>
 #    - very nasty bugs fixed: endless long flood and bad errors
 #    - wiped out alot code, rewrote the main function
-#  2.1 by Peter Postma <peter@webdeveloping.nl>
+#  2.1 by Peter Postma <peter@pointless.nl>
 #    - support for RTCW, Quake 1
 #    - installation steps added :^)
 #    - windrop fix (but still doesn't work perfect)
-#  2.2 by Peter Postma <peter@webdeveloping.nl>
+#  2.2 by Peter Postma <peter@pointless.nl>
 #    - added BF, Gamespy, QW and UT2003.
 #    - added '-timeout 5' option in qstat exec
-#  2.3 by Peter Postma <peter@webdeveloping.nl>
+#  2.3 by Peter Postma <peter@pointless.nl>
 #    - trivial changes, make the script more logical, consistent and shorter.
 #    - added flood protection
 #    - added configurable method to send messages

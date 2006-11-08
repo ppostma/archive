@@ -1,7 +1,7 @@
-# $Id: webwereld.tcl,v 1.24 2005-10-23 13:50:31 peter Exp $
+# $Id: webwereld.tcl,v 1.25 2006-11-08 22:20:50 peter Exp $
 
 # WebWereld.nl Nieuws script voor de eggdrop
-# release 1.3, 23/10/2005, door Peter Postma <peter@webdeveloping.nl>
+# release 1.3, 23/10/2005, door Peter Postma <peter@pointless.nl>
 #
 # Changelog:
 # 1.3: (23/10/2005)
@@ -27,7 +27,7 @@
 #
 # Het webwereld.tcl script werkt het best met Tcl versies vanaf 8.0.
 #
-# Voor vragen/suggesties/bugs/etc: peter@webdeveloping.nl
+# Voor vragen/suggesties/bugs/etc: peter@pointless.nl
 # 
 # De laatste versie van dit script kan je hier vinden:
 #   http://www.pointless.nl/eggdrop.php

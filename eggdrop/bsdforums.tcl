@@ -1,7 +1,7 @@
-# $Id: bsdforums.tcl,v 1.25 2005-10-23 13:59:56 peter Exp $
+# $Id: bsdforums.tcl,v 1.26 2006-11-08 22:20:50 peter Exp $
 
 # BSDForums.org News Announce Script for the eggdrop
-# version 1.2, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 24/08/2003, by Peter Postma <peter@pointless.nl>
 #
 # Changelog:
 # 1.2: (24/08/2003)
@@ -27,7 +27,7 @@
 #
 # You need at least Tcl version 8.0 to get this script running!
 #
-# For questions/suggestions/bug/etc: peter@webdeveloping.nl
+# For questions/suggestions/bug/etc: peter@pointless.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
 # You can always find the latest version of this script on this page:

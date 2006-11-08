@@ -1,7 +1,7 @@
-# $Id: calc.tcl,v 1.4 2003-07-04 13:49:09 peter Exp $
+# $Id: calc.tcl,v 1.5 2006-11-08 22:20:50 peter Exp $
 
 # Simple calculator for the eggdrop
-# version 1.1, 04/07/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 1.1, 04/07/2003, by Peter Postma <peter@pointless.nl>
 
 bind pub -|- "!calc" pub:calc
 

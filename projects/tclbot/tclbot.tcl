@@ -1,7 +1,7 @@
-# $Id: tclbot.tcl,v 1.4 2004-01-30 22:13:22 peter Exp $
+# $Id: tclbot.tcl,v 1.5 2006-11-08 22:23:08 peter Exp $
 
 #
-# Copyright (c) 2003 Peter Postma <peter@webdeveloping.nl>
+# Copyright (c) 2003 Peter Postma <peter@pointless.nl>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -265,7 +265,7 @@ proc reload {} {
 }
 
 # Yes, I'm really TclBot :)
-log "TclBot v$botversion by Peter Postma <peter@webdeveloping.nl>"
+log "TclBot v$botversion by Peter Postma <peter@pointless.nl>"
 
 # Check which configfile to use
 if {[file exists "default.conf"] && $argc < 1} {

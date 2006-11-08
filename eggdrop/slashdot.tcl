@@ -1,7 +1,7 @@
-# $Id: slashdot.tcl,v 1.33 2004-08-25 23:12:28 peter Exp $
+# $Id: slashdot.tcl,v 1.34 2006-11-08 22:20:50 peter Exp $
 
 # Slashdot.org News Announce Script for the eggdrop
-# version 2.0, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 2.0, 24/08/2003, by Peter Postma <peter@pointless.nl>
 #
 # Changelog:
 # 2.0: (24/08/2003)
@@ -33,7 +33,7 @@
 #
 # You need at least Tcl version 8.0 to get this script running!
 #
-# For questions/suggestions/bug/etc: peter@webdeveloping.nl
+# For questions/suggestions/bug/etc: peter@pointless.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
 # You can always find the latest version of this script on this page:

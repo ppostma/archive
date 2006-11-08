@@ -1,7 +1,7 @@
-# $Id: nforce.tcl,v 1.3 2004-09-05 01:16:27 peter Exp $
+# $Id: nforce.tcl,v 1.4 2006-11-08 22:20:50 peter Exp $
 
 # Nforce.nl release script for the eggdrop
-# version 1.2, 05/09/2004, by Peter Postma <peter@webdeveloping.nl>
+# version 1.2, 05/09/2004, by Peter Postma <peter@pointless.nl>
 #
 # Changelog:
 # 1.2: (05/09/2004)
@@ -19,7 +19,7 @@
 #
 # You need at least Tcl version 8.0 to get this script running!
 #
-# For questions/suggestions/bug/etc: peter@webdeveloping.nl
+# For questions/suggestions/bug/etc: peter@pointless.nl
 # If you found spelling/grammatical errors, please also mail me!
 #
 # You can always find the latest version of this script on this page:

@@ -1,7 +1,7 @@
-# $Id: di.tcl,v 1.10 2003-08-24 14:20:46 peter Exp $
+# $Id: di.tcl,v 1.11 2006-11-08 22:20:50 peter Exp $
 
 # Digitally Imported Radio info script for the eggdrop
-# version 0.2.1, 24/08/2003, by Peter Postma <peter@webdeveloping.nl>
+# version 0.2.1, 24/08/2003, by Peter Postma <peter@pointless.nl>
 #
 # Changelog:
 # 0.2.1: (24/08/2003)
