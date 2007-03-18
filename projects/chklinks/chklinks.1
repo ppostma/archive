@@ -1,0 +1,75 @@
+.\"
+.\" Copyright (c) 2007 Peter Postma <peter@pointless.nl>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd March 5, 2007
+.Dt CHKLINKS 1
+.Os
+.Sh NAME
+.Nm chklinks
+.Nd check links on a webpage
+.Sh SYNOPSIS
+.Nm
+.Op Fl f Ar file
+.Op Fl q | Fl v
+.Sh DESCRIPTION
+.Nm
+is a program that checks if links on a webpage are working.
+.Pp
+Checking of the links is done in the following order:
+.Bl -enum -compact
+.It
+read the webpages (as URLs) from a file or the standard input
+.It
+connect to the supplied URLs and parse all links in the anchor tags
+.It
+try to connect to the found links and record the status
+.El
+.Pp
+After all links have been checked,
+.Nm
+shows a summary of the tested links and shows all links that have been
+found broken.
+.Pp
+The supported schemes/protocols are HTTP, HTTPs and FTP.
+Other schemes will be skipped (including the javascript and mailto schemes).
+.Pp
+The following options are supported:
+.Bl -tag -width XXxxXX
+.It Fl f Ar file
+Read from
+.Ar file
+instead of the standard input.
+.It Fl q
+Quiet mode, don't show progress in percentage but only the summary
+on completion.
+This flag is automatically set when
+.Nm
+is not run from a terminal.
+.It Fl v
+Verbose mode, show each link that's being parsed and tested.
+.El
+.Sh AUTHORS
+.An Peter Postma
+.Aq peter@pointless.nl

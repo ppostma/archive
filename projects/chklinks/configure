@@ -1,0 +1,422 @@
+#!/bin/sh
+#
+# Copyright (c) 2007 Peter Postma <peter@pointless.nl>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+cc=${cc-}
+cflags=${cflags-}
+ldflags=${ldflags-}
+objs=${objs-}
+libs=${libs-}
+
+logfile=${logfile-config.log}
+prefix=${prefix-/usr/local}
+
+install=${install-install}
+
+feature_https=1
+
+check_strlcat()
+{
+	logn "Checking for strlcat... "
+
+	cat > testfile.c << EOF
+#include <string.h>
+
+int main(void)
+{
+	strlcat(NULL, NULL, 0);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/strlcat.o"
+		add_cflags "-DWANT_STRLCAT"
+	fi
+}
+
+check_strlcpy()
+{
+	logn "Checking for strlcpy... "
+
+	cat > testfile.c << EOF
+#include <string.h>
+
+int main(void)
+{
+	strlcpy(NULL, NULL, 0);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/strlcpy.o"
+		add_cflags "-DWANT_STRLCPY"
+	fi
+}
+
+check_vasprintf()
+{
+	logn "Checking for vasprintf... "
+
+	cat > testfile.c << EOF
+#include <stdio.h>
+
+int main(void)
+{
+	vasprintf(NULL, NULL, NULL);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/vasprintf.o"
+		add_cflags "-DWANT_VASPRINTF"
+	fi
+}
+
+check_strcasestr()
+{
+	logn "Checking for strcasestr... "
+
+	cat > testfile.c << EOF
+#include <string.h>
+
+int main(void)
+{
+	strcasestr(NULL, NULL);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/strcasestr.o"
+		add_cflags "-DWANT_STRCASESTR"
+	fi
+}
+
+check_getaddrinfo()
+{
+	logn "Checking for getaddrinfo... "
+
+	cat > testfile.c << EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stddef.h>
+
+int main(void)
+{
+	getaddrinfo(NULL, NULL, NULL, NULL);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c ${libs} >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -ne 0 ]; then
+		log "not found"
+		exit 1
+	else
+		log "found"
+	fi
+}
+
+check_os()
+{
+	logn "Checking operating system... "
+
+	_os=`uname`
+
+	log "${_os}"
+
+	if [ "${_os}" = "Linux" ]; then
+		add_cflags "-D_GNU_SOURCE"
+	fi
+
+	if [ "${_os}" = "SunOS" ]; then
+		add_libs "-lsocket -lnsl"
+	fi
+}
+
+check_cc()
+{
+	logn "Checking for a C compiler... "
+
+	if [ -n "${cc}" ]; then
+		if [ ! -x "${cc}" ]; then
+			_find=`find_in_path ${cc}`
+
+			if [ -z "${_find}" ]; then
+				logn "(${cc} not found) "
+				cc=
+			fi
+		fi
+	fi
+
+	if [ -z "${cc}" ]; then
+		for _file in gcc cc
+		do
+			_find=`find_in_path ${_file}`
+
+			if [ -n "${_find}" ]; then
+				cc=${_file}
+				break
+			fi
+		done
+	fi
+
+	if [ -z "${cc}" ]; then
+		log "not found"
+		exit 1
+	else
+		log "found (${cc})"
+	fi
+}
+
+check_cc_compile()
+{
+	logn "Checking if the compiler can create executables... "
+
+	cat > testfile.c << EOF
+int main(void)
+{
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -ne 0 ]; then
+		log "no"
+		exit 1
+	else
+		log "yes"
+	fi
+}
+
+check_openssl()
+{
+	logn "Checking for openssl... "
+
+	if [ ${feature_https} -eq 1 ]; then
+		cat > testfile.c << EOF
+#include <openssl/ssl.h>
+
+int main(void)
+{
+	SSL_CTX_new(SSLv23_client_method());
+	return 0;
+}
+EOF
+		${cc} -o testfile testfile.c -lssl -lcrypto >> $logfile 2>&1
+		_result=$?
+
+		rm -f testfile testfile.c >/dev/null 2>&1
+
+		if [ ${_result} -eq 0 ]; then
+			log "found"
+
+			add_objs "https.o"
+			add_libs "-lssl -lcrypto"
+		else
+			add_objs "https.stub.o"
+			log "not found (https support disabled)"
+		fi
+	else
+		add_objs "https.stub.o"
+		log "skipped (https support disabled)"
+	fi
+}
+
+find_in_path()
+{
+	_search=$1
+
+	OLDIFS=${IFS}
+	IFS=':'
+
+	for _pathname in ${PATH}
+	do
+		if [ -x "${_pathname}/${_search}" ]; then
+			echo "${_pathname}/${_search}"
+			break
+		fi
+	done
+
+	IFS=${OLDIFS}
+}
+
+add_cflags()
+{
+	cflags="${cflags} $@"
+
+	logv "Adding '$@' to CFLAGS."
+}
+
+add_ldflags()
+{
+	ldflags="${ldflags} $@"
+
+	logv "Adding '$@' to LDFLAGS."
+}
+
+add_objs()
+{
+	objs="${objs} $@"
+
+	logv "Adding '$@' to OBJS."
+}
+
+add_libs()
+{
+	libs="${libs} $@"
+
+	logv "Adding '$@' to LIBS."
+}
+
+create_makefile()
+{
+	_source=$1
+	_target=$2
+
+	log "Creating ${_target}"
+
+	sed -e "s|@cflags@|${cflags}|" \
+	    -e "s|@ldflags@|${ldflags}|" \
+	    -e "s|@objs@|${objs}|" \
+	    -e "s|@libs@|${libs}|" \
+	    -e "s|@cc@|${cc}|" \
+	    -e "s|@install@|${install}|" \
+	    -e "s|@prefix@|${prefix}|" \
+		${_source} > ${_target}
+}
+
+create_config_log()
+{
+	: > $logfile
+}
+
+log()
+{
+	printf "%s\n" "$@"
+	printf "%s\n" "$@" >> $logfile
+}
+
+logn()
+{
+	printf "%s" "$@"
+	printf "%s" "$@" >> $logfile
+}
+
+logv()
+{
+	printf "%s\n" "$@" >> $logfile
+}
+
+while [ $# -gt 0 ]
+do
+	case "$1" in
+	--disable-https)
+		feature_https=0
+		;;
+	--prefix=*)
+		prefix=`expr $1 : '--prefix=\(.*\)'`
+		;;
+	*)
+		echo "Usage: ./configure [options]"
+		echo ""
+		echo "Configuration options:"
+		echo "  --disable-https     disable support for http/ssl"
+		echo ""
+		echo "Installation options:"
+		echo "  --prefix=path       installation prefix [default: /usr/local]"
+		echo ""
+		echo "Environment variables:"
+		echo "  cc          C compiler command"
+		echo "  cflags      C compiler flags"
+		echo "  ldflags     Linker flags"
+		echo ""
+		exit 0
+		;;
+	esac
+
+	shift
+done
+
+create_config_log
+
+check_os
+check_cc
+check_cc_compile
+check_getaddrinfo
+check_openssl
+check_strcasestr
+check_strlcat
+check_strlcpy
+check_vasprintf
+
+create_makefile "Makefile.in" "Makefile"
