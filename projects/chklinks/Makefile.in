@@ -46,9 +46,9 @@ $(PROG): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 install: $(PROG)
-	[ ! -d $(PREFIX)/bin ] || mkdir -p $(PREFIX)/bin
+	[ -d $(PREFIX)/bin ] || mkdir -p $(PREFIX)/bin
 	$(INSTALL) $(PROG) $(PREFIX)/bin/$(PROG)
-	[ ! -d $(PREFIX)/share/man/man1 ] || mkdir -p $(PREFIX)/share/man/man1
+	[ -d $(PREFIX)/share/man/man1 ] || mkdir -p $(PREFIX)/share/man/man1
 	$(INSTALL) $(MAN) $(PREFIX)/share/man/man1/$(MAN)
 
 clean:
