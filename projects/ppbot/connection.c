@@ -300,8 +300,6 @@ connection_read(Connection conn)
 		if ((q = strpbrk(line, "\r\n")) != NULL)
 			*q = '\0';
 
-		log_debug("[%s] >>> '%s'", conn->id, line);
-
 		message_parse(conn, line);
 	}
 	if (len != 0)
