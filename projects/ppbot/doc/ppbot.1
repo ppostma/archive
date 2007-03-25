@@ -1,0 +1,62 @@
+.\"
+.\" Copyright (c) 2005-2007 Peter Postma <peter@pointless.nl>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd March 25, 2007
+.Dt PPBOT 1
+.Os
+.Sh NAME
+.Nm ppbot
+.Nd Peter's pointless IRC robot
+.Sh SYNOPSIS
+.Nm
+.Op Fl d
+.Op Fl f Ar configfile
+.Sh DESCRIPTION
+.Nm
+is a small and lightweight IRC robot.
+.Pp
+The following options are available:
+.Bl -tag -width 1234
+.It Fl d
+Run in debug mode.
+.Nm
+will not detach from the terminal but will stay in the foreground, printing
+all (error) messages to stderr.
+In addition to the normal messages, the debug messages will also be printed.
+.It Fl f Ar configfile
+Specify an alternate configuration file.
+The default file is
+.Pa ppbot.conf .
+.El
+.Sh FILES
+.Bl -tag -width xXppbot.confXx -compact
+.It Pa ppbot.conf
+the main configuration file
+.El
+.Sh SEE ALSO
+.Xr ppbot.conf 5
+.Sh AUTHORS
+.An Peter Postma
+.Aq peter@pointless.nl

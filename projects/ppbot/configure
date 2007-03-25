@@ -1,0 +1,571 @@
+#!/bin/sh
+#
+# Copyright (c) 2006-2007 Peter Postma <peter@pointless.nl>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+cc=${cc-}
+lex=${lex-}
+yacc=${yacc-}
+cflags=${cflags-}
+ldflags=${ldflags-}
+sh_cflags=${sh_cflags-}
+sh_ldflags=${sh_ldflags-}
+objs=${objs-}
+libs=${libs-}
+
+logfile=${logfile-config.log}
+
+check_strlcat()
+{
+	logn "Checking for strlcat... "
+
+	cat > testfile.c << EOF
+#include <string.h>
+
+int main(void)
+{
+	strlcat(NULL, NULL, 0);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/strlcat.o"
+		add_cflags "-DWANT_STRLCAT"
+		add_sh_cflags "-DWANT_STRLCAT"
+	fi
+}
+
+check_strlcpy()
+{
+	logn "Checking for strlcpy... "
+
+	cat > testfile.c << EOF
+#include <string.h>
+
+int main(void)
+{
+	strlcpy(NULL, NULL, 0);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/strlcpy.o"
+		add_cflags "-DWANT_STRLCPY"
+		add_sh_cflags "-DWANT_STRLCPY"
+	fi
+}
+
+check_daemon()
+{
+	logn "Checking for daemon... "
+
+	cat > testfile.c << EOF
+#include <stdlib.h>
+
+int main(void)
+{
+	daemon(0, 0);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/daemon.o"
+		add_cflags "-DWANT_DAEMON"
+		add_sh_cflags "-DWANT_DAEMON"
+	fi
+}
+
+check_vasprintf()
+{
+	logn "Checking for vasprintf... "
+
+	cat > testfile.c << EOF
+#include <stdio.h>
+
+int main(void)
+{
+	vasprintf(NULL, NULL, NULL);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/vasprintf.o"
+		add_cflags "-DWANT_VASPRINTF"
+		add_sh_cflags "-DWANT_VASPRINTF"
+	fi
+}
+
+check_strcasestr()
+{
+	logn "Checking for strcasestr... "
+
+	cat > testfile.c << EOF
+#include <string.h>
+
+int main(void)
+{
+	strcasestr(NULL, NULL);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -eq 0 ]; then
+		log "found"
+	else
+		log "not found"
+
+		add_objs "compat/strcasestr.o"
+		add_cflags "-DWANT_STRCASESTR"
+		add_sh_cflags "-DWANT_STRCASESTR"
+	fi
+}
+
+check_getaddrinfo()
+{
+	logn "Checking for getaddrinfo... "
+
+	cat > testfile.c << EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stddef.h>
+
+int main(void)
+{
+	getaddrinfo(NULL, NULL, NULL, NULL);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c ${libs} >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -ne 0 ]; then
+		log "not found"
+		exit 1
+	else
+		log "found"
+	fi
+}
+
+check_libdl()
+{
+	logn "Checking if -ldl is needed for using dynamic linker... "
+
+	cat > testfile.c << EOF
+#include <dlfcn.h>
+#include <stddef.h>
+
+int main(void)
+{
+	dlopen(NULL, 0);
+
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	if [ ${_result} -ne 0 ]; then
+		${cc} -ldl -o testfile testfile.c >> $logfile 2>&1
+		_result=$?
+
+		rm -f testfile testfile.c >/dev/null 2>&1
+
+		if [ ${_result} -ne 0 ]; then
+			log "broken"
+			exit 1
+		else
+			log "yes"
+
+			add_libs "-ldl"
+		fi
+	else
+		rm -f testfile testfile.c >/dev/null 2>&1
+
+		log "no"
+	fi
+}
+
+check_os()
+{
+	logn "Checking operating system... "
+
+	_os=`uname`
+
+	log "${_os}"
+
+	if [ "${_os}" = "Linux" ]; then
+		add_cflags "-D_GNU_SOURCE"
+		add_sh_cflags "-D_GNU_SOURCE"
+	fi
+
+	if [ "${_os}" = "Darwin" ]; then
+		add_sh_cflags "-fno-common"
+		add_sh_ldflags "-dynamiclib -undefined dynamic_lookup"
+	else
+		add_sh_cflags "-fPIC"
+		add_sh_ldflags "-shared"
+	fi
+
+	if [ "${_os}" = "SunOS" ]; then
+		add_libs "-lsocket -lnsl"
+	fi
+}
+
+check_yacc()
+{
+	logn "Checking for yacc... "
+
+	if [ -n "${yacc}" ]; then
+		if [ ! -x "${yacc}" ]; then
+			_find=`find_in_path ${yacc}`
+
+			if [ -z "${_find}" ]; then
+				logn "(${yacc} not found) "
+				yacc=
+			fi
+		fi
+	fi
+
+	if [ -z "${yacc}" ]; then
+		for _file in yacc bison
+		do
+			_find=`find_in_path ${_file}`
+
+			if [ -n "${_find}" ]; then
+				yacc=${_file}
+				break
+			fi
+		done
+	fi
+
+	if [ -z "${yacc}" ]; then
+		log "not found"
+		exit 1
+	else
+		log "found (${yacc})"
+
+		_bison=`${yacc} -V 2>&1 | grep -ci bison`
+		if [ "${_bison}" -gt 0 ]; then
+			add_cflags "-DHAVE_BISON"
+			add_sh_cflags "-DHAVE_BISON"
+		fi
+	fi
+}
+
+check_lex()
+{
+	logn "Checking for lex... "
+
+	if [ -n "${lex}" ]; then
+		if [ ! -x "${lex}" ]; then
+			_find=`find_in_path ${lex}`
+
+			if [ -z "${_find}" ]; then
+				logn "(${lex} not found) "
+				lex=
+			fi
+		fi
+	fi
+
+	if [ -z "${lex}" ]; then
+		for _file in lex flex
+		do
+			_find=`find_in_path ${_file}`
+
+			if [ -n "${_find}" ]; then
+				lex=${_file}
+			fi
+		done
+	fi
+
+	if [ -z "${lex}" ]; then
+		log "not found"
+		exit 1
+	else
+		log "found (${lex})"
+	fi
+}
+
+check_cc()
+{
+	logn "Checking for a C compiler... "
+
+	if [ -n "${cc}" ]; then
+		if [ ! -x "${cc}" ]; then
+			_find=`find_in_path ${cc}`
+
+			if [ -z "${_find}" ]; then
+				logn "(${cc} not found) "
+				cc=
+			fi
+		fi
+	fi
+
+	if [ -z "${cc}" ]; then
+		for _file in gcc cc
+		do
+			_find=`find_in_path ${_file}`
+
+			if [ -n "${_find}" ]; then
+				cc=${_file}
+				break
+			fi
+		done
+	fi
+
+	if [ -z "${cc}" ]; then
+		log "not found"
+		exit 1
+	else
+		log "found (${cc})"
+	fi
+}
+
+check_cc_compile()
+{
+	logn "Checking if the compiler can create executables... "
+
+	cat > testfile.c << EOF
+int main(void)
+{
+	return 0;
+}
+EOF
+	${cc} -o testfile testfile.c >> $logfile 2>&1
+	_result=$?
+
+	rm -f testfile testfile.c >/dev/null 2>&1
+
+	if [ ${_result} -ne 0 ]; then
+		log "no"
+		exit 1
+	else
+		log "yes"
+	fi
+}
+
+check_ld_export_dynamic()
+{
+	logn "Checking if the linker accepts --export-dynamic... "
+
+	_result=`${cc} -Xlinker --help 2>&1 | grep -c export-dynamic`
+	if [ ${_result} -gt 0 ]; then
+		log "yes"
+
+		add_ldflags "-Wl,--export-dynamic"
+	else
+		log "no"
+	fi
+}
+
+find_in_path()
+{
+	_search=$1
+
+	OLDIFS=${IFS}
+	IFS=':'
+
+	for _pathname in ${PATH}
+	do
+		if [ -x "${_pathname}/${_search}" ]; then
+			echo "${_pathname}/${_search}"
+			break
+		fi
+	done
+
+	IFS=${OLDIFS}
+}
+
+add_cflags()
+{
+	cflags="${cflags} $@"
+
+	logv "Adding '$@' to CFLAGS."
+}
+
+add_sh_cflags()
+{
+	sh_cflags="${sh_cflags} $@"
+
+	logv "Adding '$@' to SH_CFLAGS."
+}
+
+add_ldflags()
+{
+	ldflags="${ldflags} $@"
+
+	logv "Adding '$@' to LDFLAGS."
+}
+
+add_sh_ldflags()
+{
+	sh_ldflags="${sh_ldflags} $@"
+
+	logv "Adding '$@' to SH_LDFLAGS."
+}
+
+add_objs()
+{
+	objs="${objs} $@"
+
+	logv "Adding '$@' to OBJS."
+}
+
+add_libs()
+{
+	libs="${libs} $@"
+
+	logv "Adding '$@' to LIBS."
+}
+
+create_makefile()
+{
+	_source=$1
+	_target=$2
+
+	log "Creating ${_target}"
+
+	sed -e "s|@cflags@|${cflags}|" \
+	    -e "s|@ldflags@|${ldflags}|" \
+	    -e "s|@sh_cflags@|${sh_cflags}|" \
+	    -e "s|@sh_ldflags@|${sh_ldflags}|" \
+	    -e "s|@objs@|${objs}|" \
+	    -e "s|@libs@|${libs}|" \
+	    -e "s|@cc@|${cc}|" \
+	    -e "s|@lex@|${lex}|" \
+	    -e "s|@yacc@|${yacc}|" \
+		${_source} > ${_target}
+}
+
+create_config_log()
+{
+	: > $logfile
+}
+
+log()
+{
+	printf "%s\n" "$@"
+	printf "%s\n" "$@" >> $logfile
+}
+
+logn()
+{
+	printf "%s" "$@"
+	printf "%s" "$@" >> $logfile
+}
+
+logv()
+{
+	printf "%s\n" "$@" >> $logfile
+}
+
+if [ $# -gt 0 ]; then
+	case "$1" in
+	*)
+		echo "Usage: ./configure"
+		echo ""
+		echo "Environment variables:"
+		echo "  cc         C compiler command"
+		echo "  cflags     C compiler flags"
+		echo "  ldflags    Linker flags"
+		echo "  lex        Lexical analyzer command"
+		echo "  yacc       yacc command"
+		echo ""
+		exit 0
+		;;
+	esac
+fi
+
+create_config_log
+
+check_os
+check_lex
+check_yacc
+check_cc
+check_cc_compile
+check_ld_export_dynamic
+check_libdl
+check_daemon
+check_getaddrinfo
+check_strcasestr
+check_strlcat
+check_strlcpy
+check_vasprintf
+
+create_makefile "Makefile.in" "Makefile"
+
+for plugin in ai autoop autorejoin dictionary google rss
+do
+	create_makefile "plugins/${plugin}/Makefile.in" \
+	    "plugins/${plugin}/Makefile"
+done

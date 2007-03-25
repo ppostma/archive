@@ -1,0 +1,151 @@
+.\"
+.\" Copyright (c) 2005-2007 Peter Postma <peter@pointless.nl>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd March 25, 2007
+.Dt PPBOT.CONF 5
+.Os
+.Sh NAME
+.Nm ppbot.conf
+.Nd configuration file for ppbot
+.Sh DESCRIPTION
+The
+.Nm
+file specifies the configuration for
+.Xr ppbot 1 .
+This file consists of server definitions, channel definitions and
+configuration parameters.
+To start
+.Xr ppbot 1 ,
+there needs to be at least one server defined in the configuration file.
+.Pp
+Empty lines and lines starting with a hash character
+.Pq Sq #
+are ignored.
+.Ss Server definition
+A server is defined by the keyword
+.Sq server ,
+following by an unique identifier.
+The configuration parameters for the server are specified between
+an opening brace and a closing brace.
+.Ss Channel definition
+A channel is defined by the keyword
+.Sq channel ,
+followed by the channel name.
+The configuration parameters for the channel are specified between
+an opening brace and a closing brace.
+.Pp
+A channel may only be defined inside a server section.
+.Ss Parameters
+The configuration parameters start with a keyword, then one or more space
+characters and the value for the keyword.
+Double quote characters can be used to specify strings with spaces or
+special characters in them.
+.Ss Global parameters
+The following parameters and arguments are recognized in the global section:
+.Bl -tag -width logfile
+.It Sy debug Ar boolean
+.Sq yes
+or
+.Sq no .
+If set to
+.Sq yes ,
+debug messages will be enabled.
+These messages will be written to the logfile, so the
+.Sy logfile
+parameter must be configured as well.
+.It Sy logfile Ar file
+Specify the
+.Ar file
+that will be used to put the log messages in.
+To enable logging, this parameter must be set to a valid path/file where
+.Xr ppbot 1
+can write to.
+.It Sy plugin Ar file
+Add and enable an external plugin.
+.El
+.Ss Server parameters
+The following parameters and arguments are recognized in the server section:
+.Bl -tag -width realname
+.It Sy address Ar string
+Define the address or hostname for the server to connect to.
+.Em This parameter is mandatory .
+.It Sy altnick Ar string
+Define the alternate nickname, the nickname that will be used if the
+first nickname cannot be used for some reason.
+.It Sy ident Ar string
+Define the user identification part.
+If this parameter is not set, the value of the
+.Sy nickname
+will be used.
+.It Sy nickname Ar string
+Define the first nickname to use.
+.Em This parameter is mandatory .
+.It Sy password Ar string
+Define the password for the server.
+.It Sy port Ar number
+Define the port for the server.
+If this parameter is not set, the default port 6667 will be used.
+.It Sy realname Ar string
+Define the real name of the user.
+If this parameter is not set, the value of the
+.Sy nickname
+will be used.
+.El
+.Ss Channel parameters
+The following parameters and arguments are recognized in the channel section:
+.Bl -tag -width logfile
+.It Sy key Ar string
+Define a key to use when joining the channel.
+.It Sy logfile Ar file
+Define a log
+.Ar file
+to log events in the channel to.
+The format of the log file is compatible with the
+.Sq eggdrop
+format.
+.El
+.Sh EXAMPLES
+An example
+.Nm
+file:
+.Bd -literal -offset indent
+server pointless {
+    address   pointless.nl
+    nickname  ppbot
+
+    channel #foobar
+
+    channel #secret {
+        key  mysecretkey
+    }
+}
+
+plugin  plugins/google.so
+plugin  plugins/rss.so
+
+logfile logs/ppbot.log
+.Ed
+.Sh SEE ALSO
+.Xr ppbot 1

@@ -1,0 +1,57 @@
+#
+# Copyright (c) 2006-2007 Peter Postma <peter@pointless.nl>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+CC=	@cc@
+LEX=	@lex@
+YACC=	@yacc@
+
+CFLAGS=	@cflags@ -O2 -g
+LDFLAGS= @ldflags@
+LIBS=	@libs@
+
+PROG=	ppbot
+OBJS=	channel.o config_parse.o config_scan.o connection.o ircbot.o \
+	log.o message.o mqueue.o plugin.o timer.o xalloc.o \
+	@objs@
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $(PROG) $(LIBS)
+
+.c.o: ircbot.h timer.h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+config_parse.c: config_parse.y
+	$(YACC) -o $@ -d $<
+
+config_scan.c: config_scan.l
+	$(LEX) -o$@ $<
+
+clean:
+	rm -f config_parse.[ch] config_scan.c $(OBJS) $(PROG) $(PROG).core core
+
+distclean: clean
+	rm -f Makefile config.log
