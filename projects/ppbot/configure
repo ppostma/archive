@@ -564,7 +564,7 @@ check_vasprintf
 
 create_makefile "Makefile.in" "Makefile"
 
-for plugin in ai autoop autorejoin dictionary google rss
+for plugin in autoop autorejoin dictionary google rss
 do
 	create_makefile "plugins/${plugin}/Makefile.in" \
 	    "plugins/${plugin}/Makefile"
