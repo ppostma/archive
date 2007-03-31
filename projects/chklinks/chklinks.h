@@ -33,7 +33,7 @@
  * Name & version of the program.
  */
 #define CHKLINKS_NAME		"chklinks"
-#define CHKLINKS_VERSION	"20070318"
+#define CHKLINKS_VERSION	"20070331"
 
 /*
  * Boolean symbolic constants.
