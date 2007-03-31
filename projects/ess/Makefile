@@ -1,11 +1,8 @@
-# $Id: Makefile,v 1.10 2004-02-21 18:07:45 peter Exp $
+# $Id: Makefile,v 1.11 2007-03-31 18:19:43 peter Exp $
 
 CC	= gcc
 CFLAGS	= -DRESOLVE -Wall -O2
 #CFLAGS	= -DIPV4_DEFAULT -DRESOLVE -Wall -O
-
-# For Solaris:
-#LIBS	= -lsocket -lnsl
 
 PREFIX	= /usr/local
 
@@ -16,7 +13,7 @@ MAN	= ess.1
 all: ess
 
 ess:
-	$(CC) $(CFLAGS) -o $(EXEC) $(SRC) $(LIBS)
+	$(CC) $(CFLAGS) -o $(EXEC) $(SRC)
 
 strip: ess
 	strip $(EXEC)

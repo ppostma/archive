@@ -5,8 +5,6 @@ To compile the program:
 
 You can specify -DIPV4_DEFAULT to use IPv4 only by default.
 See the Makefile for an example.
-If you're on Solaris then you must uncomment the LIBS line in the Makefile
-before doing make.
 
 If you want to install the program then do:
 # make install
