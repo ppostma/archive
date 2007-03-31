@@ -58,7 +58,6 @@ static const struct {
 	{ EAI_MEMORY,     "Memory allocation failure"                  },
 	{ EAI_NODATA,     "No address associated with hostname"        },
 	{ EAI_NONAME,     "Hostname nor service provided, or unknown"  },
-	{ EAI_OVERFLOW,   "Argument buffer overflow"                   },
 	{ EAI_SERVICE,    "Unknown service name"                       },
 	{ EAI_SOCKTYPE,   "Unsupported socket type",                   },
 	{ EAI_SYSTEM,     "A system error occurred"                    }
