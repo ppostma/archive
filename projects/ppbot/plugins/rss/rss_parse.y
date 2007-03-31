@@ -40,6 +40,8 @@ extern FILE *yyrssin;
 
 static struct rss_config *rcp;
 
+static int rss_config_verify(struct rss_config *);
+
 int yyrssparse(void);
 int yyrsslex(void);
 int yyrsserror(const char *);
