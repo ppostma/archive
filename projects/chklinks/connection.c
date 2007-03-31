@@ -50,14 +50,21 @@ static const struct {
 	int		 ecode;
 	const char	*msg;
 } gai_error_messages[] = {
+#ifdef EAI_ADDRFAMILY
 	{ EAI_ADDRFAMILY, "Address family for hostname not supported"  },
+#endif
 	{ EAI_AGAIN,	  "Temporary failure in name resolution"       },
 	{ EAI_BADFLAGS,   "The address flags has an invalid value"     },
 	{ EAI_FAIL,       "Non-recoverable failure in name resolution" },
 	{ EAI_FAMILY,     "Address family not supported"               },
 	{ EAI_MEMORY,     "Memory allocation failure"                  },
+#ifdef EAI_NODATA
 	{ EAI_NODATA,     "No address associated with hostname"        },
+#endif
 	{ EAI_NONAME,     "Hostname nor service provided, or unknown"  },
+#ifdef EAI_OVERFLOW
+	{ EAI_OVERFLOW,   "Argument buffer overflow"                   },
+#endif
 	{ EAI_SERVICE,    "Unknown service name"                       },
 	{ EAI_SOCKTYPE,   "Unsupported socket type",                   },
 	{ EAI_SYSTEM,     "A system error occurred"                    }
