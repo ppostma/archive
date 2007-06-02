@@ -116,7 +116,7 @@ mq_detach(Connection conn, MqueueList list)
 	/* Remove the timer. */
 	rv = timer_cancel("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_debug("[%s] Unable to cancel message queue timer: %s",
+		log_warnx("[%s] Unable to cancel message queue timer: %s",
 		    connection_id(conn), strerror(rv));
 	}
 }
