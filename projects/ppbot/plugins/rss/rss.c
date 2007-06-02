@@ -376,13 +376,14 @@ rss_read(struct rss_config *rcp)
 	rp = xcalloc(1, sizeof(struct rss));
 	TAILQ_INIT(&rp->items);
 
-	parse_http_data(data, rcp, &rp);
+	status = parse_http_data(data, rcp, &rp);
+	if (status == FALSE) {
+		if (rp->version == NULL) {
+			log_warnx("Unable to determine RSS version.");
+		}
+		log_warnx("Unable to parse data from feed %s.", rcp->id);
+	}
 
-	if (rp->version == NULL)
-		log_warnx("Unable to determine RSS version (feed %s).",
-		    rcp->id);
-	else
-		status = TRUE;
  out:
 	xfree(saved_data);
 	xfree(uri);
@@ -697,11 +698,14 @@ http_connect(const char *host, const char *port, const char *uri)
 	sock = host_connect(host, port);
 	if (sock == -1)
 		return (NULL);
+
 	if (send_http_request(sock, host, uri) == -1) {
 		connection_safeclose(sock);
 		return (NULL);
 	}
+
 	data = receive_data(sock);
+
 	connection_safeclose(sock);
 
 	return (data);
@@ -775,6 +779,7 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 	char		*next, *value, *str, *p = NULL;
 	char		*title = NULL, *url = NULL, *pubdate = NULL;
 	int		 start = FALSE, cdata = FALSE, item = FALSE;
+	int		 status = TRUE;
 	size_t		 len, size = BUFSIZ;
 
 	/* Temporary buffer for data. */
@@ -807,6 +812,7 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 			/* Find end of element. */
 			if ((p = strchr(data, '>')) == NULL) {
 				log_debug("end of element not found");
+				status = FALSE;
 				break;
 			}
 			*p++ = '\0';
@@ -816,10 +822,12 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 				/* Find the version string. */
 				if ((p = strcasestr(data, "version")) == NULL) {
 					log_debug("version string not found");
+					status = FALSE;
 					break;
 				}
 				if ((p = strchr(p, '=')) == NULL) {
 					log_debug("invalid version format");
+					status = FALSE;
 					break;
 				}
 				if (*++p == '"')
@@ -827,6 +835,7 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 				value = p;
 				if ((p = strchr(p, '"')) == NULL) {
 					log_debug("string terminator missing");
+					status = FALSE;
 					break;
 				}
 				*p = '\0';
@@ -893,6 +902,7 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 			/* Find the ending element. */
 			if (!cdata && (p = strchr(data, '<')) == NULL) {
 				log_debug("no element end found");
+				status = FALSE;
 				break;
 			}
 			next = p;
@@ -909,6 +919,7 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 				if (len > (BUFSIZ * BUFSIZ)) {
 					errno = ENOMEM;
 					log_warn("Unable to allocate memory");
+					status = FALSE;
 					break;
 				}
 				while (len > size)
@@ -926,7 +937,7 @@ parse_http_data(const char *buf, struct rss_config *rcp, struct rss **rssp)
 	xfree(pubdate);
 	xfree(str);
 
-	return (TRUE);
+	return (status);
 }
 
 /*
