@@ -194,6 +194,10 @@ mq_enqueue(Connection conn, struct mqueue *mq)
 {
 	struct mqueue_head *list = connection_queue(conn);
 
+	/* Is the list attached? */
+	if (list == NULL)
+		return;
+
 	/* If the queue is empty, resume the queue timer. */
 	if (SIMPLEQ_EMPTY(list))
 		mq_resume_queue(conn);
@@ -210,6 +214,10 @@ mq_dequeue(Connection conn)
 {
 	struct mqueue_head *list = connection_queue(conn);
 	struct mqueue	   *mq;
+
+	/* Is the list attached? */
+	if (list == NULL)
+		return (NULL);
 
 	mq = SIMPLEQ_FIRST(list);
 	if (mq == NULL)
