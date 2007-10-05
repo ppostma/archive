@@ -58,22 +58,22 @@
 #define MSG_USER		0x02  /* The message requires a valid user. */
 #define MSG_DATA		0x04  /* The message requires data. */
 
-/* Channel pointer. */
+/* Channel object. */
 typedef struct channel *Channel;
 
-/* Channel list pointer. */
+/* Channel list object. */
 typedef struct channel_head *ChannelList;
 
-/* Connection pointer. */
+/* Connection object. */
 typedef struct connection *Connection;
 
-/* Message pointer. */
+/* Message object. */
 typedef struct message *Message;
 
-/* Message queue list pointer. */
+/* Message queue list object. */
 typedef struct mqueue_head *MqueueList;
 
-/* Plugin pointer. */
+/* Plugin object. */
 typedef struct plugin *Plugin;
 
 /*
