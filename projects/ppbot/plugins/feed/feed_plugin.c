@@ -24,6 +24,8 @@
  * SUCH DAMAGE.
  */
 
+#include <stddef.h>
+
 #include "compat/compat.h"
 #include "feed.h"
 #include "plugin.h"
