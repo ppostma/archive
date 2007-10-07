@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2007 Peter Postma <peter@pointless.nl>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+CC=	@cc@
+LEX=	@lex@
+YACC=	@yacc@
+
+CFLAGS= @sh_cflags@ `xml2-config --cflags` -O2 -g -I../..
+LDFLAGS= @sh_ldflags@ `xml2-config --libs`
+
+PLUGIN=	feed.so
+OBJS=	feed_config_parse.o feed_config_scan.o feed_connection.o feed_http.o \
+	feed_parser.o feed_plugin.o feed_updater.o feed_url.o
+
+all: $(PLUGIN)
+
+$(PLUGIN): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $(PLUGIN)
+
+.c.o: feed.h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+feed_config_parse.c: feed_config_parse.y
+	$(YACC) -p yyfeed -d -o $@ $<
+
+feed_config_scan.c: feed_config_scan.l
+	$(LEX) -Pyyfeed -o$@ $<
+
+clean:
+	rm -f feed_config_parse.[ch] feed_config_scan.c $(OBJS) $(PLUGIN)
+
+distclean: clean
+	rm -f Makefile
