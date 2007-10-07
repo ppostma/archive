@@ -38,10 +38,6 @@ int	asprintf(char **, const char *, ...);
 int	daemon(int, int);
 #endif /* WANT_DAEMON */
 
-#ifdef WANT_STRCASESTR
-char	*strcasestr(const char *, const char *);
-#endif /* WANT_STRCASESTR */
-
 #ifdef WANT_STRLCAT
 size_t	strlcat(char *, const char *, size_t);
 #endif /* WANT_STRLCAT */
