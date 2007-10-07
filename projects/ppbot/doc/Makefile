@@ -26,14 +26,14 @@
 all: cat html
 
 cat:
+	groff -Tascii -mdoc feed.conf.5 > feed.conf.5.cat
 	groff -Tascii -mdoc ppbot.1 > ppbot.1.cat
 	groff -Tascii -mdoc ppbot.conf.5 > ppbot.conf.5.cat
-	groff -Tascii -mdoc rss.conf.5 > rss.conf.5.cat
 
 html:
+	groff -Tlatin1 -mdoc2html feed.conf.5 > feed.conf.5.html
 	groff -Tlatin1 -mdoc2html ppbot.1 > ppbot.1.html
 	groff -Tlatin1 -mdoc2html ppbot.conf.5 > ppbot.conf.5.html
-	groff -Tlatin1 -mdoc2html rss.conf.5 > rss.conf.5.html
 
 clean:
 	rm -f *.cat *.html

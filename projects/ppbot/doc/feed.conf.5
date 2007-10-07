@@ -23,16 +23,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 25, 2007
-.Dt RSS.CONF 5
+.Dd October 7, 2007
+.Dt FEED.CONF 5
 .Os
 .Sh NAME
-.Nm rss.conf
-.Nd configuration file for the ppbot RSS plugin
+.Nm feed.conf
+.Nd configuration file for the ppbot web feed reader plugin
 .Sh DESCRIPTION
 The
 .Nm
-file defines the parameters for the RSS plugin for
+file defines the parameters for the web feed reader plugin for
 .Xr ppbot 1 .
 The file consists of feed definitions and configuration parameters.
 .Pp
@@ -46,9 +46,17 @@ following by an unique identifier.
 The configuration parameters for the feed are specified between
 an opening brace and a closing brace.
 .Pp
-The supported RSS variant is Rich Site Summary (0.91 and 0.92) and
-Really Simple Syndication (RSS 2.0).
-The RDF or RSS 1.0 variant is currently not supported.
+The supported web feeds are:
+.Bl -bullet -compact -offset XxX
+.It
+Really Simple Syndication (RSS 2.0)
+.It
+RDF Site Summary (RSS 1.0 and RSS 0.90)
+.It
+Rich Site Summary (RSS 0.91)
+.It
+Atom 1.0
+.El
 .Ss Parameters
 The following parameters and arguments are recognized:
 .Bl -tag -width location
@@ -65,27 +73,27 @@ of items to show in a feed when using the command.
 If this parameter is not specified, then the default number of 5 items will
 be used.
 .It Sy name Ar feedname
-Define the name for the RSS feed.
+Define the name for the web feed.
 This name will be prefixed with the messages in the channel.
 .It Sy location Ar url
-Define the web location of the RSS feed.
+Define the web location of the web feed.
 This should be a complete and valid URL.
-Only HTTP based locations are supported.
+The location may be specified with a http, feed, or rss URI scheme.
 .Em This parameter is mandatory .
 .It Sy refresh Ar minutes
-Set the refresh interval for updating the RSS feed.
+Set the refresh interval for updating the web feed.
 If this parameter is not specified, then the default interval of 30 minutes
 will be used.
 .It Sy update Ar auto | command
-Specifies how the RSS feed should be updated.
+Specifies how the web feed should be updated.
 When this parameter is set to
 .Sq auto ,
-the RSS feed will be updated periodically, with an interval specified by the
+the web feed will be updated periodically, with an interval specified by the
 .Ar refresh
 parameter.
 When this parameter is set to
 .Sq command ,
-the RSS feed will be updated when a command in the channel is used.
+the web feed will be updated when a command in the channel is used.
 If this parameter is not specified, then the default value
 .Sq command
 will be used.
@@ -95,10 +103,11 @@ An example
 .Nm
 file:
 .Bd -literal -offset indent
-feed nu {
-    location   "http://www.nu.nl/deeplink_rss2/index.jsp?r=Algemeen"
-    name       "Nu.nl algemeen"
+feed kerneltrap {
+    location   "http://kerneltrap.org/node/feed"
+    name       "Kerneltrap"
     update     auto
+    refresh    30
     channels   pointless:#test
 }
 .Ed
