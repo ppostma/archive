@@ -36,9 +36,12 @@ libs=${libs-}
 
 logfile=${logfile-config.log}
 
+# Optional features.
+has_libxml2=0
+
 check_strlcat()
 {
-	logn "Checking for strlcat... "
+	logn "Checking for strlcat()... "
 
 	cat > testfile.c << EOF
 #include <string.h>
@@ -68,7 +71,7 @@ EOF
 
 check_strlcpy()
 {
-	logn "Checking for strlcpy... "
+	logn "Checking for strlcpy()... "
 
 	cat > testfile.c << EOF
 #include <string.h>
@@ -98,7 +101,7 @@ EOF
 
 check_daemon()
 {
-	logn "Checking for daemon... "
+	logn "Checking for daemon()... "
 
 	cat > testfile.c << EOF
 #include <stdlib.h>
@@ -128,7 +131,7 @@ EOF
 
 check_vasprintf()
 {
-	logn "Checking for vasprintf... "
+	logn "Checking for vasprintf()... "
 
 	cat > testfile.c << EOF
 #include <stdio.h>
@@ -156,39 +159,9 @@ EOF
 	fi
 }
 
-check_strcasestr()
-{
-	logn "Checking for strcasestr... "
-
-	cat > testfile.c << EOF
-#include <string.h>
-
-int main(void)
-{
-	strcasestr(NULL, NULL);
-
-	return 0;
-}
-EOF
-	${cc} -o testfile testfile.c >> $logfile 2>&1
-	_result=$?
-
-	rm -f testfile testfile.c >/dev/null 2>&1
-
-	if [ ${_result} -eq 0 ]; then
-		log "found"
-	else
-		log "not found"
-
-		add_objs "compat/strcasestr.o"
-		add_cflags "-DWANT_STRCASESTR"
-		add_sh_cflags "-DWANT_STRCASESTR"
-	fi
-}
-
 check_getaddrinfo()
 {
-	logn "Checking for getaddrinfo... "
+	logn "Checking for getaddrinfo()... "
 
 	cat > testfile.c << EOF
 #include <sys/types.h>
@@ -252,6 +225,41 @@ EOF
 		rm -f testfile testfile.c >/dev/null 2>&1
 
 		log "no"
+	fi
+}
+
+check_libxml2()
+{
+	logn "Checking for libxml2... "
+
+	_find=`find_in_path xml2-config`
+
+	if [ -z "${_find}" ]; then
+		log "not found (xml2-config not found in path)"
+	else
+		cat > testfile.c << EOF
+#include <libxml/tree.h>
+
+int main(void)
+{
+	xmlParseMemory(NULL, 0);
+
+	return 0;
+}
+EOF
+		${cc} `xml2-config --cflags` -o testfile testfile.c \
+		    `xml2-config --libs` >> $logfile 2>&1
+		_result=$?
+
+		rm -f testfile testfile.c >/dev/null 2>&1
+
+		if [ ${_result} -ne 0 ]; then
+			log "not found"
+		else
+			log "found"
+
+			has_libxml2=1
+		fi
 	fi
 }
 
@@ -507,6 +515,29 @@ create_makefile()
 		${_source} > ${_target}
 }
 
+create_program_makefiles()
+{
+	create_makefile "Makefile.in" "Makefile"
+}
+
+create_plugin_makefiles()
+{
+	create_makefile "plugins/autoop/Makefile.in" \
+	    "plugins/autoop/Makefile"
+	create_makefile "plugins/autorejoin/Makefile.in" \
+	    "plugins/autorejoin/Makefile"
+	create_makefile "plugins/dictionary/Makefile.in" \
+	    "plugins/dictionary/Makefile"
+
+	if [ ${has_libxml2} -eq 1 ]; then
+		create_makefile "plugins/feed/Makefile.in" \
+		    "plugins/feed/Makefile"
+	fi
+
+	create_makefile "plugins/google/Makefile.in" \
+	    "plugins/google/Makefile"
+}
+
 create_config_log()
 {
 	: > $logfile
@@ -555,17 +586,13 @@ check_cc
 check_cc_compile
 check_ld_export_dynamic
 check_libdl
+check_libxml2
 check_daemon
 check_getaddrinfo
-check_strcasestr
 check_strlcat
 check_strlcpy
 check_vasprintf
 
-create_makefile "Makefile.in" "Makefile"
+create_program_makefiles
 
-for plugin in autoop autorejoin dictionary google rss
-do
-	create_makefile "plugins/${plugin}/Makefile.in" \
-	    "plugins/${plugin}/Makefile"
-done
+create_plugin_makefiles
