@@ -36,9 +36,6 @@
 #include "ircbot.h"
 #include "queue.h"
 
-extern size_t line;
-extern FILE *yyfeedin;
-
 /*
  * Configuration for a feed.
  */
@@ -70,6 +67,18 @@ static struct feed_config *tmp_fcp = NULL;
  * Send events to this listener (if non-NULL).
  */
 static void (*feed_listener)(FeedConfig) = NULL;
+
+/*
+ * Local function prototypes.
+ */
+static void feed_config_event(struct feed_config *);
+static int  feed_config_verify(struct feed_config *);
+
+/*
+ * Yacc variable/function prototypes.
+ */
+extern size_t line;
+extern FILE  *yyfeedin;
 
 int yyfeedparse(void);
 int yyfeedlex(void);
