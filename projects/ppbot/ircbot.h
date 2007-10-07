@@ -33,7 +33,7 @@
  * Name, version & default configuration of the IRC bot.
  */
 #define IRCBOT_NAME		"ppbot"
-#define IRCBOT_VERSION		"20070325"
+#define IRCBOT_VERSION		"20071007"
 #define IRCBOT_CONFIG		"ppbot.conf"
 
 /*
