@@ -24,22 +24,22 @@
 # SUCH DAMAGE.
 
 all:
-	-cd autoop && $(MAKE)
-	-cd autorejoin && $(MAKE)
-	-cd dictionary && $(MAKE)
-	-cd google && $(MAKE)
-	-cd rss && $(MAKE)
+	if [ -f autoop/Makefile ]; then cd autoop && $(MAKE); fi
+	if [ -f autorejoin/Makefile ]; then cd autorejoin && $(MAKE); fi
+	if [ -f dictionary/Makefile ]; then cd dictionary && $(MAKE); fi
+	if [ -f feed/Makefile ]; then cd feed && $(MAKE) ; fi
+	if [ -f google/Makefile ]; then cd google && $(MAKE); fi
 
 clean:
-	-cd autoop && $(MAKE) clean
-	-cd autorejoin && $(MAKE) clean
-	-cd dictionary && $(MAKE) clean
-	-cd google && $(MAKE) clean
-	-cd rss && $(MAKE) clean
+	if [ -f autoop/Makefile ]; then cd autoop && $(MAKE) clean; fi
+	if [ -f autorejoin/Makefile ]; then cd autorejoin && $(MAKE) clean; fi
+	if [ -f dictionary/Makefile ]; then cd dictionary && $(MAKE) clean; fi
+	if [ -f feed/Makefile ]; then cd feed && $(MAKE) clean; fi
+	if [ -f google/Makefile ]; then cd google && $(MAKE) clean; fi
 
 distclean:
-	-cd autoop && $(MAKE) distclean
-	-cd autorejoin && $(MAKE) distclean
-	-cd dictionary && $(MAKE) distclean
-	-cd google && $(MAKE) distclean
-	-cd rss && $(MAKE) distclean
+	if [ -f autoop/Makefile ]; then cd autoop && $(MAKE) distclean; fi
+	if [ -f autorejoin/Makefile ]; then cd autorejoin && $(MAKE) distclean; fi
+	if [ -f dictionary/Makefile ]; then cd dictionary && $(MAKE) distclean; fi
+	if [ -f feed/Makefile ]; then cd feed && $(MAKE) distclean; fi
+	if [ -f google/Makefile ]; then cd google && $(MAKE) distclean; fi
