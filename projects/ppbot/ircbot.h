@@ -81,8 +81,8 @@ typedef struct plugin *Plugin;
  */
 
 /* channel.c */
-ChannelList	 channel_init(void);
-void		 channel_deinit(ChannelList);
+ChannelList	 channel_list_create(void);
+void		 channel_list_destroy(ChannelList);
 
 Channel		 channel_create(ChannelList, const char *, int);
 void		 channel_destroy(Channel);

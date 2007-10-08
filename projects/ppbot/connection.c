@@ -109,7 +109,7 @@ connection_create(const char *id)
 	conn->id = xstrdup(id);
 	conn->fd = -1;
 	conn->active = FALSE;
-	conn->channels = channel_init();
+	conn->channels = channel_list_create();
 	TAILQ_INSERT_TAIL(&connections, conn, link);
 
 	return (conn);
@@ -126,7 +126,7 @@ connection_destroy(Connection conn)
 	reconnect_timer_destroy(conn);
 
 	/* Free space for all channels. */
-	channel_deinit(conn->channels);
+	channel_list_destroy(conn->channels);
 
 	/* Free space used for the connection. */
 	xfree(conn->id);

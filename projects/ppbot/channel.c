@@ -67,11 +67,11 @@ static struct user	*user_lookup(struct channel *, const char *);
 static void		 user_destroy(struct user *);
 
 /*
- * channel_init --
- *	Initialize a list of channels.
+ * channel_list_create --
+ *	Create a list of channels.
  */
 ChannelList
-channel_init(void)
+channel_list_create(void)
 {
 	struct channel_head *list;
 
@@ -82,11 +82,11 @@ channel_init(void)
 }
 
 /*
- * channel_deinit --
- *	De-initialize a list of channels.
+ * channel_list_destroy --
+ *	Destroy a list of channels.
  */
 void
-channel_deinit(ChannelList list)
+channel_list_destroy(ChannelList list)
 {
 	struct channel *chan;
 
