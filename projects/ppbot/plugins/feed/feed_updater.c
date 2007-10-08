@@ -39,7 +39,6 @@ struct feed_updater {
 	Feed			 old;	   /* old feed */
 	Feed			 new;	   /* new feed (compare with old) */
 	FeedConfig		 fcp;      /* feed configuration */
-	time_t			 last;	   /* last update */
 	char			*modified; /* last recorded Modified header */
 	char			*etag;	   /* last recorded ETag header */
 	void			(*new_item)(FeedConfig, FeedItem);
@@ -70,7 +69,7 @@ void
 feed_updater_destroy(FeedUpdater fup)
 {
 	/* Free the old and new feeds. */
-	if (fup->old != NULL && fup->new != fup->old)
+	if (fup->old != NULL)
 		feed_destroy(fup->old);
 	if (fup->new != NULL)
 		feed_destroy(fup->new);
