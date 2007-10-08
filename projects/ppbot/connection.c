@@ -267,7 +267,7 @@ connection_read(Connection conn)
 	} while (n == -1 && errno == EINTR);
 
 	if (n == -1) {
-		log_warn("[%s] recv error", conn->id);
+		log_warn("[%s] Error reading data", conn->id);
 		return (FALSE);
 	} else if (n == 0)
 		return (FALSE);
@@ -281,7 +281,7 @@ connection_read(Connection conn)
 				 * This would be pretty bad and should never
 				 * happen on normal (correct) IRC servers.
 				 */
-				log_debug("[%s] Read buffer is full! "
+				log_debug("[%s] Read buffer is full "
 				    "(message ignored).", conn->id);
 				conn->buf[0] = '\0';
 				conn->trash = TRUE; /* trash remaining data */
@@ -328,7 +328,7 @@ connection_write(Connection conn, const char *str)
 	do {
 		rv = send(conn->fd, str + total, left, 0);
 		if (rv == -1) {
-			log_warn("[%s] send error", conn->id);
+			log_warn("[%s] Error writing data", conn->id);
 			return (FALSE);
 		}
 		total += rv;
