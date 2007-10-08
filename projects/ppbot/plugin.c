@@ -91,11 +91,11 @@ plugin_add(const char *path)
 }
 
 /*
- * plugin_init --
+ * plugins_initialize --
  *	Run the initialization routine for all plugins.
  */
 void
-plugin_init(void)
+plugins_initialize(void)
 {
 	struct plugin	*plug;
 	void		(*func)(Plugin);
@@ -108,11 +108,11 @@ plugin_init(void)
 }
 
 /*
- * plugin_deinit --
- *	Run the de-initialization routine for all plugins.
+ * plugins_finalize --
+ *	Run the close routine for all plugins.
  */
 void
-plugin_deinit(void)
+plugins_finalize(void)
 {
 	struct plugin	*plug;
 	void		(*func)(Plugin);
@@ -125,11 +125,11 @@ plugin_deinit(void)
 }
 
 /*
- * plugin_destroy --
+ * plugins_destroy --
  *	Remove all plugins from the plugin list.
  */
 void
-plugin_destroy(void)
+plugins_destroy(void)
 {
 	struct plugin	*plug;
 	struct callback	*cb;
@@ -153,11 +153,11 @@ plugin_destroy(void)
 }
 
 /*
- * plugin_execute --
+ * plugins_execute --
  *	Execute the callbacks for each plugin.
  */
 void
-plugin_execute(Connection conn, Message msg)
+plugins_execute(Connection conn, Message msg)
 {
 	struct plugin	*plug;
 	struct callback *cb;

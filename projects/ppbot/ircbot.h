@@ -224,10 +224,11 @@ void		 send_raw(Connection, const char *, ...);
 
 /* plugin.c */
 int		 plugin_add(const char *);
-void		 plugin_init(void);
-void		 plugin_deinit(void);
-void		 plugin_destroy(void);
-void		 plugin_execute(Connection, Message);
+
+void		 plugins_initialize(void);
+void		 plugins_finalize(void);
+void		 plugins_destroy(void);
+void		 plugins_execute(Connection, Message);
 
 int		 callback_register(Plugin, const char *, int, size_t,
 			void (*)(Connection, Message));

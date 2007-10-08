@@ -215,7 +215,7 @@ message_parse(Connection conn, char *buf)
 		}
 
 		/* Handle the plugins. */
-		plugin_execute(conn, &msg);
+		plugins_execute(conn, &msg);
 	}
 
 	/* Free memory used for the message. */

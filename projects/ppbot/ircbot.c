@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 	connections_verify();
 
 	logfile_open();
-	plugin_init();
+	plugins_initialize();
 
 	connections_init();
 
@@ -113,8 +113,8 @@ main(int argc, char *argv[])
 	connections_destroy();
 
 	timer_destroy_all();
-	plugin_deinit();
-	plugin_destroy();
+	plugins_finalize();
+	plugins_destroy();
 	logfile_close();
 
 	return (EXIT_SUCCESS);
@@ -158,8 +158,8 @@ signal_handler(int sig)
 static void
 reconfigure(const char *cfg)
 {
-	plugin_deinit();
-	plugin_destroy();
+	plugins_finalize();
+	plugins_destroy();
 	logfile_close();
 
 	connections_destroy_dead();
@@ -169,7 +169,7 @@ reconfigure(const char *cfg)
 	connections_verify();
 
 	logfile_open();
-	plugin_init();
+	plugins_initialize();
 
 	connections_reinit();
 	connections_join_channels();
