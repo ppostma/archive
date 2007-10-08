@@ -76,16 +76,16 @@ mq_attach(Connection conn)
 	rv = timer_schedule(tv, (void *)mq_handler, conn, TIMER_POLL,
 	    "mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("Unable to schedule message queue timer: %s",
-		    strerror(rv));
+		log_warnx("[%s] Unable to schedule message queue timer: %s",
+		    connection_id(conn), strerror(rv));
 		return (NULL);
 	}
 
 	/* Suspend the timer immediately. */
 	rv = timer_suspend("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("Unable to suspend message queue timer: %s",
-		    strerror(rv));
+		log_warnx("[%s] Unable to suspend message queue timer: %s",
+		    connection_id(conn), strerror(rv));
 		return (NULL);
 	}
 
@@ -164,8 +164,8 @@ mq_suspend_queue(Connection conn)
 
 	rv = timer_suspend("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("Unable to suspend message queue timer: %s",
-		    strerror(rv));
+		log_warnx("[%s] Unable to suspend message queue timer: %s",
+		    connection_id(conn), strerror(rv));
 	}
 }
 
@@ -180,8 +180,8 @@ mq_resume_queue(Connection conn)
 
 	rv = timer_resume("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("Unable to resume message queue timer: %s",
-		    strerror(rv));
+		log_warnx("[%s] Unable to resume message queue timer: %s",
+		    connection_id(conn), strerror(rv));
 	}
 }
 
