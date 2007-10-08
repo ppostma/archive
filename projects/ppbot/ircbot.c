@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 	logfile_open();
 	plugins_initialize();
 
-	connections_init();
+	connections_initialize();
 
 	if (!debug) {
 		if (daemon(1, 0) == -1) {
@@ -171,7 +171,7 @@ reconfigure(const char *cfg)
 	logfile_open();
 	plugins_initialize();
 
-	connections_reinit();
+	connections_reinitialize();
 	connections_join_channels();
 }
 

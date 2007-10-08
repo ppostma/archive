@@ -172,8 +172,8 @@ void		 connection_join_timer_destroy(Connection);
 
 void		 connections_verify(void);
 struct pollfd	*connections_pollfds(unsigned int *);
-void		 connections_init(void);
-void		 connections_reinit(void);
+void		 connections_initialize(void);
+void		 connections_reinitialize(void);
 void		 connections_join_channels(void);
 void		 connections_close(void);
 void		 connections_destroy(void);

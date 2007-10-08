@@ -763,11 +763,11 @@ connections_pollfds(unsigned int *nfd)
 }
 
 /*
- * connections_init --
+ * connections_initialize --
  *	Initialize all connections and install the ping timer.
  */
 void
-connections_init(void)
+connections_initialize(void)
 {
 	struct connection *conn;
 
@@ -785,11 +785,11 @@ connections_init(void)
 }
 
 /*
- * connections_reinit --
+ * connections_reinitialize --
  *	Initialize all non-active connections.
  */
 void
-connections_reinit(void)
+connections_reinitialize(void)
 {
 	struct connection *conn;
 
