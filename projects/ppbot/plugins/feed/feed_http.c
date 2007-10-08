@@ -78,7 +78,7 @@ http_receive(const char *origurl, const char *modified, const char *etag)
 {
 	struct http_result	*result;
 	char			*rawurl = xstrdup(origurl);
-	char			*data = NULL;
+	char			*data;
 	Url			 url;
 
  retry:
