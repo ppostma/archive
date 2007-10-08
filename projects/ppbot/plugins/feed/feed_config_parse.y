@@ -383,11 +383,11 @@ feed_destination_channel(FeedDestination fdp)
 }
 
 /*
- * feed_yacc_cleanup --
- *	Free memory allocated by the yacc generated file.
+ * feed_config_parse_cleanup --
+ *      Clean up used resources from yacc.
  */
 void
-feed_yacc_cleanup(void)
+feed_config_parse_cleanup(void)
 {
 #ifndef HAVE_BISON
 	if (yyss != NULL)

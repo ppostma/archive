@@ -155,11 +155,12 @@ plugin_close(Plugin p)
 	}
 
 	/*
-	 * Free memory allocated by the yacc/lex generated files.
+	 * Free memory allocated by yacc/lex/libxml2.
 	 * This is needed because we unload the shared object and then load
 	 * it again.  Allocated memory isn't freed upon unload and will not
 	 * be used ever again so if we don't free it, it will leak.
 	 */
-	feed_lex_cleanup();
-	feed_yacc_cleanup();
+	feed_config_scan_cleanup();
+	feed_config_parse_cleanup();
+	feed_parser_cleanup();
 }

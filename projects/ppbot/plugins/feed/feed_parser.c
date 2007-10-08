@@ -473,3 +473,13 @@ feed_item_compare(FeedItem ip, FeedItem ip2)
 
 	return (FALSE);
 }
+
+/*
+ * feed_parser_cleanup --
+ *	Clean up used resources.
+ */
+void
+feed_parser_cleanup(void)
+{
+	xmlCleanupParser();
+}

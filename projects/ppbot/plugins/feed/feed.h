@@ -70,7 +70,7 @@ typedef struct url *Url;
  */
 
 /* feed_config_scan.l */
-void		 feed_lex_cleanup(void);
+void		 feed_config_scan_cleanup(void);
 
 /* feed_config_parse.y */
 void		 feed_config_set_listener(void (*)(FeedConfig));
@@ -91,7 +91,7 @@ FeedDestination	 feed_destination_next(FeedDestination);
 const char	*feed_destination_id(FeedDestination);
 const char	*feed_destination_channel(FeedDestination);
 
-void		 feed_yacc_cleanup(void);
+void		 feed_config_parse_cleanup(void);
 
 /* feed_connection.c */
 int		 feed_connection_create(const char *, const char *);
@@ -127,6 +127,8 @@ const char	*feed_item_title(FeedItem);
 const char	*feed_item_link(FeedItem);
 
 int		 feed_item_compare(FeedItem, FeedItem);
+
+void		 feed_parser_cleanup(void);
 
 /* feed_updater.c */
 FeedUpdater	 feed_updater_create(FeedConfig);

@@ -79,8 +79,12 @@ count			{ return (TOKEN_COUNT); }
 .			{ yyfeederror("invalid character"); }
 %%
 
+/*
+ * feed_config_scan_cleanup --
+ *	Clean up used resources.
+ */
 void
-feed_lex_cleanup(void)
+feed_config_scan_cleanup(void)
 {
 	yy_delete_buffer(YY_CURRENT_BUFFER);
 }
