@@ -137,7 +137,8 @@ void		 feed_updater_destroy(FeedUpdater);
 void		 feed_updater_set_new_item(FeedUpdater,
 			void (*)(FeedConfig, FeedItem));
 
-int		 feed_update(FeedUpdater);
+void		 feed_update(FeedUpdater);
+Feed		 feed_fetch(FeedUpdater);
 
 /* feed_url.c */
 Url		 url_parse(const char *, const char *);

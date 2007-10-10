@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "feed.h"
@@ -39,6 +40,7 @@ struct feed_updater {
 	Feed			 old;	   /* old feed */
 	Feed			 new;	   /* new feed (compare with old) */
 	FeedConfig		 fcp;      /* feed configuration */
+	time_t			 last;     /* timestamp of last update */
 	char			*modified; /* last recorded Modified header */
 	char			*etag;	   /* last recorded ETag header */
 	void			(*new_item)(FeedConfig, FeedItem);
@@ -55,6 +57,7 @@ feed_updater_create(FeedConfig fcp)
 
 	fup = xcalloc(1, sizeof(struct feed_updater));
 	fup->fcp = fcp;
+	fup->last = time(NULL) - (feed_config_refresh(fcp) * 60) - 60;
 	fup->modified = NULL;
 	fup->etag = NULL;
 
@@ -177,13 +180,13 @@ feed_check_new(FeedUpdater fup)
  * feed_update --
  *	Update a feed and send new items events.
  */
-int
+void
 feed_update(FeedUpdater fup)
 {
 	log_debug("Updating feed %s", feed_config_id(fup->fcp));
 
 	if (feed_read(fup) == FALSE)
-		return (FALSE);
+		return;
 
 	if (fup->new != NULL && fup->old != NULL)
 		feed_check_new(fup);
@@ -194,6 +197,37 @@ feed_update(FeedUpdater fup)
 		fup->old = fup->new;
 		fup->new = NULL;
 	}
+}
 
-	return (TRUE);
+/*
+ * feed_fetch --
+ *	Update the feed and return it.
+ */
+Feed
+feed_fetch(FeedUpdater fup)
+{
+	FeedConfig	fcp = fup->fcp;
+	time_t		elapsed;
+
+	if (feed_config_update(fcp) == FALSE) {
+		elapsed = time(NULL) - fup->last;
+
+		if ((elapsed / 60) >= feed_config_refresh(fcp)) {
+			if (feed_read(fup) == FALSE)
+				return (fup->old);
+
+			if (fup->new != NULL) {
+				if (fup->old != NULL)
+					feed_destroy(fup->old);
+				fup->old = fup->new;
+				fup->new = NULL;
+			}
+			fup->last = time(NULL);
+		} else {
+			log_debug("No update needed for feed %s",
+			    feed_config_id(fcp));
+		}
+	}
+
+	return (fup->old);
 }
