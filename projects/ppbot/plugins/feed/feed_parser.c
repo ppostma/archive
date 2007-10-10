@@ -57,7 +57,7 @@ static int		 feed_parse_rss(Feed, xmlDocPtr, xmlNodePtr);
 static struct feed_item	*feed_parse_rss_item(xmlDocPtr, xmlNodePtr);
 
 /*
- * RDF Site Summary (RSS 0.90 and RSS 1.0)
+ * RDF Site Summary (RSS 0.90 and RSS 1.0).
  */
 static int		 feed_parse_rdf(Feed, xmlDocPtr, xmlNodePtr);
 static struct feed_item	*feed_parse_rdf_item(xmlDocPtr, xmlNodePtr);
@@ -107,7 +107,7 @@ feed_parse(Feed fp, const char *buffer)
 
 	} else if (xmlStrcasecmp(root->name, "rdf") == 0) {
 		/*
-		 * RDF Site Summary (RSS 0.90 and RSS 1.0)
+		 * RDF Site Summary (RSS 0.90 and RSS 1.0).
 		 */
 		rv = feed_parse_rdf(fp, ptr, root);
 
@@ -316,11 +316,17 @@ feed_parse_atom_item(xmlDocPtr ptr, xmlNodePtr node)
 			}
 			title = xmlNodeListGetString(ptr, item->children, 1);
 		} else if (xmlStrcasecmp(item->name, "link") == 0) {
-			if (link != NULL) {
-				xmlFree(link);
-				link = NULL;
+			xmlChar *rel = xmlGetProp(item, "rel");
+			if (rel == NULL ||
+			    xmlStrcasecmp(rel, "alternate") == 0) {
+				if (link != NULL) {
+					xmlFree(link);
+					link = NULL;
+				}
+				link = xmlGetProp(item, "href");
 			}
-			link = xmlNodeListGetString(ptr, item->children, 1);
+			if (rel != NULL)
+				xmlFree(rel);
 		} else if (xmlStrcasecmp(item->name, "id") == 0) {
 			if (id != NULL) {
 				xmlFree(id);
