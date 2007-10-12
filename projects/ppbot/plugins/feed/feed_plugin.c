@@ -123,9 +123,8 @@ feed_command(Connection conn, Message msg, const char *args)
 
 		count = 0;
 		TAILQ_FOREACH(fhp, &feeds, link) {
-			if (count++ > 0) {
+			if (count++ > 0)
 				strlcat(buf, ", ", sizeof(buf));
-			}
 			strlcat(buf, feed_config_id(fhp->fcp), sizeof(buf));
 		}
 
@@ -154,7 +153,8 @@ feed_command(Connection conn, Message msg, const char *args)
 			}
 		}
 
-		send_privmsg(conn, channel, buf);
+		if (count > 0)
+			send_privmsg(conn, channel, buf);
 	} else {
 		/* Search for the requested feed ID. */
 		TAILQ_FOREACH(fhp, &feeds, link) {
