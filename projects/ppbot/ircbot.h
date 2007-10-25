@@ -213,6 +213,8 @@ size_t		 message_parameter_count(Message);
 MqueueList	 mq_attach(Connection);
 void		 mq_detach(Connection, MqueueList);
 
+void		 send_ctcp(Connection, const char *, const char *,
+			const char *, ...);
 void		 send_ctcpreply(Connection, const char *, const char *,
 			const char *, ...);
 void		 send_join(Connection, const char *, const char *);

@@ -252,6 +252,28 @@ mq_handler(Connection conn)
 }
 
 /*
+ * send_ctcp --
+ *	Send a CTCP message to an IRC server.
+ */
+void
+send_ctcp(Connection conn, const char *dest, const char *cmd,
+    const char *fmt, ...)
+{
+	struct mqueue	*mq;
+	va_list		 ap;
+	char		*str;
+
+	va_start(ap, fmt);
+	str = xvsprintf(fmt, ap);
+	va_end(ap);
+
+	mq = mq_create("PRIVMSG %s :\001%s %s\001\r\n", dest, cmd, str);
+	mq_enqueue(conn, mq);
+
+	xfree(str);
+}
+
+/*
  * send_ctcpreply --
  *	Send a CTCP reply to an IRC server (skips the queue).
  */
