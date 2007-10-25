@@ -42,9 +42,10 @@ static ChannelList chanlist;
 /*
  * Yacc/Lex function prototypes.
  */
-int yyparse(void);
-int yylex(void);
-int yyerror(const char *);
+void yyrestart(FILE *);
+int  yyparse(void);
+int  yylex(void);
+int  yyerror(const char *);
 %}
 
 %token <string> STRING
@@ -190,7 +191,9 @@ config_parse(const char *file)
 		return (FALSE);
 	}
 
-	config_scan_initialize(fp);
+	config_scan_reset();
+
+	yyrestart(fp);
 
 	error = yyparse();
 

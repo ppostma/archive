@@ -95,13 +95,12 @@ true|yes		{ /* boolean */
 %%
 
 /*
- * config_scan_initialize --
- *	Initialize the scanner: set the input file and reset the line counter.
+ * config_scan_reset --
+ *	Reset the line counter.
  */
 void
-config_scan_initialize(FILE *fp)
+config_scan_reset(void)
 {
-	yyin = fp;
 	line = 1;
 }
 

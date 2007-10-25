@@ -28,13 +28,12 @@
 #define _IRCBOT_H_
 
 #include <stdarg.h>	/* for va_list type */
-#include <stdio.h>	/* for FILE type */
 
 /*
  * Name, version & default configuration of the IRC bot.
  */
 #define IRCBOT_NAME		"ppbot"
-#define IRCBOT_VERSION		"20071007"
+#define IRCBOT_VERSION		"20071025"
 #define IRCBOT_CONFIG		"ppbot.conf"
 
 /*
@@ -127,7 +126,7 @@ void		 channel_log_internal_privmsg(ChannelList, const char *,
 			const char *, const char *);
 
 /* config_scan.l */
-void		 config_scan_initialize(FILE *);
+void		 config_scan_reset(void);
 
 /* config_parse.y */
 int		 config_parse(const char *);
