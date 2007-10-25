@@ -45,7 +45,7 @@ static int	 log_ndebug = FALSE;
 
 /*
  * set_logdebug --
- *	Turn on/off log_debug() functions.
+ *	Enable/disable debugging messages (via log_debug()).
  */
 void
 set_logdebug(int ndebug)
