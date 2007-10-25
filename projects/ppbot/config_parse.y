@@ -32,13 +32,16 @@
 
 #include "ircbot.h"
 
-extern size_t line;
-extern FILE *yyin;
-
+/*
+ * Temporary storage during parsing.
+ */
 static Connection conn;
 static Channel chan;
 static ChannelList chanlist;
 
+/*
+ * Yacc/Lex function prototypes.
+ */
 int yyparse(void);
 int yylex(void);
 int yyerror(const char *);
@@ -186,8 +189,8 @@ config_parse(const char *file)
 		log_warn("Unable to open '%s' for reading", file);
 		return (FALSE);
 	}
-	yyin = fp;
-	line = 1;
+
+	config_scan_initialize(fp);
 
 	error = yyparse();
 

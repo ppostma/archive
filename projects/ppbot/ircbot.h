@@ -28,6 +28,7 @@
 #define _IRCBOT_H_
 
 #include <stdarg.h>	/* for va_list type */
+#include <stdio.h>	/* for FILE type */
 
 /*
  * Name, version & default configuration of the IRC bot.
@@ -124,6 +125,9 @@ void		 channel_log_internal_notice(ChannelList, const char *,
 			const char *, const char *);
 void		 channel_log_internal_privmsg(ChannelList, const char *,
 			const char *, const char *);
+
+/* config_scan.l */
+void		 config_scan_initialize(FILE *);
 
 /* config_parse.y */
 int		 config_parse(const char *);

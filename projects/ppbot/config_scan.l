@@ -34,10 +34,16 @@
 
 #define YY_NO_UNPUT
 
-size_t line;
+/*
+ * Line counter.
+ */
+static size_t line;
 
-int  yyerror(const char *);
-int  yylex(void);
+/*
+ * Lex function prototypes.
+ */
+int yyerror(const char *);
+int yylex(void);
 %}
 
 %%
@@ -88,16 +94,35 @@ true|yes		{ /* boolean */
 .			{ yyerror("invalid character"); }
 %%
 
-int
-yywrap(void)
+/*
+ * config_scan_initialize --
+ *	Initialize the scanner: set the input file and reset the line counter.
+ */
+void
+config_scan_initialize(FILE *fp)
 {
-	return (1);
+	yyin = fp;
+	line = 1;
 }
 
+/*
+ * yyerror --
+ *	Lex error routine.
+ */
 int
 yyerror(const char *str)
 {
 	log_warnx("%s at \"%s\", line %lu", str, yytext, (unsigned long)line);
 
 	return (0);
+}
+
+/*
+ * yywrap --
+ *	Required by the Lex interface.
+ */
+int
+yywrap(void)
+{
+	return (1);
 }
