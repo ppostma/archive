@@ -158,21 +158,27 @@ signal_handler(int sig)
 static void
 reconfigure(const char *cfg)
 {
+	int rv;
+
 	plugins_finalize();
 	plugins_destroy();
 
 	connections_destroy_dead();
 
-	config_parse(cfg);
+	logfile_set(NULL);
 
-	logfile_open();
+	rv = config_parse(cfg);
 
-	connections_verify();
+	if (rv == TRUE) {
+		logfile_open();
 
-	plugins_initialize();
+		connections_verify();
 
-	connections_reinitialize();
-	connections_join_channels();
+		plugins_initialize();
+
+		connections_reinitialize();
+		connections_join_channels();
+	}
 }
 
 /*
