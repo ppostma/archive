@@ -70,21 +70,20 @@ set_logstderr(int nlog)
 void
 logfile_set(const char *file)
 {
-	if (log_file != NULL) {
-		logfile_close();
-	}
 	xstrdup2(&log_file, file);
 }
 
 /*
  * logfile_open --
- *	Open the main log file if it's set and not already open.
+ *	Open the main log file if it's set.  Close it first when already open.
  */
 void
 logfile_open(void)
 {
-	if (log_file == NULL || log_fp != NULL)
+	if (log_file == NULL)
 		return;
+
+	logfile_close();
 
 	log_fp = fopen(log_file, "a");
 	if (log_fp == NULL)
@@ -93,7 +92,7 @@ logfile_open(void)
 
 /*
  * logfile_close --
- *	Close the main log file if it's open.
+ *	Close the main log file when opened.
  */
 void
 logfile_close(void)

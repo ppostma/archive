@@ -160,15 +160,15 @@ reconfigure(const char *cfg)
 {
 	plugins_finalize();
 	plugins_destroy();
-	logfile_close();
 
 	connections_destroy_dead();
 
 	config_parse(cfg);
 
+	logfile_open();
+
 	connections_verify();
 
-	logfile_open();
 	plugins_initialize();
 
 	connections_reinitialize();
