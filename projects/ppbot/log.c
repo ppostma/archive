@@ -80,14 +80,13 @@ logfile_set(const char *file)
 void
 logfile_open(void)
 {
-	if (log_file == NULL)
-		return;
-
 	logfile_close();
 
-	log_fp = fopen(log_file, "a");
-	if (log_fp == NULL)
-		log_warn("Unable to open the main log file");
+	if (log_file != NULL) {
+		log_fp = fopen(log_file, "a");
+		if (log_fp == NULL)
+			log_warn("Unable to open the main log file");
+	}
 }
 
 /*
