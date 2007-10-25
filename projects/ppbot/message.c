@@ -546,17 +546,17 @@ event_command_privmsg(Connection conn, Message msg)
 {
 	ChannelList	 list = connection_channels(conn);
 	Channel		 chan;
-	char		*buf = msg->data;
-	char		*str, *tmp, *p;
+	char		*data = msg->data;
+	char		*buf, *p;
 	time_t		 t;
-	int		 isaction = FALSE;
-	int		 isctcp = FALSE;
+	int		 is_action = FALSE;
+	int		 is_ctcp = FALSE;
 
 	/* Check what sort message this is (PRIVMSG or CTCP). */
-	if (*buf == '\001') {
-		isctcp = TRUE;
-		if (strncmp(++buf, "ACTION", 6) == 0) {
-			isaction = TRUE;
+	if (*data == '\001') {
+		is_ctcp = TRUE;
+		if (strncmp(++data, "ACTION", 6) == 0) {
+			is_action = TRUE;
 		}
 	}
 
@@ -572,36 +572,36 @@ event_command_privmsg(Connection conn, Message msg)
 		}
 
 		/* Log normal messages and actions. */
-		if (!isctcp || isaction) {
+		if (!is_ctcp || is_action) {
 			channel_log_privmsg(msg, chan);
 		}
 	}
 
 	/* Handle CTCP actions if this is a CTCP message. */
-	if (isctcp) {
-		if (strncmp(buf, "CLIENTINFO", 10) == 0) {
+	if (is_ctcp) {
+		if (strncmp(data, "CLIENTINFO", 10) == 0) {
 			/* Client info request. */
 			send_ctcpreply(conn, msg->sender, "CLIENTINFO",
 			    "CLIENTINFO PING TIME VERSION");
-		} else if (strncmp(buf, "PING", 4) == 0) {
+		} else if (strncmp(data, "PING", 4) == 0) {
 			/* Ping request. */
-			buf += 4;
-			while (*buf != '\0' && isspace((unsigned char)*buf))
-				buf++;
-			if (*buf == '\0' || *buf == '\001')
+			data += 4;
+			while (*data != '\0' && isspace((unsigned char)*data))
+				data++;
+			if (*data == '\0' || *data == '\001')
 				return;
-			tmp = xstrdup(buf);
-			if ((p = strrchr(tmp, '\001')) != NULL)
+			buf = xstrdup(data);
+			if ((p = strrchr(buf, '\001')) != NULL)
 				*p = '\0';
-			send_ctcpreply(conn, msg->sender, "PING", "%s", tmp);
-			xfree(tmp);
-		} else if (strncmp(buf, "TIME", 4) == 0) {
+			send_ctcpreply(conn, msg->sender, "PING", "%s", buf);
+			xfree(buf);
+		} else if (strncmp(data, "TIME", 4) == 0) {
 			/* Time request. */
 			t = time(NULL);
-			str = ctime(&t);
-			str[strlen(str) - 1] = '\0';
-			send_ctcpreply(conn, msg->sender, "TIME", "%s", str);
-		} else if (strncmp(buf, "VERSION", 7) == 0) {
+			buf = ctime(&t);
+			buf[strlen(buf) - 1] = '\0';
+			send_ctcpreply(conn, msg->sender, "TIME", "%s", buf);
+		} else if (strncmp(data, "VERSION", 7) == 0) {
 			/* Version request. */
 			send_ctcpreply(conn, msg->sender, "VERSION",
 			    "%s v%s", IRCBOT_NAME, IRCBOT_VERSION);
