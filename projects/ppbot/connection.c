@@ -410,6 +410,7 @@ connection_close(Connection conn, int reconnect)
 	connection_safeclose(conn->fd);
 
 	conn->fd = -1;
+	conn->queue = NULL;
 	conn->active = FALSE;
 	conn->trash = FALSE;
 	conn->ping_wait = 0;
