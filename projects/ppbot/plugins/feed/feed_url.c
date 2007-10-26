@@ -58,9 +58,7 @@ static const struct {
 } schemes[] = {
 	{ "feed",	"80",	URL_GENERIC },
 	{ "feed:http",	"80",	URL_GENERIC },
-	{ "feed:https",	"443",	URL_GENERIC },
 	{ "http",	"80",	URL_GENERIC },
-	{ "https",	"443",	URL_GENERIC },
 	{ "rss",	"80",	URL_GENERIC }
 };
 
