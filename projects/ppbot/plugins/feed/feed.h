@@ -71,6 +71,7 @@ typedef struct url *Url;
 
 /* feed_config_scan.l */
 void		 feed_config_scan_cleanup(void);
+void		 feed_config_scan_reset(void);
 
 /* feed_config_parse.y */
 void		 feed_config_set_listener(void (*)(FeedConfig));

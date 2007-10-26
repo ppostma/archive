@@ -75,14 +75,12 @@ static void feed_config_event(struct feed_config *);
 static int  feed_config_verify(struct feed_config *);
 
 /*
- * Yacc variable/function prototypes.
+ * Yacc/Lex function prototypes.
  */
-extern size_t line;
-extern FILE  *yyfeedin;
-
-int yyfeedparse(void);
-int yyfeedlex(void);
-int yyfeederror(const char *);
+void yyfeedrestart(FILE *);
+int  yyfeedparse(void);
+int  yyfeedlex(void);
+int  yyfeederror(const char *);
 %}
 
 %token <string> STRING
@@ -196,8 +194,9 @@ feed_config_parse(const char *file)
 		return (FALSE);
 	}
 
-	yyfeedin = fp;
-	line = 1;
+	feed_config_scan_reset();
+
+	yyfeedrestart(fp);
 
 	error = yyfeedparse();
 

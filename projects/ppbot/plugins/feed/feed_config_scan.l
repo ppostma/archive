@@ -35,10 +35,16 @@
 
 #define YY_NO_UNPUT
 
-size_t line;
+/*
+ * Line counter.
+ */
+static size_t line;
 
-int  yyfeederror(const char *);
-int  yyfeedlex(void);
+/*
+ * Lex function prototypes.
+ */
+int yyfeederror(const char *);
+int yyfeedlex(void);
 %}
 
 %%
@@ -89,12 +95,20 @@ feed_config_scan_cleanup(void)
 	yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 
-int
-yyfeedwrap(void)
+/*
+ * feed_config_scan_reset --
+ *	Reset the line counter.
+ */
+void
+feed_config_scan_reset(void)
 {
-	return (1);
+	line = 1;
 }
 
+/*
+ * yyfeederror --
+ *	Lex error routine.
+ */
 int
 yyfeederror(const char *str)
 {
@@ -102,4 +116,14 @@ yyfeederror(const char *str)
 	    (unsigned long)line);
 
 	return (0);
+}
+
+/*
+ * yyfeedwrap --
+ *	Required by the Lex interface.
+ */
+int
+yyfeedwrap(void)
+{
+	return (1);
 }
