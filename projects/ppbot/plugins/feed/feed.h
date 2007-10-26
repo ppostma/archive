@@ -33,7 +33,7 @@
  * Name & version of the plugin.
  */
 #define PLUGIN_NAME	"ppbot web feed reader"
-#define PLUGIN_VERSION	"20071007"
+#define PLUGIN_VERSION	"20071026"
 
 /* URL flags. */
 #define URL_SCHEME	0x01
