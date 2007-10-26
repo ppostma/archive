@@ -200,7 +200,7 @@ ircbot_print_daemon(pid_t child)
 	date = ctime(&t);
 	date[strlen(date) - 1] = '\0';
 
-	log_warnx("%s version %s daemonized at %s, pid %u",
+	log_warnx("%s version %s running in background at %s, pid %u",
 	    IRCBOT_NAME, IRCBOT_VERSION, date, (unsigned int)child);
 }
 
