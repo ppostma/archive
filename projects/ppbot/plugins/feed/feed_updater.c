@@ -31,7 +31,6 @@
 
 #include "feed.h"
 #include "ircbot.h"
-#include "queue.h"
 
 /*
  * Feed updater object.
