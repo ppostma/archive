@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 
 #include <dlfcn.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -66,7 +67,10 @@ plugin_add(const char *path)
 	void		*handle;
 
 	if (stat(path, &sb) == -1) {
-		log_warn("Unable to stat '%s'", path);
+		if (errno == ENOENT)
+			log_warnx("The file '%s' does not exist.", path);
+		else
+			log_warn("Unable to get file status for '%s'", path);
 		return (FALSE);
 	}
 	if (!S_ISREG(sb.st_mode)) {
@@ -92,7 +96,7 @@ plugin_add(const char *path)
 
 /*
  * plugins_initialize --
- *	Run the initialization routine for all plugins.
+ *	Run the 'open' routine for all plugins.
  */
 void
 plugins_initialize(void)
@@ -109,7 +113,7 @@ plugins_initialize(void)
 
 /*
  * plugins_finalize --
- *	Run the close routine for all plugins.
+ *	Run the 'close' routine for all plugins.
  */
 void
 plugins_finalize(void)
