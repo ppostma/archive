@@ -99,36 +99,6 @@ EOF
 	fi
 }
 
-check_daemon()
-{
-	logn "Checking for daemon()... "
-
-	cat > testfile.c << EOF
-#include <stdlib.h>
-
-int main(void)
-{
-	daemon(0, 0);
-
-	return 0;
-}
-EOF
-	${cc} -o testfile testfile.c >> $logfile 2>&1
-	_result=$?
-
-	rm -f testfile testfile.c >/dev/null 2>&1
-
-	if [ ${_result} -eq 0 ]; then
-		log "found"
-	else
-		log "not found"
-
-		add_objs "compat/daemon.o"
-		add_cflags "-DWANT_DAEMON"
-		add_sh_cflags "-DWANT_DAEMON"
-	fi
-}
-
 check_vasprintf()
 {
 	logn "Checking for vasprintf()... "
@@ -587,7 +557,6 @@ check_cc_compile
 check_ld_export_dynamic
 check_libdl
 check_libxml2
-check_daemon
 check_getaddrinfo
 check_strlcat
 check_strlcpy

@@ -34,10 +34,6 @@
 int	asprintf(char **, const char *, ...);
 #endif /* WANT_ASPRINTF */
 
-#ifdef WANT_DAEMON
-int	daemon(int, int);
-#endif /* WANT_DAEMON */
-
 #ifdef WANT_STRLCAT
 size_t	strlcat(char *, const char *, size_t);
 #endif /* WANT_STRLCAT */
