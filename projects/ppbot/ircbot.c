@@ -75,10 +75,6 @@ main(int argc, char *argv[])
 	else
 		progname = argv[0];
 
-	/* Enable logging to stderr if started from a terminal. */
-	if (isatty(STDERR_FILENO))
-		set_logstderr(TRUE);
-
 	/* Parse command line arguments. */
 	while ((ch = getopt(argc, argv, "df:")) != -1) {
 		switch (ch) {
@@ -98,6 +94,7 @@ main(int argc, char *argv[])
 	signal(SIGTERM, ircbot_signal_handler);
 
 	set_logdebug(debug);
+	set_logstderr(TRUE);
 
 	ircbot_print_welcome();
 
