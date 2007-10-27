@@ -234,6 +234,7 @@ callback_deregister(Plugin plug, const char *cmd, int flags, size_t argc,
 
 	cb = callback_lookup(plug, cmd, flags, argc, fn);
 	if (cb != NULL) {
+		LIST_REMOVE(cb, link);
 		xfree(cb->cmd);
 		xfree(cb);
 		return (TRUE);
