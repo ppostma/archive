@@ -144,7 +144,7 @@ feed_command(Connection conn, Message msg, const char *args)
 				if (strcmp(id,
 				    feed_destination_id(fdp)) != 0)
 					continue;
-				if (strcmp(channel,
+				if (strcasecmp(channel,
 				    feed_destination_channel(fdp)) != 0)
 					continue;
 				if (count++ > 0)
