@@ -187,7 +187,7 @@ config_parse(const char *file)
 
 	fp = fopen(file, "r");
 	if (fp == NULL) {
-		log_warn("Unable to open '%s' for reading", file);
+		log_msg(LOG_WARNING, "Unable to open '%s' for reading", file);
 		return (FALSE);
 	}
 
@@ -200,7 +200,8 @@ config_parse(const char *file)
 	fclose(fp);
 
 	if (error) {
-		log_warnx("Failed to parse configuration file '%s'.", file);
+		log_msg(LOG_INFO, "Failed to parse configuration file '%s'.",
+		    file);
 		return (FALSE);
 	}
 
@@ -221,11 +222,11 @@ config_verify(Connection c)
 	int rv = TRUE;
 
 	if (connection_address(c) == NULL) {
-		log_warnx("[%s] No address defined.", connection_id(c));
+		log_conn(LOG_INFO, c, "No address defined.");
 		rv = FALSE;
 	}
 	if (connection_nick(c) == NULL) {
-		log_warnx("[%s] No nickname defined.", connection_id(c));
+		log_conn(LOG_INFO, c, "No nickname defined.");
 		rv = FALSE;
 	}
 	if (rv != FALSE) {

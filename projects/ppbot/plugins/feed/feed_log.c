@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007 Peter Postma <peter@pointless.nl>
+ * Copyright (c) 2007 Peter Postma <peter@pointless.nl>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,65 +24,61 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Auto rejoin on kick plugin for ppbot.
- */
+#include <stdio.h>
 
-#include <string.h>
+#include "feed.h"
+#include "ircbot.h"
 
-#include "plugin.h"
-
-/*
- * Name & version of the plugin.
- */
-#define PLUGIN_NAME	"auto rejoin"
-#define PLUGIN_VERSION	"20071104"
+static Plugin plugin;
 
 /*
- * Local function prototypes.
- */
-static void handle_kick(Plugin, Connection, Message);
-
-/*
- * plugin_open --
- *	Called when the plugin is loaded/opened.
+ * feed_logger_initialize --
+ *	Initialize the logger.
  */
 void
-plugin_open(Plugin p)
+feed_logger_initialize(Plugin p)
 {
-	callback_register(p, "KICK", MSG_USER, 2, handle_kick);
-
-	log_plugin(LOG_INFO, p, "Loaded plugin %s v%s.",
-	    PLUGIN_NAME, PLUGIN_VERSION);
+	plugin = p;
 }
 
 /*
- * handle_kick --
- *	Called when a KICK message is received.
+ * feed_log_debug --
+ *	Log a debug message.
  */
-static void
-handle_kick(Plugin p, Connection conn, Message msg)
+void
+feed_log_debug(const char *fmt, ...)
 {
-	const char	*nick = connection_current_nick(conn);
-	const char	*kicked = message_parameter(msg, 1);
-	const char	*channel  = message_parameter(msg, 0);
-	const char	*key;
-	ChannelList	 list = connection_channels(conn);
-	Channel		 chan;
+	va_list ap;
 
-	/* Re-join if the bot was kicked. */
-        if (strcmp(nick, kicked) == 0) {
-		log_plugin(LOG_DEBUG, p, "Re-joining channel %s (%s).",
-		    channel, connection_id(conn));
+	va_start(ap, fmt);
+	vlog_plugin(LOG_DEBUG, plugin, fmt, ap);
+	va_end(ap);
+}
 
-		/* Look up the channel and check if a key is configured. */
-		chan = channel_lookup(list, channel);
-		if (chan != NULL)
-			key = channel_key(chan);
-		else
-			key = NULL;
+/*
+ * feed_log_info --
+ *	Log an informational message.
+ */
+void
+feed_log_info(const char *fmt, ...)
+{
+	va_list ap;
 
-		/* Send the JOIN command to the server. */
-		send_join(conn, channel, key);
-	}
+	va_start(ap, fmt);
+	vlog_plugin(LOG_INFO, plugin, fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * feed_log_warning --
+ *	Log a warning message.
+ */
+void
+feed_log_warning(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vlog_plugin(LOG_WARNING, plugin, fmt, ap);
+	va_end(ap);
 }

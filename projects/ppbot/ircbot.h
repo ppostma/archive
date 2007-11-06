@@ -33,7 +33,7 @@
  * Name, version & default configuration of the IRC bot.
  */
 #define IRCBOT_NAME		"ppbot"
-#define IRCBOT_VERSION		"20071025"
+#define IRCBOT_VERSION		"20071106"
 #define IRCBOT_CONFIG		"ppbot.conf"
 
 /*
@@ -52,6 +52,11 @@
  */
 #define FALSE			0
 #define TRUE			1
+
+/* Logging flags. */
+#define LOG_INFO		0x01  /* Log an informational message. */
+#define LOG_DEBUG		0x02  /* Log a debug message. */
+#define LOG_WARNING		0x04  /* Log and append errno as string. */
 
 /* Message flags. */
 #define MSG_SENDER		0x01  /* The message requires a sender. */
@@ -110,6 +115,8 @@ void		 user_remove(ChannelList, const char *);
 void		 user_remove_channel(Channel, const char *);
 void		 user_remove_all(ChannelList);
 
+void		 channel_log_ctcp(Message, Channel);
+void		 channel_log_ctcpreply(Message, Channel);
 void		 channel_log_join(Message, Channel);
 void		 channel_log_kick(Message, Channel);
 void		 channel_log_nick(Message, ChannelList);
@@ -120,6 +127,10 @@ void		 channel_log_privmsg(Message, Channel);
 void		 channel_log_quit(Message, ChannelList);
 void		 channel_log_topic(Message, Channel);
 
+void		 channel_log_internal_ctcp(ChannelList, const char *,
+			const char *, const char *);
+void		 channel_log_internal_ctcpreply(ChannelList, const char *,
+			const char *, const char *);
 void		 channel_log_internal_notice(ChannelList, const char *,
 			const char *, const char *);
 void		 channel_log_internal_privmsg(ChannelList, const char *,
@@ -190,9 +201,14 @@ void		 logfile_set(const char *);
 void		 logfile_open(void);
 void		 logfile_close(void);
 
-void		 log_debug(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_warn(const char *, ...);
+void		 log_msg(int, const char *, ...);
+void		 vlog_msg(int, const char *, va_list);
+
+void		 log_plugin(int, Plugin, const char *, ...);
+void		 vlog_plugin(int, Plugin, const char *, va_list);
+
+void		 log_conn(int, Connection, const char *, ...);
+void		 vlog_conn(int, Connection, const char *, va_list);
 
 /* message.c */
 void		 message_parse(Connection, char *);
@@ -213,10 +229,8 @@ size_t		 message_parameter_count(Message);
 MqueueList	 mq_attach(Connection);
 void		 mq_detach(Connection, MqueueList);
 
-void		 send_ctcp(Connection, const char *, const char *,
-			const char *, ...);
-void		 send_ctcpreply(Connection, const char *, const char *,
-			const char *, ...);
+void		 send_ctcp(Connection, const char *, const char *, ...);
+void		 send_ctcpreply(Connection, const char *, const char *, ...);
 void		 send_join(Connection, const char *, const char *);
 void		 send_login(Connection);
 void		 send_nick(Connection, const char *);
@@ -229,6 +243,7 @@ void		 send_raw(Connection, const char *, ...);
 
 /* plugin.c */
 int		 plugin_add(const char *);
+const char	*plugin_id(Plugin);
 
 void		 plugins_initialize(void);
 void		 plugins_finalize(void);
@@ -236,9 +251,9 @@ void		 plugins_destroy(void);
 void		 plugins_execute(Connection, Message);
 
 int		 callback_register(Plugin, const char *, int, size_t,
-			void (*)(Connection, Message));
+			void (*)(Plugin, Connection, Message));
 int		 callback_deregister(Plugin, const char *, int, size_t,
-			void (*)(Connection, Message));
+			void (*)(Plugin, Connection, Message));
 
 /* xalloc.c */
 void		*xmalloc(size_t);

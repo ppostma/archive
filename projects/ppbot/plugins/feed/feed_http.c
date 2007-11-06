@@ -159,8 +159,8 @@ http_getdata(Url url, const char *modified, const char *etag)
 
 	snprintf(request, sizeof(request),
 	    "GET %s HTTP/1.0\r\nHost: %s\r\n"
-	    "User-Agent: Mozilla/5.0 (compatible; %s v%s)\r\n",
-	    encoded, url_host(url), PLUGIN_NAME, PLUGIN_VERSION);
+	    "User-Agent: Mozilla/5.0 (compatible; %s %s v%s)\r\n",
+	    encoded, url_host(url), IRCBOT_NAME, PLUGIN_NAME, PLUGIN_VERSION);
 
 	xfree(encoded);
 
@@ -297,7 +297,7 @@ http_destroy(HttpResult result)
 
 /*
  * http_result_code --
- *	Accessor function for the 'code' member.
+ *	Accessor function for the code member in HttpResult.
  */
 int
 http_result_code(HttpResult result)
@@ -307,7 +307,7 @@ http_result_code(HttpResult result)
 
 /*
  * http_result_status --
- *	Accessor function for the 'status' member.
+ *	Accessor function for the status member in HttpResult.
  */
 int
 http_result_status(HttpResult result)
@@ -317,7 +317,7 @@ http_result_status(HttpResult result)
 
 /*
  * http_result_body --
- *	Accessor function for the 'body' member.
+ *	Accessor function for the body member in HttpResult.
  */
 const char *
 http_result_body(HttpResult result)
@@ -327,7 +327,7 @@ http_result_body(HttpResult result)
 
 /*
  * http_result_error --
- *	Accessor function for the 'errbuf' member.
+ *	Accessor function for the errbuf member in HttpResult.
  */
 const char *
 http_result_error(HttpResult result)

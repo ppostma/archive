@@ -358,7 +358,7 @@ url_free(Url url)
 
 /*
  * url_scheme --
- *	Accessor function for the 'scheme' member.
+ *	Accessor function for the scheme member in Url.
  */
 const char *
 url_scheme(Url url)
@@ -368,7 +368,7 @@ url_scheme(Url url)
 
 /*
  * url_host --
- *	Accessor function for the 'host' member.
+ *	Accessor function for the host member in Url.
  */
 const char *
 url_host(Url url)
@@ -378,7 +378,7 @@ url_host(Url url)
 
 /*
  * url_port --
- *	Accessor function for the 'port' member.
+ *	Accessor function for the port member in Url.
  */
 const char *
 url_port(Url url)
@@ -388,7 +388,7 @@ url_port(Url url)
 
 /*
  * url_path --
- *	Accessor function for the 'path' member.
+ *	Accessor function for the path member in Url.
  */
 const char *
 url_path(Url url)

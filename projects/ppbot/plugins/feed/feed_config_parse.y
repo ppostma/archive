@@ -190,7 +190,7 @@ feed_config_parse(const char *file)
 
 	fp = fopen(file, "r");
 	if (fp == NULL) {
-		log_warn("Unable to open '%s' for reading", file);
+		feed_log_warning("Unable to open '%s' for reading", file);
 		return (FALSE);
 	}
 
@@ -203,7 +203,7 @@ feed_config_parse(const char *file)
 	fclose(fp);
 
 	if (error) {
-		log_warnx("Failed to parse configuration file '%s'.", file);
+		feed_log_info("Failed to parse configuration file '%s'.", file);
 		return (FALSE);
 	}
 
@@ -218,8 +218,8 @@ static void
 feed_config_event(struct feed_config *fcp)
 {
 	if (feed_listener == NULL) {
-		log_debug("No listener active; feed configuration %s trashed.",
-		    fcp->id);
+		feed_log_debug("No listener active; feed configuration %s "
+		    "removed.", fcp->id);
 		/* No listener, destroy the resources. */
 		feed_config_destroy(fcp);
 		return;
@@ -283,7 +283,7 @@ feed_config_destroy(FeedConfig fcp)
 
 /*
  * feed_config_id --
- *	Accessor function for the 'id' member.
+ *	Accessor function for the id member in FeedConfig.
  */
 const char *
 feed_config_id(FeedConfig fcp)
@@ -293,7 +293,7 @@ feed_config_id(FeedConfig fcp)
 
 /*
  * feed_config_name --
- *	Accessor function for the 'name' member.
+ *	Accessor function for the name member in FeedConfig.
  */
 const char *
 feed_config_name(FeedConfig fcp)
@@ -303,7 +303,7 @@ feed_config_name(FeedConfig fcp)
 
 /*
  * feed_config_location --
- *	Accessor function for the 'location' member.
+ *	Accessor function for the location member in FeedConfig.
  */
 const char *
 feed_config_location(FeedConfig fcp)
@@ -313,7 +313,7 @@ feed_config_location(FeedConfig fcp)
 
 /*
  * feed_config_refresh --
- *	Accessor function for the 'refresh' member.
+ *	Accessor function for the refresh member in FeedConfig.
  */
 int
 feed_config_refresh(FeedConfig fcp)
@@ -323,7 +323,7 @@ feed_config_refresh(FeedConfig fcp)
 
 /*
  * feed_config_update --
- *	Accessor function for the 'update' member.
+ *	Accessor function for the update member in FeedConfig.
  */
 int
 feed_config_update(FeedConfig fcp)
@@ -333,7 +333,7 @@ feed_config_update(FeedConfig fcp)
 
 /*
  * feed_config_showcount --
- *	Accessor function for the 'showcount' member.
+ *	Accessor function for the showcount member in FeedConfig.
  */
 unsigned int
 feed_config_showcount(FeedConfig fcp)
@@ -363,7 +363,7 @@ feed_destination_next(FeedDestination fdp)
 
 /*
  * feed_destination_id --
- *	Accessor function for the 'id' member.
+ *	Accessor function for the id member in FeedDestination.
  */
 const char *
 feed_destination_id(FeedDestination fdp)
@@ -373,7 +373,7 @@ feed_destination_id(FeedDestination fdp)
 
 /*
  * feed_destination_channel --
- *	Accessor function for the 'channel' member.
+ *	Accessor function for the channel member in FeedDestination.
  */
 const char *
 feed_destination_channel(FeedDestination fdp)

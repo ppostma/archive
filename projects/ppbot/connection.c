@@ -162,7 +162,7 @@ connection_start(Connection conn)
 
 	error = getaddrinfo(conn->address, conn->port, &hints, &res);
 	if (error != 0) {
-		log_warnx("[%s] Unable to resolve %s[%s]: %s", conn->id,
+		log_conn(LOG_INFO, conn, "Unable to resolve %s[%s]: %s",
 		    conn->address, conn->port, gai_strerror(error));
 		return (FALSE);
 	}
@@ -218,7 +218,7 @@ connection_start(Connection conn)
 	freeaddrinfo(res);
 
 	if (sock == -1) {
-		log_warn("[%s] Unable to connect to %s[%s]", conn->id,
+		log_conn(LOG_WARNING, conn, "Unable to connect to %s[%s]",
 		    conn->address, conn->port);
 		return (FALSE);
 	}
@@ -226,7 +226,7 @@ connection_start(Connection conn)
 	/* Attach the message queue. */
 	conn->queue = mq_attach(conn);
 	if (conn->queue == NULL) {
-		log_warnx("[%s] Unable to attach message queue.", conn->id);
+		log_conn(LOG_INFO, conn, "Unable to attach message queue.");
 		connection_safeclose(sock);
 		return (FALSE);
 	}
@@ -240,6 +240,9 @@ connection_start(Connection conn)
 	/* Re-initialize the poll fds. */
 	numfd++;
 	repoll = TRUE;
+
+	log_conn(LOG_INFO, conn, "Connection to %s established.",
+	    conn->address, conn->port);
 
 	return (TRUE);
 }
@@ -267,7 +270,7 @@ connection_read(Connection conn)
 	} while (n == -1 && errno == EINTR);
 
 	if (n == -1) {
-		log_warn("[%s] Error reading data", conn->id);
+		log_conn(LOG_WARNING, conn, "Error reading data");
 		return (FALSE);
 	} else if (n == 0)
 		return (FALSE);
@@ -281,8 +284,8 @@ connection_read(Connection conn)
 				 * This would be pretty bad and should never
 				 * happen on normal (correct) IRC servers.
 				 */
-				log_debug("[%s] Read buffer is full "
-				    "(message ignored).", conn->id);
+				log_conn(LOG_DEBUG, conn,
+				    "Read buffer is full (message ignored).");
 				conn->buf[0] = '\0';
 				conn->trash = TRUE; /* trash remaining data */
 			} else {
@@ -319,7 +322,7 @@ connection_write(Connection conn, const char *str)
 	ssize_t	rv;
 
 	if (conn->fd == -1) {
-		log_debug("[%s] Invalid socket descriptor", conn->id);
+		log_conn(LOG_DEBUG, conn, "Invalid socket descriptor.");
 		return (FALSE);
 	}
 
@@ -328,7 +331,7 @@ connection_write(Connection conn, const char *str)
 	do {
 		rv = send(conn->fd, str + total, left, 0);
 		if (rv == -1) {
-			log_warn("[%s] Error writing data", conn->id);
+			log_conn(LOG_WARNING, conn, "Error writing data");
 			return (FALSE);
 		}
 		total += rv;
@@ -445,7 +448,7 @@ connection_safeclose(int fd)
 
 /*
  * connection_active --
- *	Accessor function for the 'active' member.
+ *	Accessor function for the active member in Connection.
  */
 int
 connection_active(Connection conn)
@@ -455,7 +458,7 @@ connection_active(Connection conn)
 
 /*
  * connection_address --
- *	Accessor function for the 'address' member.
+ *	Accessor function for the address member in Connection.
  */
 const char *
 connection_address(Connection conn)
@@ -465,7 +468,7 @@ connection_address(Connection conn)
 
 /*
  * connection_alternate_nick --
- *	Accessor function for the 'altnick' member.
+ *	Accessor function for the altnick member in Connection.
  */
 const char *
 connection_alternate_nick(Connection conn)
@@ -475,7 +478,7 @@ connection_alternate_nick(Connection conn)
 
 /*
  * connection_channels --
- *	Accessor function for the 'channels' member.
+ *	Accessor function for the channels member in Connection.
  */
 ChannelList
 connection_channels(Connection conn)
@@ -485,7 +488,7 @@ connection_channels(Connection conn)
 
 /*
  * connection_current_nick --
- *	Accessor function for the 'curnick' member.
+ *	Accessor function for the curnick member in Connection.
  */
 const char *
 connection_current_nick(Connection conn)
@@ -495,7 +498,7 @@ connection_current_nick(Connection conn)
 
 /*
  * connection_id --
- *	Accessor function for the 'id' member.
+ *	Accessor function for the id member in Connection.
  */
 const char *
 connection_id(Connection conn)
@@ -505,7 +508,7 @@ connection_id(Connection conn)
 
 /*
  * connection_ident --
- *	Accessor function for the 'ident' member.
+ *	Accessor function for the ident member in Connection.
  */
 const char *
 connection_ident(Connection conn)
@@ -514,8 +517,8 @@ connection_ident(Connection conn)
 }
 
 /*
- * connection_nick
- *	Accessor function for the 'nick' member.
+ * connection_nick --
+ *	Accessor function for the nick member in Connection.
  */
 const char *
 connection_nick(Connection conn)
@@ -525,7 +528,7 @@ connection_nick(Connection conn)
 
 /*
  * connection_password --
- *	Accessor function for the 'password' member.
+ *	Accessor function for the password member in Connection.
  */
 const char *
 connection_password(Connection conn)
@@ -535,7 +538,7 @@ connection_password(Connection conn)
 
 /*
  * connection_port --
- *	Accessor function for the 'port' member.
+ *	Accessor function for the port member in Connection.
  */
 const char *
 connection_port(Connection conn)
@@ -545,7 +548,7 @@ connection_port(Connection conn)
 
 /*
  * connection_queue --
- *	Accessor function for the 'queue' member.
+ *	Accessor function for the queue member in Connection.
  */
 MqueueList
 connection_queue(Connection conn)
@@ -555,7 +558,7 @@ connection_queue(Connection conn)
 
 /*
  * connection_realname --
- *	Accessor function for the 'realname' member.
+ *	Accessor function for the realname member in Connection.
  */
 const char *
 connection_realname(Connection conn)
@@ -688,8 +691,8 @@ connection_join_timer_setup(Connection conn)
 	rv = timer_schedule(tv, (void *)connection_join_channels, conn,
 	    TIMER_ONCE, "join_channels#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_debug("[%s] Unable to schedule join channels timer: %s",
-		    conn->id, strerror(rv));
+		log_conn(LOG_DEBUG, conn,
+		    "Unable to schedule join channels timer: %s", strerror(rv));
 	}
 }
 
@@ -704,8 +707,8 @@ connection_join_timer_destroy(Connection conn)
 
 	rv = timer_cancel("join_channels#%lx", (unsigned long)conn);
 	if (rv != 0 && rv != ENOENT) {
-		log_debug("[%s] Unable to cancel join channels timer: %s",
-		    conn->id, strerror(rv));
+		log_conn(LOG_DEBUG, conn,
+		    "Unable to cancel join channels timer: %s", strerror(rv));
 	}
 }
 
@@ -754,7 +757,7 @@ connections_pollfds(unsigned int *nfd)
 			pfd[i++].events = POLLIN;
 		}
 
-		log_debug("Poll init, using %d descriptors.", numfd);
+		log_msg(LOG_DEBUG, "Poll init, using %d descriptors.", numfd);
 	}
 
 	if (nfd != NULL)
@@ -892,13 +895,14 @@ connections_ping_timer(void)
 		if (conn->ping_wait > 0 &&
 		    (conn->ping_wait * TIMER_PING) >= 300) {
 			/* If the last PONG was too long ago, disconnect. */
-			log_warnx("[%s] No PONG received from %s in 300 seconds"
-			    ", disconnecting.", conn->id, conn->address);
+			log_conn(LOG_INFO, conn, "No PONG received from %s in "
+			    "300 seconds, disconnecting.", conn->address);
 			connection_close(conn, TRUE);
 		} else {
 			if (conn->ping_wait++ > 0) {
-				log_debug("[%s] Waiting for ping reply... (%d)",
-				    conn->id, conn->ping_wait);
+				log_conn(LOG_DEBUG, conn,
+				    "Waiting for ping reply... (%d)",
+				    conn->ping_wait);
 			}
 			send_ping(conn, conn->server);
 		}
@@ -920,7 +924,8 @@ connections_ping_timer_setup(void)
 	rv = timer_schedule(tv, (void *)connections_ping_timer, NULL,
 	    TIMER_POLL, "connections_ping");
 	if (rv != 0) {
-		log_debug("Unable to schedule connections ping timer: %s",
+		log_msg(LOG_DEBUG,
+		    "Unable to schedule connections ping timer: %s",
 		    strerror(rv));
 	}
 }
@@ -979,8 +984,8 @@ reconnect_timer_setup(struct connection *conn)
 	rv = timer_schedule(tv, (void *)reconnect_timer, conn, TIMER_POLL,
 	    "reconnect_timer#%lx", (unsigned long)conn);
 	if (rv != 0 && rv != EEXIST) {
-		log_debug("[%s] Unable to schedule reconnect timer: %s",
-		    conn->id, strerror(rv));
+		log_conn(LOG_DEBUG, conn,
+		    "Unable to schedule reconnect timer: %s", strerror(rv));
 	}
 }
 
@@ -995,7 +1000,7 @@ reconnect_timer_destroy(struct connection *conn)
 
 	rv = timer_cancel("reconnect_timer#%lx", (unsigned long)conn);
 	if (rv != 0 && rv != ENOENT) {
-		log_debug("[%s] Unable to cancel reconnect timer: %s",
-		    conn->id, strerror(rv));
+		log_conn(LOG_DEBUG, conn,
+		    "Unable to cancel reconnect timer: %s", strerror(rv));
 	}
 }

@@ -24,6 +24,10 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Dictionary plugin for ppbot.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -36,17 +40,32 @@
 
 #include "plugin.h"
 
+/*
+ * Name & version of the plugin.
+ */
+#define PLUGIN_NAME	"dictionary"
+#define PLUGIN_VERSION	"20071104"
+
+/*
+ * Prefix for the dictionary file.
+ */
 static const char dict_file[] = ".dict";
 
-static void check_message(Connection, Message);
+/*
+ * Local function prototypes.
+ */
+static void dict_check_message(Plugin, Connection, Message);
 
-static void dict_learn(Connection, Message, const char *);
-static void dict_explain(Connection, Message, const char *);
-static void dict_forget(Connection, Message, const char *);
+static void dict_learn(Plugin, Connection, Message, const char *);
+static void dict_explain(Plugin, Connection, Message, const char *);
+static void dict_forget(Plugin, Connection, Message, const char *);
 
+/*
+ * Table with command <-> function mapping.
+ */
 static const struct {
 	const char *cmd;
-	void	(*func)(Connection, Message, const char *);
+	void	  (*func)(Plugin, Connection, Message, const char *);
 } commands[] = {
 	{ "learn",	dict_learn	},
 	{ "define",	dict_learn	},
@@ -56,14 +75,26 @@ static const struct {
 	{ "forget",	dict_forget	}
 };
 
+/*
+ * plugin_open --
+ *	Called when the plugin is loaded/opened.
+ */
 void
 plugin_open(Plugin p)
 {
-	callback_register(p, "PRIVMSG", MSG_USER|MSG_DATA, 1, check_message);
+	callback_register(p, "PRIVMSG", MSG_USER|MSG_DATA, 1,
+	    dict_check_message);
+
+	log_plugin(LOG_INFO, p, "Loaded plugin %s v%s.",
+	    PLUGIN_NAME, PLUGIN_VERSION);
 }
 
+/*
+ * dict_check_message --
+ *	Check the table with commands for a match.
+ */
 static void
-check_message(Connection conn, Message msg)
+dict_check_message(Plugin p, Connection conn, Message msg)
 {
 	const char *buf;
 	int	    found = FALSE;
@@ -89,38 +120,45 @@ check_message(Connection conn, Message msg)
 	while (*buf != '\0' && isspace((unsigned char)*buf))
 		buf++;
 
-	(*commands[i].func)(conn, msg, buf);
+	(*commands[i].func)(p, conn, msg, buf);
 }
 
+/*
+ * dict_checkfile --
+ *	Check if the dictionary file exists and create it if not.
+ */
 static int
-dict_checkfile(Connection conn, const char *path)
+dict_checkfile(Plugin p, const char *path)
 {
 	struct stat	 sb;
 	FILE		*fp;
 
 	if (stat(path, &sb) < 0) {
 		if ((fp = fopen(path, "w")) == NULL) {
-			log_warn("[%s] Unable to open '%s' for writing",
-			    connection_id(conn), path);
+			log_plugin(LOG_WARNING, p,
+			    "Unable to open '%s' for writing", path);
 			return (FALSE);
 		} else {
-			log_warnx("[%s] Dictionary file created.",
-			    connection_id(conn));
+			log_plugin(LOG_INFO, p, "Dictionary file created.");
 			fclose(fp);
 		}
 	}
 	return (TRUE);
 }
 
+/*
+ * dict_addword --
+ *	Add a word to the dictionary specified by 'path'.
+ */
 static int
-dict_addword(Connection conn, const char *path, const char *word,
+dict_addword(Plugin p, const char *path, const char *word,
     const char *value)
 {
 	FILE	*fp;
 
 	if ((fp = fopen(path, "a")) == NULL) {
-		log_warn("[%s] Unable to open '%s' for appending",
-		    connection_id(conn), path);
+		log_plugin(LOG_WARNING, p,
+		    "Unable to open '%s' for appending", path);
 		return (FALSE);
 	}
 	fprintf(fp, "%s\t%s\n", word, value);
@@ -129,41 +167,45 @@ dict_addword(Connection conn, const char *path, const char *word,
 	return (TRUE);
 }
 
+/*
+ * dict_delword --
+ *	Delete a word from the dictionary specified by 'path'.
+ */
 static int
-dict_delword(Connection conn, const char *path, const char *word)
+dict_delword(Plugin p, const char *path, const char *word)
 {
 	FILE	*fpr, *fpw;
 	char	 buf[BUFSIZ];
 	char	 temp[PATH_MAX];
-	char	*p, *line;
+	char	*q, *line;
 	int	 deleted = FALSE;
 
 	snprintf(temp, sizeof(temp), "%s.temp", path);
 
 	if ((fpr = fopen(path, "r")) == NULL) {
-		log_warn("[%s] Unable to open '%s' for reading",
-		    connection_id(conn), path);
+		log_plugin(LOG_WARNING, p,
+		    "Unable to open '%s' for reading", path);
 		return (FALSE);
 	}
 	if ((fpw = fopen(temp, "w")) == NULL) {
-		log_warn("[%s] Unable to open '%s' for writing",
-		    connection_id(conn), temp);
+		log_plugin(LOG_WARNING, p,
+		    "Unable to open '%s' for writing", temp);
 		fclose(fpr);
 		return (FALSE);
 	}
 	while (fgets(buf, sizeof(buf), fpr) != NULL) {
-		if ((p = strchr(buf, '\n')) != NULL)
-			*p = '\0';
+		if ((q = strchr(buf, '\n')) != NULL)
+			*q = '\0';
 		if (strlen(buf) == 0)
 			continue;
 
 		line = &buf[0];
-		if ((p = strchr(line, '\t')) == NULL)
+		if ((q = strchr(line, '\t')) == NULL)
 			continue;
-                *p++ = '\0';
+                *q++ = '\0';
 
 		if (strcasecmp(line, word) != 0) {
-			fprintf(fpw, "%s\t%s\n", buf, p);
+			fprintf(fpw, "%s\t%s\n", buf, q);
 		} else {
 			deleted = TRUE;
 		}
@@ -172,39 +214,43 @@ dict_delword(Connection conn, const char *path, const char *word)
         fclose(fpw);
 
 	if (rename(temp, path) == -1) {
-		log_warn("[%s] Unable to rename '%s' to '%s'",
-		    connection_id(conn), temp, path);
+		log_plugin(LOG_WARNING, p,
+		    "Unable to rename '%s' to '%s'", temp, path);
 	}
 
 	return (deleted);
 }
 
+/*
+ * dict_getword --
+ *	Retrieve a word from the dictionary specified by 'path'.
+ */
 static char *
-dict_getword(Connection conn, const char *path, const char *word)
+dict_getword(Plugin p, const char *path, const char *word)
 {
 	char	 buf[BUFSIZ];
-	char	*line, *p, *value = NULL;
+	char	*line, *q, *value = NULL;
 	FILE	*fp;
 
 	if ((fp = fopen(path, "r")) == NULL) {
-		log_warn("[%s] Unable to open '%s' for reading",
-		    connection_id(conn), path);
+		log_plugin(LOG_WARNING, p,
+		    "Unable to open '%s' for reading", path);
 		return (NULL);
 	}
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if ((p = strchr(buf, '\n')) != NULL)
-			*p = '\0';
+		if ((q = strchr(buf, '\n')) != NULL)
+			*q = '\0';
 		if (strlen(buf) == 0)
 			continue;
 
 		line = &buf[0];
-		if ((p = strchr(line, '\t')) == NULL)
+		if ((q = strchr(line, '\t')) == NULL)
 			continue;
-		*p++ = '\0';
+		*q++ = '\0';
 
                 if (strcasecmp(line, word) == 0) {
 			/* Return the value of the word. */
-			value = xstrdup(p);
+			value = xstrdup(q);
 			break;
                 }
         }
@@ -213,12 +259,16 @@ dict_getword(Connection conn, const char *path, const char *word)
 	return (value);
 }
 
+/*
+ * dict_learn --
+ *	The learn command, used to add words to the dictionary.
+ */
 static void
-dict_learn(Connection conn, Message msg, const char *args)
+dict_learn(Plugin p, Connection conn, Message msg, const char *args)
 {
 	const char *channel = message_parameter(msg, 0);
 	const char *sender = message_sender(msg);
-	char	   *buf, *p, *explain, *word = NULL;
+	char	   *buf, *q, *explain, *word = NULL;
 	char	    file[PATH_MAX];
 
 	if (*args == '\0') {
@@ -228,29 +278,29 @@ dict_learn(Connection conn, Message msg, const char *args)
 
 	word = xstrdup(args);
 
-	p = word;
-	while (*p != '\0' && !isspace((unsigned char)*p))
-		p++;
-	if (*p != '\0')
-		*p++ = '\0';
+	q = word;
+	while (*q != '\0' && !isspace((unsigned char)*q))
+		q++;
+	if (*q != '\0')
+		*q++ = '\0';
 
-	if (*p == '\0') {
+	if (*q == '\0') {
 		send_privmsg(conn, channel,
 		    "%s: what's that supposed to mean?", sender);
 		goto out;
 	}
-	while (*p != '\0' && isspace((unsigned char)*p))
-		p++;
-	explain = p;
+	while (*q != '\0' && isspace((unsigned char)*q))
+		q++;
+	explain = q;
 
 	snprintf(file, sizeof(file), "%s_%s", dict_file, connection_id(conn));
 
-	if (!dict_checkfile(conn, file))
+	if (!dict_checkfile(p, file))
 		goto out;
 
-	buf = dict_getword(conn, file, word);
+	buf = dict_getword(p, file, word);
 	if (buf == NULL) {
-		if (dict_addword(conn, file, word, explain) == TRUE)
+		if (dict_addword(p, file, word, explain) == TRUE)
 			send_notice(conn, sender,
 			    "Word '%s' added.", word);
 	} else {
@@ -264,12 +314,16 @@ dict_learn(Connection conn, Message msg, const char *args)
 	xfree(word);
 }
 
+/*
+ * dict_explain --
+ *	The explain command, used to retrieve words from the dictionary.
+ */
 static void
-dict_explain(Connection conn, Message msg, const char *args)
+dict_explain(Plugin p, Connection conn, Message msg, const char *args)
 {
 	const char	*channel = message_parameter(msg, 0);
 	const char	*sender = message_sender(msg);
-	char		*value, *p, *word = NULL;
+	char		*value, *q, *word = NULL;
 	char		 file[PATH_MAX];
 
 	if (*args == '\0') {
@@ -279,16 +333,16 @@ dict_explain(Connection conn, Message msg, const char *args)
 
 	word = xstrdup(args);
 
-	p = &word[strlen(word) - 1];
-	while (isspace((unsigned char)*p) || *p == '?')
-		*p-- = '\0';
+	q = &word[strlen(word) - 1];
+	while (isspace((unsigned char)*q) || *q == '?')
+		*q-- = '\0';
 
 	snprintf(file, sizeof(file), "%s_%s", dict_file, connection_id(conn));
 
-	if (!dict_checkfile(conn, file))
+	if (!dict_checkfile(p, file))
 		goto out;
 
-	value = dict_getword(conn, file, word);
+	value = dict_getword(p, file, word);
 	if (value == NULL) {
 		send_privmsg(conn, channel,
 		    "%s: I don't know what that is.", sender);
@@ -302,8 +356,12 @@ dict_explain(Connection conn, Message msg, const char *args)
 	xfree(word);
 }
 
+/*
+ * dict_forget --
+ *	The forget command, used to delete words in the dictionary.
+ */
 static void
-dict_forget(Connection conn, Message msg, const char *args)
+dict_forget(Plugin p, Connection conn, Message msg, const char *args)
 {
 	const char	*channel = message_parameter(msg, 0);
 	const char	*sender = message_sender(msg);
@@ -316,9 +374,9 @@ dict_forget(Connection conn, Message msg, const char *args)
 
 	snprintf(file, sizeof(file), "%s_%s", dict_file, connection_id(conn));
 
-	if (!dict_checkfile(conn, file))
+	if (!dict_checkfile(p, file))
 		return;
 
-	if (dict_delword(conn, file, args) == TRUE)
+	if (dict_delword(p, file, args) == TRUE)
 		send_notice(conn, sender, "Word '%s' deleted.", args);
 }

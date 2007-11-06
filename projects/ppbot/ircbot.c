@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 	if (!debug) {
 		switch (child = fork()) {
 		case -1:
-			log_warnx("Unable to fork process");
+			log_msg(LOG_INFO, "Unable to fork process");
 			exit(EXIT_FAILURE);
 		case 0:
 			break;
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 		}
 
 		if (setsid() == -1) {
-			log_warn("Unable to create new session");
+			log_msg(LOG_WARNING, "Unable to create new session");
 			exit(EXIT_FAILURE);
 		}
 
@@ -180,8 +180,8 @@ ircbot_print_welcome(void)
 	date = ctime(&t);
 	date[strlen(date) - 1] = '\0';
 
-	log_warnx("%s version %s started at %s", IRCBOT_NAME,
-	    IRCBOT_VERSION, date);
+	log_msg(LOG_INFO, "%s v%s started at %s",
+	    IRCBOT_NAME, IRCBOT_VERSION, date);
 }
 
 /*
@@ -197,7 +197,7 @@ ircbot_print_daemon(pid_t child)
 	date = ctime(&t);
 	date[strlen(date) - 1] = '\0';
 
-	log_warnx("%s version %s running in background at %s, pid %u",
+	log_msg(LOG_INFO, "%s v%s running in background at %s, pid %u",
 	    IRCBOT_NAME, IRCBOT_VERSION, date, (unsigned int)child);
 }
 
@@ -214,8 +214,8 @@ ircbot_print_bye(void)
 	date = ctime(&t);
 	date[strlen(date) - 1] = '\0';
 
-	log_warnx("%s version %s shutting down at %s", IRCBOT_NAME,
-	    IRCBOT_VERSION, date);
+	log_msg(LOG_INFO, "%s v%s shutting down at %s",
+	    IRCBOT_NAME, IRCBOT_VERSION, date);
 }
 
 /*
@@ -295,23 +295,25 @@ ircbot_main_loop(const char *cfg)
 		if (sig_hup) {
 			sig_hup = FALSE;
 			ircbot_reconfigure(cfg);
-			log_warnx("The configuration has been reloaded.");
+			log_msg(LOG_INFO,
+			    "The configuration has been reloaded.");
 		}
 
 		/* Shut down when receiving INT/TERM signal. */
 		if (sig_int) {
-			log_warnx("Received SIGINT, shutting down.");
+			log_msg(LOG_INFO, "Received SIGINT, shutting down.");
 			break;
 		}
 		if (sig_term) {
-			log_warnx("Received SIGTERM, shutting down.");
+			log_msg(LOG_INFO, "Received SIGTERM, shutting down.");
 			break;
 		}
 
 		/* Correct the timers when running backwards. */
 		gettimeofday(&now, NULL);
 		if (timercmp(&now, &base, <)) {
-			log_debug("Time is running backwards, corrected.");
+			log_msg(LOG_DEBUG,
+			    "Time is running backwards, corrected.");
 			timer_correct(&base, &now);
 		}
 		base = now;
@@ -323,7 +325,7 @@ ircbot_main_loop(const char *cfg)
 		if (rv == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("poll error");
+			log_msg(LOG_WARNING, "Error in poll");
 			break;
 		} else if (rv == 0)
 			continue;
@@ -335,8 +337,8 @@ ircbot_main_loop(const char *cfg)
 				if (conn == NULL)
 					continue;
 				if (connection_read(conn) == FALSE) {
-					log_warnx("[%s] Connection lost to %s.",
-					    connection_id(conn),
+					log_conn(LOG_INFO, conn,
+					    "Connection lost to %s.",
 					    connection_address(conn));
 					connection_close(conn, TRUE);
 				}

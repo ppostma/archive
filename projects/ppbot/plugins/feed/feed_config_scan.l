@@ -112,7 +112,7 @@ feed_config_scan_reset(void)
 int
 yyfeederror(const char *str)
 {
-	log_warnx("%s at \"%s\", line %lu\n", str, yyfeedtext,
+	feed_log_info("%s at \"%s\", line %lu.\n", str, yyfeedtext,
 	    (unsigned long)line);
 
 	return (0);

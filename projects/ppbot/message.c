@@ -237,25 +237,26 @@ message_check_parameters(Connection conn, Message msg, int flags,
     size_t paramcount)
 {
 	if ((flags & MSG_SENDER) && msg->sender == NULL) {
-		log_debug("[%s] Sender required, but not found (%s).",
-		    connection_id(conn), msg->command);
+		log_conn(LOG_DEBUG, conn,
+		    "Sender required, but not found (%s).", msg->command);
 		return (FALSE);
 	}
 	if ((flags & MSG_USER) &&
 	    (msg->sender == NULL || msg->userhost == NULL)) {
-		log_debug("[%s] User required, but not found (%s).",
-		    connection_id(conn), msg->command);
+		log_conn(LOG_DEBUG, conn,
+		    "User required, but not found (%s).", msg->command);
 		return (FALSE);
 	}
 	if ((flags & MSG_DATA) && msg->data == NULL) {
-		log_debug("[%s] Data required, but not found (%s).",
-		    connection_id(conn), msg->command);
+		log_conn(LOG_DEBUG, conn,
+		    "Data required, but not found (%s).", msg->command);
 		return (FALSE);
 	}
 	if (msg->paramcount < paramcount) {
-		log_debug("[%s] %lu parameters required, found only %lu (%s).",
-		    connection_id(conn), (unsigned long)paramcount,
-		    (unsigned long)msg->paramcount, msg->command);
+		log_conn(LOG_DEBUG, conn,
+		    "%lu parameters required, found only %lu (%s).",
+		    (unsigned long)paramcount, (unsigned long)msg->paramcount,
+		    msg->command);
 		return (FALSE);
 	}
 
@@ -334,7 +335,7 @@ message_to_me(Connection conn, Message msg, const char **buf)
 static void
 event_command_error(Connection conn, Message msg)
 {
-	log_warnx("[%s] %s", connection_id(conn), msg->data);
+	log_conn(LOG_DEBUG, conn, "%s", msg->data);
 }
 
 /*
@@ -351,8 +352,7 @@ event_command_join(Connection conn, Message msg)
 	/* Look up the channel, create it if non-existent. */
 	ch = (msg->params[0] != NULL) ? msg->params[0] : msg->data;
 	if (ch == NULL) {
-		log_debug("[%s] No channel in JOIN message.",
-		    connection_id(conn));
+		log_conn(LOG_DEBUG, conn, "No channel in JOIN message.");
 		return;
 	}
 	chan = channel_lookup(list, ch);
@@ -383,8 +383,8 @@ event_command_kick(Connection conn, Message msg)
 	/* Look up the channel. */
 	chan = channel_lookup(list, msg->params[0]);
 	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_command_kick)",
-		    connection_id(conn), msg->params[0]);
+		log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+		    "(event_command_kick).", msg->params[0]);
 		return;
 	}
 
@@ -429,8 +429,8 @@ event_command_mode(Connection conn, Message msg)
 	/* Look up the channel. */
 	chan = channel_lookup(list, msg->params[0]);
 	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_command_mode)",
-		    connection_id(conn), msg->params[0]);
+		log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+		    "(event_command_mode).", msg->params[0]);
 		return;
 	}
 
@@ -467,25 +467,31 @@ event_command_notice(Connection conn, Message msg)
 {
 	ChannelList	list = connection_channels(conn);
 	Channel		chan;
+	int		is_ctcpreply = FALSE;
 
 	/* Ignore "NOTICE AUTH" messages. */
 	if (msg->sender == NULL || strcmp(msg->params[0], "AUTH") == 0)
 		return;
 
-	/* We don't handle private messages. */
-	if (message_is_private(conn, msg))
-		return;
-
-	/* Look up the channel. */
-	chan = channel_lookup(list, msg->params[0]);
-	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_command_notice)",
-		    connection_id(conn), msg->params[0]);
-		return;
+	/* Check for a CTCP-reply message. */
+	if (*msg->data == '\001') {
+		is_ctcpreply = TRUE;
 	}
 
-	/* Log the message. */
-	channel_log_notice(msg, chan);
+	/* Log the message if public. */
+	if (!message_is_private(conn, msg)) {
+		/* Look up the channel. */
+		chan = channel_lookup(list, msg->params[0]);
+		if (chan == NULL) {
+			log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+			    "(event_command_notice).", msg->params[0]);
+		} else {
+			if (is_ctcpreply)
+				channel_log_ctcpreply(msg, chan);
+			else
+				channel_log_notice(msg, chan);
+		}
+	}
 }
 
 /*
@@ -501,8 +507,8 @@ event_command_part(Connection conn, Message msg)
 	/* Look up the channel. */
 	chan = channel_lookup(list, msg->params[0]);
 	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_command_part)",
-		    connection_id(conn), msg->params[0]);
+		log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+		    "(event_command_part).", msg->params[0]);
 		return;
 	}
 
@@ -549,31 +555,26 @@ event_command_privmsg(Connection conn, Message msg)
 	char		*data = msg->data;
 	char		*buf, *p;
 	time_t		 t;
-	int		 is_action = FALSE;
 	int		 is_ctcp = FALSE;
 
-	/* Check what sort message this is (PRIVMSG or CTCP). */
+	/* Check for a CTCP message. */
 	if (*data == '\001') {
 		is_ctcp = TRUE;
-		if (strncmp(++data, "ACTION", 6) == 0) {
-			is_action = TRUE;
-		}
+		data++;
 	}
 
-	/* Check to log when this is not a private message. */
+	/* Log the message if public. */
 	if (!message_is_private(conn, msg)) {
 		/* Look up the channel. */
 		chan = channel_lookup(list, msg->params[0]);
 		if (chan == NULL) {
-			log_debug("[%s] No such channel '%s' "
-			    "(event_command_privmsg)", connection_id(conn),
-			    msg->params[0]);
-			return;
-		}
-
-		/* Log normal messages and actions. */
-		if (!is_ctcp || is_action) {
-			channel_log_privmsg(msg, chan);
+			log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+			    "(event_command_privmsg).", msg->params[0]);
+		} else {
+			if (is_ctcp)
+				channel_log_ctcp(msg, chan);
+			else
+				channel_log_privmsg(msg, chan);
 		}
 	}
 
@@ -581,7 +582,7 @@ event_command_privmsg(Connection conn, Message msg)
 	if (is_ctcp) {
 		if (strncmp(data, "CLIENTINFO", 10) == 0) {
 			/* Client info request. */
-			send_ctcpreply(conn, msg->sender, "CLIENTINFO",
+			send_ctcpreply(conn, msg->sender, "CLIENTINFO "
 			    "CLIENTINFO PING TIME VERSION");
 		} else if (strncmp(data, "PING", 4) == 0) {
 			/* Ping request. */
@@ -593,18 +594,18 @@ event_command_privmsg(Connection conn, Message msg)
 			buf = xstrdup(data);
 			if ((p = strrchr(buf, '\001')) != NULL)
 				*p = '\0';
-			send_ctcpreply(conn, msg->sender, "PING", "%s", buf);
+			send_ctcpreply(conn, msg->sender, "PING %s", buf);
 			xfree(buf);
 		} else if (strncmp(data, "TIME", 4) == 0) {
 			/* Time request. */
 			t = time(NULL);
 			buf = ctime(&t);
 			buf[strlen(buf) - 1] = '\0';
-			send_ctcpreply(conn, msg->sender, "TIME", "%s", buf);
+			send_ctcpreply(conn, msg->sender, "TIME %s", buf);
 		} else if (strncmp(data, "VERSION", 7) == 0) {
 			/* Version request. */
-			send_ctcpreply(conn, msg->sender, "VERSION",
-			    "%s v%s", IRCBOT_NAME, IRCBOT_VERSION);
+			send_ctcpreply(conn, msg->sender, "VERSION %s v%s",
+			    IRCBOT_NAME, IRCBOT_VERSION);
 		}
 	}
 }
@@ -642,8 +643,8 @@ event_command_topic(Connection conn, Message msg)
 	/* Look up the channel. */
 	chan = channel_lookup(list, msg->params[0]);
 	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_command_topic)",
-		    connection_id(conn), msg->params[0]);
+		log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+		    "(event_command_topic).", msg->params[0]);
 		return;
 	}
 
@@ -668,8 +669,8 @@ event_numeric_names(Connection conn, Message msg)
 	/* Look up the channel. */
 	chan = channel_lookup(list, msg->params[2]);
 	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_numeric_names)",
-		    connection_id(conn), msg->params[2]);
+		log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+		    "(event_numeric_names).", msg->params[2]);
 		return;
 	}
 
@@ -699,18 +700,18 @@ static void
 event_numeric_nickname(Connection conn, Message msg)
 {
 	if (strcmp(msg->command, "433") == 0) {
-		log_warnx("[%s] Nickname '%s' is in use.",
-		    connection_id(conn), connection_current_nick(conn));
+		log_conn(LOG_INFO, conn, "Nickname '%s' is in use.",
+		    connection_current_nick(conn));
 	} else {
-		log_warnx("[%s] Erroneous nickname '%s'.",
-		    connection_id(conn), connection_current_nick(conn));
+		log_conn(LOG_INFO, conn, "Erroneous nickname '%s'.",
+		    connection_current_nick(conn));
 	}
 
 	/* Try alternate nick if we've one. */
 	if (strcmp(connection_current_nick(conn), msg->params[1]) == 0 &&
 	    connection_alternate_nick(conn) != NULL &&
 	    strcmp(connection_alternate_nick(conn), msg->params[1]) != 0) {
-		log_warnx("[%s] Trying nickname '%s'.", connection_id(conn),
+		log_conn(LOG_INFO, conn, "Trying nickname '%s'.",
 		    connection_alternate_nick(conn));
 		send_nick(conn, connection_alternate_nick(conn));
 
@@ -718,8 +719,7 @@ event_numeric_nickname(Connection conn, Message msg)
 		connection_set_current_nick(conn,
 		    connection_alternate_nick(conn));
 	} else {
-		log_warnx("[%s] No nicknames available to use.",
-		    connection_id(conn));
+		log_conn(LOG_INFO, conn, "No nicknames available to use.");
 		send_quit(conn, NULL);
 	}
 }
@@ -745,8 +745,8 @@ event_numeric_topic(Connection conn, Message msg)
 	/* Look up the channel. */
 	chan = channel_lookup(list, msg->params[1]);
 	if (chan == NULL) {
-		log_debug("[%s] No such channel '%s' (event_numeric_topic)",
-		    connection_id(conn), msg->params[1]);
+		log_conn(LOG_DEBUG, conn, "No such channel '%s' "
+		    "(event_numeric_topic).", msg->params[1]);
 		return;
 	}
 
@@ -761,8 +761,7 @@ event_numeric_topic(Connection conn, Message msg)
 static void
 event_numeric_unknown(Connection conn, Message msg)
 {
-	log_warnx("[%s] %s: %s", connection_id(conn), msg->params[1],
-	    msg->data);
+	log_conn(LOG_INFO, conn, "%s: %s", msg->params[1], msg->data);
 }
 
 /*
@@ -782,7 +781,7 @@ event_numeric_welcome(Connection conn, Message msg)
 
 /*
  * message_command --
- *	Accessor function for the 'command' member.
+ *	Accessor function for the command member in Message.
  */
 const char *
 message_command(Message msg)
@@ -792,7 +791,7 @@ message_command(Message msg)
 
 /*
  * message_sender --
- *	Accessor function for the 'sender' member.
+ *	Accessor function for the sender member in Message.
  */
 const char *
 message_sender(Message msg)
@@ -802,7 +801,7 @@ message_sender(Message msg)
 
 /*
  * message_userhost --
- *	Accessor function for the 'userhost' member.
+ *	Accessor function for the userhost member in Message.
  */
 const char *
 message_userhost(Message msg)
@@ -812,7 +811,7 @@ message_userhost(Message msg)
 
 /*
  * message_data --
- *	Accessor function for the 'data' member.
+ *	Accessor function for the data member in Message.
  */
 const char *
 message_data(Message msg)
@@ -822,7 +821,7 @@ message_data(Message msg)
 
 /*
  * message_parameter --
- *	Accessor function for the 'params' member.
+ *	Accessor function for the params member in Message.
  */
 const char *
 message_parameter(Message msg, size_t idx)
@@ -835,7 +834,7 @@ message_parameter(Message msg, size_t idx)
 
 /*
  * message_raw --
- *	Accessor function for the 'raw' member.
+ *	Accessor function for the raw member in Message.
  */
 const char *
 message_raw(Message msg)
@@ -845,7 +844,7 @@ message_raw(Message msg)
 
 /*
  * message_parameter_count --
- *	Accessor function for the 'paramcount' member.
+ *	Accessor function for the paramcount member in Message.
  */
 size_t
 message_parameter_count(Message msg)

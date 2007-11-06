@@ -39,6 +39,7 @@
  * Plugin & callback objects.
  */
 struct plugin {
+	char			*id;
 	char			*path;
 	void			*handle;
 	LIST_HEAD(, callback)	 callbacks;
@@ -49,7 +50,7 @@ struct callback {
 	char			*cmd;
 	int			 flags;
 	size_t			 paramcount;
-	void			(*fn)(Connection, Message);
+	void			(*fn)(Plugin, Connection, Message);
 	LIST_ENTRY(callback)	 link;
 };
 
@@ -65,26 +66,43 @@ plugin_add(const char *path)
 	struct plugin	*plug;
 	struct stat	 sb;
 	void		*handle;
+	char		*id, *temp;
 
 	if (stat(path, &sb) == -1) {
-		if (errno == ENOENT)
-			log_warnx("The file '%s' does not exist.", path);
-		else
-			log_warn("Unable to get file status for '%s'", path);
+		if (errno == ENOENT) {
+			log_msg(LOG_INFO,
+			    "The file '%s' does not exist.", path);
+		} else {
+			log_msg(LOG_WARNING,
+			    "Unable to get file status for '%s'", path);
+		}
 		return (FALSE);
 	}
 	if (!S_ISREG(sb.st_mode)) {
-		log_warnx("Not a regular file: '%s'.", path);
+		log_msg(LOG_INFO, "Not a regular file: '%s'.", path);
 		return (FALSE);
 	}
 
 	handle = dlopen(path, RTLD_LAZY);
 	if (handle == NULL) {
-		log_warnx("Unable to open shared object: %s.", dlerror());
+		log_msg(LOG_INFO, "Unable to open shared object: %s.",
+		    dlerror());
 		return (FALSE);
 	}
 
+	/* Get the name of the plugin file without extension. */
+	if ((temp = strrchr(path, '/')) != NULL)
+		temp++;
+
+	id = xstrdup(temp);
+	if (strlen(id) > 3) {
+		if (strcmp(id + strlen(id) - 3, ".so") == 0)
+			id[strlen(id) - 3] = '\0';
+	}
+
+	/* Create the plugin and add it to the internal list. */
 	plug = xmalloc(sizeof(struct plugin));
+	plug->id = id;
 	plug->path = xstrdup(path);
 	plug->handle = handle;
 
@@ -92,6 +110,16 @@ plugin_add(const char *path)
 	TAILQ_INSERT_TAIL(&plugins, plug, link);
 
 	return (TRUE);
+}
+
+/*
+ * plugin_id --
+ *	Accessor function for the id member in Plugin.
+ */
+const char *
+plugin_id(Plugin plug)
+{
+	return (plug->id);
 }
 
 /*
@@ -152,6 +180,7 @@ plugins_destroy(void)
 		/* Free memory for the plugin. */
 		TAILQ_REMOVE(&plugins, plug, link);
 		xfree(plug->path);
+		xfree(plug->id);
 		xfree(plug);
 	}
 }
@@ -176,7 +205,7 @@ plugins_execute(Connection conn, Message msg)
 			    cb->flags, cb->paramcount) == FALSE)
 				continue;
 			/* Execute the callback function. */
-			(*cb->fn)(conn, msg);
+			(*cb->fn)(plug, conn, msg);
 		}
 	}
 }
@@ -187,7 +216,7 @@ plugins_execute(Connection conn, Message msg)
  */
 static struct callback *
 callback_lookup(Plugin plug, const char *cmd, int flags, size_t argc,
-    void (*fn)(Connection, Message))
+    void (*fn)(Plugin, Connection, Message))
 {
 	struct callback *cb;
 
@@ -207,7 +236,7 @@ callback_lookup(Plugin plug, const char *cmd, int flags, size_t argc,
  */
 int
 callback_register(Plugin plug, const char *cmd, int flags, size_t argc,
-    void (*fn)(Connection, Message))
+    void (*fn)(Plugin, Connection, Message))
 {
 	struct callback	*cb;
 
@@ -228,7 +257,7 @@ callback_register(Plugin plug, const char *cmd, int flags, size_t argc,
  */
 int
 callback_deregister(Plugin plug, const char *cmd, int flags, size_t argc,
-    void (*fn)(Connection, Message))
+    void (*fn)(Plugin, Connection, Message))
 {
 	struct callback *cb;
 

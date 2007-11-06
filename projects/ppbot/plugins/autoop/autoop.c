@@ -24,6 +24,10 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Auto ops plugin for ppbot.
+ */
+
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
@@ -31,19 +35,32 @@
 #include "plugin.h"
 #include "queue.h"
 
+/*
+ * Name & version of the plugin.
+ */
+#define PLUGIN_NAME	"auto ops"
+#define PLUGIN_VERSION	"20071104"
+
+/*
+ * File with operators.
+ */
 static const char ops_file[] = "ops.conf";
 
-/* Local function prototypes. */
-static void	handle_join(Connection , Message );
-static void	handle_privmsg(Connection , Message );
+/*
+ * Local function prototypes.
+ */
+static void handle_join(Plugin, Connection, Message);
+static void handle_privmsg(Plugin, Connection, Message);
 
-/* List with operators. */
+/*
+ * List with operators.
+ */
 struct operator {
 	char			*userhost;
 	LIST_ENTRY(operator)	 link;
 };
 
-static LIST_HEAD(, operator) operators;
+static LIST_HEAD(, operator) operators = LIST_HEAD_INITIALIZER(&operators);
 
 /*
  * plugin_open --
@@ -60,24 +77,28 @@ plugin_open(Plugin p)
 	/* Read the operators from the config file. */
 	fp = fopen(ops_file, "r");
 	if (fp == NULL) {
-		log_warn("Unable to open '%s' for reading", ops_file);
-		return;
-	}
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if ((ch = strchr(buf, '\n')) != NULL)
-			*ch = '\0';
-		if (strlen(buf) == 0)
-			continue;
+		log_plugin(LOG_WARNING, p, "Unable to open '%s' for reading",
+		    ops_file);
+	} else {
+		while (fgets(buf, sizeof(buf), fp) != NULL) {
+			if ((ch = strchr(buf, '\n')) != NULL)
+				*ch = '\0';
+			if (strlen(buf) == 0)
+				continue;
 
-		/* Add the operator to the list. */
-		op = xmalloc(sizeof(struct operator));
-		op->userhost = xstrdup(buf);
-		LIST_INSERT_HEAD(&operators, op, link);
+			/* Add the operator to the list. */
+			op = xmalloc(sizeof(struct operator));
+			op->userhost = xstrdup(buf);
+			LIST_INSERT_HEAD(&operators, op, link);
+		}
+		fclose(fp);
 	}
-	fclose(fp);
 
 	callback_register(p, "JOIN", MSG_USER, 0, handle_join);
 	callback_register(p, "PRIVMSG", MSG_USER|MSG_DATA, 1, handle_privmsg);
+
+	log_plugin(LOG_INFO, p, "Loaded plugin %s v%s.",
+	    PLUGIN_NAME, PLUGIN_VERSION);
 }
 
 /*
@@ -119,22 +140,23 @@ is_operator(const char *userhost)
  *	Called when a JOIN message is received.
  */
 static void
-handle_join(Connection conn, Message msg)
+handle_join(Plugin p, Connection conn, Message msg)
 {
 	const char *channel;
 
 	channel = (message_parameter(msg, 0) != NULL) ?
 	    message_parameter(msg, 0) : message_data(msg);
 	if (channel == NULL) {
-		log_debug("[%s] No channel in JOIN message.",
+		log_plugin(LOG_DEBUG, p, "No channel in JOIN message (%s).",
 		    connection_id(conn));
 		return;
 	}
 
 	/* If the userhost is operator, then op him. */
 	if (is_operator(message_userhost(msg))) {
-		log_debug("[%s] Giving operator status to '%s' in %s.",
-		    connection_id(conn), message_sender(msg), channel);
+		log_plugin(LOG_DEBUG, p,
+		    "Giving operator status to '%s' in %s (%s).",
+		    message_sender(msg), channel, connection_id(conn));
 
 		send_raw(conn, "MODE %s +o %s", channel, message_sender(msg));
 	}
@@ -145,7 +167,7 @@ handle_join(Connection conn, Message msg)
  *      Called when a PRIVMSG message is received.
  */
 static void
-handle_privmsg(Connection conn, Message msg)
+handle_privmsg(Plugin p, Connection conn, Message msg)
 {
 	const char *sender = message_sender(msg);
 	const char *channel = message_parameter(msg, 0);
@@ -161,8 +183,9 @@ handle_privmsg(Connection conn, Message msg)
 
 	/* If the userhost is operator, then op him. */
 	if (is_operator(message_userhost(msg))) {
-		log_debug("[%s] Giving operator status to '%s' in %s.",
-		    connection_id(conn), sender, channel);
+		log_plugin(LOG_DEBUG, p,
+		    "Giving operator status to '%s' in %s (%s).",
+		    sender, channel, connection_id(conn));
 
 		send_raw(conn, "MODE %s +o %s", channel, sender);
 	}

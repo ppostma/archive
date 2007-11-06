@@ -111,7 +111,8 @@ config_scan_reset(void)
 int
 yyerror(const char *str)
 {
-	log_warnx("%s at \"%s\", line %lu", str, yytext, (unsigned long)line);
+	log_msg(LOG_INFO, "%s at \"%s\", line %lu.", str, yytext,
+	    (unsigned long)line);
 
 	return (0);
 }

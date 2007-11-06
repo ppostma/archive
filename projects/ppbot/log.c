@@ -35,13 +35,20 @@
 #include "ircbot.h"
 
 /*
+ * Logging buffer sizes.
+ */
+#define LOG_BUFSIZE		512
+#define LOG_BUFSIZE_CONN	64
+#define LOG_BUFSIZE_PLUGIN	64
+
+/*
  * Global variables --
  *	Log file pointer, log file, log stderr/debug indicators.
  */
-static FILE	*log_fp = NULL;
-static char	*log_file = NULL;
-static int	 log_stderr = FALSE;
-static int	 log_ndebug = FALSE;
+static FILE *log_fp = NULL;
+static char *log_file = NULL;
+static int   log_stderr = FALSE;
+static int   log_ndebug = FALSE;
 
 /*
  * set_logdebug --
@@ -85,7 +92,8 @@ logfile_open(void)
 	if (log_file != NULL) {
 		log_fp = fopen(log_file, "a");
 		if (log_fp == NULL)
-			log_warn("Unable to open the main log file");
+			log_msg(LOG_WARNING,
+			    "Unable to open the log file '%s'", log_file);
 	}
 }
 
@@ -107,13 +115,17 @@ logfile_close(void)
  *	Log to the specified FILE pointer.
  */
 static void
-logit(FILE *fp, const char *buf, int error)
+logit(FILE *fp, int flags, const char *prefix, const char *buf)
 {
 	time_t	   t = time(NULL);
 	struct tm *tp = localtime(&t);
 
-	fprintf(fp, "%02d:%02d %s", tp->tm_hour, tp->tm_min, buf);
-	if (error) {
+	fprintf(fp, "[%02d:%02d] ", tp->tm_hour, tp->tm_min);
+	if (prefix != NULL) {
+		fprintf(fp, "%s ", prefix);
+	}
+	fprintf(fp, "%s", buf);
+	if ((flags & LOG_WARNING)) {
 		fprintf(fp, ": %s", strerror(errno));
 	}
 	fprintf(fp, "%s", "\n");
@@ -121,64 +133,103 @@ logit(FILE *fp, const char *buf, int error)
 }
 
 /*
- * vlog --
- *	Log a string to stderr and/or a file.
+ * vlog_common --
+ *	Log to stderr and/or a file.
  */
 static void
-vlog(const char *fmt, va_list ap, int error)
+vlog_common(int flags, const char *prefix, const char *fmt, va_list ap)
 {
-	char buf[BUFSIZ];
+	char buf[LOG_BUFSIZE];
+
+	if ((flags & LOG_DEBUG) && !log_ndebug)
+		return;
 
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 
 	if (log_stderr) {
-		logit(stderr, buf, error);
+		logit(stderr, flags, prefix, buf);
 	}
 	if (log_fp != NULL) {
-		logit(log_fp, buf, error);
+		logit(log_fp, flags, prefix, buf);
 	}
 }
 
 /*
- * log_debug --
- *	Log only when debug is enabled.
+ * log_msg --
+ *	Log a message.
  */
 void
-log_debug(const char *fmt, ...)
-{
-	va_list	ap;
-
-	if (log_ndebug) {
-		va_start(ap, fmt);
-		vlog(fmt, ap, FALSE);
-		va_end(ap);
-	}
-}
-
-/*
- * log_warnx --
- *	Log in warnx() style.
- */
-void
-log_warnx(const char *fmt, ...)
-{
-	va_list	ap;
-
-	va_start(ap, fmt);
-	vlog(fmt, ap, FALSE);
-	va_end(ap);
-}
-
-/*
- * log_warn --
- *	Log in warn() style (outputs errno as string).
- */
-void
-log_warn(const char *fmt, ...)
+log_msg(int flags, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	vlog(fmt, ap, TRUE);
+	vlog_msg(flags, fmt, ap);
 	va_end(ap);
+}
+
+/*
+ * vlog_msg --
+ *	Log a message (arguments are already captured).
+ */
+void
+vlog_msg(int flags, const char *fmt, va_list ap)
+{
+	vlog_common(flags, NULL, fmt, ap);
+}
+
+/*
+ * log_plugin --
+ *	Log a message, prefix the plugin.
+ */
+void
+log_plugin(int flags, Plugin p, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vlog_plugin(flags, p, fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * vlog_plugin --
+ *	Log a message, prefix the plugin (arguments are already captured).
+ */
+void
+vlog_plugin(int flags, Plugin p, const char *fmt, va_list ap)
+{
+	char buf[LOG_BUFSIZE_PLUGIN];
+
+	snprintf(buf, sizeof(buf), "*%s*", plugin_id(p));
+
+	vlog_common(flags, buf, fmt, ap);
+}
+
+/*
+ * log_conn --
+ *	Log a message, prefix the connection.
+ */
+void
+log_conn(int flags, Connection conn, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vlog_conn(flags, conn, fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * vlog_conn --
+ *	Log a message, prefix the connection (arguments are already captured).
+ */
+void
+vlog_conn(int flags, Connection conn, const char *fmt, va_list ap)
+{
+	char buf[LOG_BUFSIZE_CONN];
+
+	snprintf(buf, sizeof(buf), "(%s)", connection_id(conn));
+
+	vlog_common(flags, buf, fmt, ap);
 }

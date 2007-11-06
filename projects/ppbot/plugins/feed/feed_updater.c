@@ -108,14 +108,15 @@ feed_read(FeedUpdater fup)
 	result = http_receive(feed_config_location(fup->fcp),
 	    fup->modified, fup->etag);
 	if (http_result_status(result) == FALSE) {
-		log_warnx("Unable to update feed %s: %s",
+		feed_log_info("Unable to update feed %s: %s.",
 		    feed_config_id(fup->fcp), http_result_error(result));
 		http_destroy(result);
 		return (FALSE);
 	}
 
 	if (http_result_code(result) == 304) {
-		log_debug("No changes in feed %s", feed_config_id(fup->fcp));
+		feed_log_debug("No changes in feed %s.",
+		    feed_config_id(fup->fcp));
 		http_destroy(result);
 		return (FALSE);
 	}
@@ -124,7 +125,7 @@ feed_read(FeedUpdater fup)
 
 	rv = feed_parse(fp, http_result_body(result));
 	if (rv == FALSE) {
-		log_warnx("Unable to parse feed %s: %s",
+		feed_log_info("Unable to parse feed %s: %s.",
 		    feed_config_id(fup->fcp), feed_error(fp));
 		feed_destroy(fp);
 		http_destroy(result);
@@ -182,7 +183,7 @@ feed_check_new(FeedUpdater fup)
 void
 feed_update(FeedUpdater fup)
 {
-	log_debug("Updating feed %s", feed_config_id(fup->fcp));
+	feed_log_debug("Updating feed %s.", feed_config_id(fup->fcp));
 
 	if (feed_read(fup) == FALSE)
 		return;
@@ -223,7 +224,7 @@ feed_fetch(FeedUpdater fup)
 			}
 			fup->last = time(NULL);
 		} else {
-			log_debug("No update needed for feed %s",
+			feed_log_debug("No update needed for feed %s.",
 			    feed_config_id(fcp));
 		}
 	}

@@ -87,7 +87,7 @@ feed_updater_new_item(FeedConfig fcp, FeedItem ip)
 	     fdp = feed_destination_next(fdp)) {
 		Connection conn = connection_find(feed_destination_id(fdp));
 		if (conn == NULL) {
-			log_debug(
+			feed_log_debug(
 			    "Connection %s not found; no feed output to %s.",
 			    feed_destination_id(fdp),
 			    feed_destination_channel(fdp));
@@ -195,7 +195,7 @@ feed_command(Connection conn, Message msg, const char *args)
  *	Handle the PRIVMSG message.
  */
 static void
-feed_check_message(Connection conn, Message msg)
+feed_check_message(Plugin p, Connection conn, Message msg)
 {
 	const char *command = "feed";
 	const char *buf;
@@ -220,13 +220,15 @@ feed_check_message(Connection conn, Message msg)
 /*
  * plugin_open --
  *	Called when the plugin is loaded/opened.  This function loads the
- *	configuration file and installs the timers for reading the RSS feed.
+ *	configuration file and installs the timers for reading the feeds.
  */
 void
 plugin_open(Plugin p)
 {
 	struct feed_head *fhp;
 	struct timeval    tv;
+
+	feed_logger_initialize(p);
 
 	feed_config_set_listener(feed_config_event);
 	feed_config_parse(feed_config);
@@ -245,9 +247,11 @@ plugin_open(Plugin p)
 		}
 	}
 
-	/* Install the commands. */
+	/* Install the command. */
 	callback_register(p, "PRIVMSG", MSG_USER|MSG_DATA, 1,
 	    feed_check_message);
+
+	feed_log_info("Loaded plugin %s v%s.", PLUGIN_NAME, PLUGIN_VERSION);
 }
 
 /*

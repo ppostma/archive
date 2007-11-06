@@ -29,11 +29,13 @@
 
 #include <sys/types.h>
 
+#include "ircbot.h"
+
 /*
  * Name & version of the plugin.
  */
-#define PLUGIN_NAME	"ppbot web feed reader"
-#define PLUGIN_VERSION	"20071026"
+#define PLUGIN_NAME	"web feed reader"
+#define PLUGIN_VERSION	"20071104"
 
 /* URL flags. */
 #define URL_SCHEME	0x01
@@ -112,6 +114,13 @@ const char	*http_result_body(HttpResult);
 const char	*http_result_error(HttpResult);
 
 const char	*http_header_value(HttpResult, const char *);
+
+/* feed_log.c */
+void		 feed_logger_initialize(Plugin);
+
+void		 feed_log_debug(const char *, ...);
+void		 feed_log_info(const char *, ...);
+void		 feed_log_warning(const char *, ...);
 
 /* feed_parser.c */
 int		 feed_parse(Feed, const char *);

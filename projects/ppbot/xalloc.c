@@ -46,7 +46,7 @@ xmalloc(size_t size)
 	do {
 		p = malloc(size);
 		if (p == NULL && !warned++)
-			log_warn("Unable to allocate %lu bytes",
+			log_msg(LOG_WARNING, "Unable to allocate %lu bytes",
 			    (unsigned long)size);
 		if (p == NULL)
 			sleep(1);
@@ -68,7 +68,7 @@ xcalloc(size_t number, size_t size)
 	do {
 		p = calloc(number, size);
 		if (p == NULL && !warned++)
-			log_warn("Unable to allocate %lu bytes",
+			log_msg(LOG_WARNING, "Unable to allocate %lu bytes",
 			    (unsigned long)(number * size));
 		if (p == NULL)
 			sleep(1);
@@ -93,7 +93,7 @@ xrealloc(void *ptr, size_t size)
 	do {
 		p = realloc(ptr, size);
 		if (p == NULL && !warned++)
-			log_warn("Unable to reallocate %lu bytes",
+			log_msg(LOG_WARNING, "Unable to reallocate %lu bytes",
 			    (unsigned long)size);
 		if (p == NULL)
 			sleep(1);
@@ -178,7 +178,7 @@ xvsprintf(const char *fmt, va_list ap)
 	do {
 		rv = vasprintf(&ptr, fmt, ap);
 		if (rv == -1 && !warned++)
-			log_warn("Unable to format string");
+			log_msg(LOG_WARNING, "Unable to format string");
 		if (rv == -1)
 			sleep(1);
 	} while (rv == -1);

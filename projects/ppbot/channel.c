@@ -35,6 +35,11 @@
 #include "queue.h"
 
 /*
+ * Logging buffer size.
+ */
+#define LOG_BUFSIZE	(MAX_BUFFER + 128)
+
+/*
  * Channel and user objects.
  */
 struct channel {
@@ -177,7 +182,7 @@ channel_lookup(ChannelList list, const char *name)
 
 /*
  * channel_name --
- *	Accessor function for the 'name' member.
+ *	Accessor function for the name member in Channel.
  */
 const char *
 channel_name(Channel chan)
@@ -187,7 +192,7 @@ channel_name(Channel chan)
 
 /*
  * channel_key --
- *	Accessor function for the 'key' member.
+ *	Accessor function for the key member in Channel.
  */
 const char *
 channel_key(Channel chan)
@@ -197,7 +202,7 @@ channel_key(Channel chan)
 
 /*
  * channel_topic --
- *	Accessor function for the 'topic' member.
+ *	Accessor function for the topic member in Channel.
  */
 const char *
 channel_topic(Channel chan)
@@ -294,8 +299,8 @@ channel_join_all(Connection conn, ChannelList list)
 
 			chan->logfp = fopen(chan->logfile, "a");
 			if (chan->logfp == NULL) {
-				log_warn("Unable to open '%s' for appending",
-				    chan->logfile);
+				log_conn(LOG_WARNING, conn, "Unable to open "
+				    "'%s' for appending", chan->logfile);
 			}
 		}
 		/* Join the channel if not there. */
@@ -429,45 +434,77 @@ user_remove_all(ChannelList list)
 
 /*
  * channel_log_write --
- *	Write the log the the file.
+ *	Write a log string to exactly one channel.
  */
 static void
-channel_log_write(FILE *fp, const char *str)
+channel_log_write(Channel chan, const char *buf)
 {
 	time_t	   t = time(NULL);
 	struct tm *tm = localtime(&t);
 
-	fprintf(fp, "[%02d:%02d] %s\n", tm->tm_hour, tm->tm_min, str);
-	fflush(fp);
+	fprintf(chan->logfp, "[%02d:%02d] %s\n", tm->tm_hour, tm->tm_min, buf);
+	fflush(chan->logfp);
 }
 
 /*
- * channel_do_log --
- *	Figure out where to send the logs to and write the log.
+ * channel_log_write_multiple --
+ *	Write a log string to multiple channels.
  */
 static void
-channel_do_log(ChannelList list, Channel chan, const char *sender,
+channel_log_write_multiple(ChannelList list, const char *sender,
     const char *buf)
 {
-	if (chan == NULL && list != NULL) {
-		/* Global, append to multiple logs. */
-		TAILQ_FOREACH(chan, list, link) {
-			/* Is logging enabled? */
-			if (chan->logfp == NULL)
-				continue;
-			/* Is the sender on the channel? */
-			if (!user_on_channel(chan, sender))
-				continue;
-			channel_log_write(chan->logfp, buf);
-		}
-	} else {
-		/* One channel log. */
-		channel_log_write(chan->logfp, buf);
+	struct channel *chan;
+
+	TAILQ_FOREACH(chan, list, link) {
+		/* Is logging enabled? */
+		if (chan->logfp == NULL)
+			continue;
+		/* Is the sender on the channel? */
+		if (!user_on_channel(chan, sender))
+			continue;
+		channel_log_write(chan, buf);
 	}
 }
 
 /* Static buffer for the log messages. */
-static char log_buf[BUFSIZ];
+static char log_buf[LOG_BUFSIZE];
+
+/*
+ * channel_log_ctcp --
+ *	Log a CTCP message.
+ */
+void
+channel_log_ctcp(Message msg, Channel chan)
+{
+	char *tmp, *p;
+
+	if (chan->logfp == NULL)
+		return;
+
+	/* Log only CTCP action messages. */
+	if (strncmp(message_data(msg), "\001ACTION", 7) == 0) {
+		tmp = xstrdup(message_data(msg) + 8);
+		if ((p = strrchr(tmp, '\001')) != NULL)
+			*p = '\0';
+
+		snprintf(log_buf, sizeof(log_buf), "Action: %s %s",
+		    message_sender(msg), tmp);
+		xfree(tmp);
+
+		channel_log_write(chan, log_buf);
+	}
+}
+
+/*
+ * channel_log_ctcpreply --
+ *	Log a CTCP-reply message.
+ */
+void
+channel_log_ctcpreply(Message msg, Channel chan)
+{
+	/* Do nothing. */
+}
 
 /*
  * channel_log_join --
@@ -482,7 +519,7 @@ channel_log_join(Message msg, Channel chan)
 	snprintf(log_buf, sizeof(log_buf), "%s (%s) joined %s.",
 	    message_sender(msg), message_userhost(msg), chan->name);
 
-	channel_do_log(NULL, chan, message_sender(msg), log_buf);
+	channel_log_write(chan, log_buf);
 } 
 
 /*
@@ -499,7 +536,7 @@ channel_log_kick(Message msg, Channel chan)
 	    message_parameter(msg, 1), message_parameter(msg, 0),
 	    message_sender(msg), message_data(msg));
 
-	channel_do_log(NULL, chan, message_sender(msg), log_buf);
+	channel_log_write(chan, log_buf);
 }
 
 /*
@@ -513,7 +550,7 @@ channel_log_nick(Message msg, ChannelList list)
 	    message_sender(msg), message_data(msg));
 
 	/* Use the old nickname, otherwise the bot won't find it. */
-	channel_do_log(list, NULL, message_sender(msg), log_buf);
+	channel_log_write_multiple(list, message_sender(msg), log_buf);
 }
 
 /*
@@ -551,7 +588,7 @@ channel_log_mode(Message msg, Channel chan)
 	snprintf(log_buf + strlen(log_buf), sizeof(log_buf) - strlen(log_buf),
 	    "' by %s!%s", message_sender(msg), message_userhost(msg));
 
-	channel_do_log(NULL, chan, message_sender(msg), log_buf);
+	channel_log_write(chan, log_buf);
 }
 
 /*
@@ -568,7 +605,7 @@ channel_log_part(Message msg, Channel chan)
 	    message_sender(msg), message_userhost(msg),
 	    message_parameter(msg, 0));
 
-	channel_do_log(NULL, chan, message_sender(msg), log_buf);
+	channel_log_write(chan, log_buf);
 }
 
 /*
@@ -578,25 +615,13 @@ channel_log_part(Message msg, Channel chan)
 void
 channel_log_privmsg(Message msg, Channel chan)
 {
-	char *tmp, *p;
-
 	if (chan->logfp == NULL)
 		return;
 
-	if (strncmp(message_data(msg), "\001ACTION", 7) == 0) {
-		tmp = xstrdup(message_data(msg) + 8);
-		if ((p = strrchr(tmp, '\001')) != NULL)
-			*p = '\0';
+	snprintf(log_buf, sizeof(log_buf), "<%s> %s",
+	    message_sender(msg), message_data(msg));
 
-		snprintf(log_buf, sizeof(log_buf), "Action: %s %s",
-		    message_sender(msg), tmp);
-		xfree(tmp);
-	} else {
-		snprintf(log_buf, sizeof(log_buf), "<%s> %s",
-		    message_sender(msg), message_data(msg));
-	}
-
-	channel_do_log(NULL, chan, message_sender(msg), log_buf);
+	channel_log_write(chan, log_buf);
 }
 
 /*
@@ -610,7 +635,7 @@ channel_log_quit(Message msg, ChannelList list)
 	    message_sender(msg), message_userhost(msg),
 	    message_data(msg) ? message_data(msg) : "");
 
-	channel_do_log(list, NULL, message_sender(msg), log_buf);
+	channel_log_write_multiple(list, message_sender(msg), log_buf);
 }
 
 /*
@@ -627,29 +652,16 @@ channel_log_topic(Message msg, Channel chan)
 	    message_parameter(msg, 0), message_sender(msg),
 	    message_userhost(msg), message_data(msg) ? message_data(msg) : "");
 
-	channel_do_log(NULL, chan, message_sender(msg), log_buf);
+	channel_log_write(chan, log_buf);
 }
 
 /*
- * channel_log_internal_notice --
- *	Log an internal NOTICE message.  NOTICE messages generated by
- *	the bot aren't repeated by the IRC server, like most other messages.
+ * channel_log_internal_ctcp --
+ *	Log an internal CTCP message.
  */
 void
-channel_log_internal_notice(ChannelList list, const char *dest,
-    const char *data, const char *curnick)
-{
-	channel_log_internal_privmsg(list, dest, data, curnick);
-}
-
-/*
- * channel_log_internal_privmsg --
- *	Log an internal PRIVMSG message.  PRIVMSG messages generated by
- *	the bot aren't repeated by the IRC server, like most other messages.
- */
-void
-channel_log_internal_privmsg(ChannelList list, const char *dest,
-    const char *data, const char *curnick)
+channel_log_internal_ctcp(ChannelList list, const char *dest,
+    const char *curnick, const char *data)
 {
 	Channel	 chan;
 	char	*tmp, *p;
@@ -663,8 +675,8 @@ channel_log_internal_privmsg(ChannelList list, const char *dest,
 	if (chan == NULL || chan->logfp == NULL)
 		return;
 
-	/* Log the action or normal message. */
-	if (strncmp(data, "\001ACTION", 7) == 0) {
+	/* Log only CTCP action messages. */
+        if (strncmp(data, "\001ACTION", 7) == 0) {
 		tmp = xstrdup(data + 8);
 		if ((p = strrchr(tmp, '\001')) != NULL)
 			*p = '\0';
@@ -672,9 +684,53 @@ channel_log_internal_privmsg(ChannelList list, const char *dest,
 		snprintf(log_buf, sizeof(log_buf), "Action: %s %s",
 		    curnick, tmp);
 		xfree(tmp);
-	} else {
-		snprintf(log_buf, sizeof(log_buf), "<%s> %s", curnick, data);
-	}
 
-	channel_do_log(NULL, chan, curnick, log_buf);
+		channel_log_write(chan, log_buf);
+	}
+}
+
+/*
+ * channel_log_internal_ctcpreply --
+ *	Log an internal CTCP-reply message.
+ */
+void
+channel_log_internal_ctcpreply(ChannelList list, const char *dest,
+    const char *curnick, const char *data)
+{
+	/* Do nothing. */
+}
+
+/*
+ * channel_log_internal_notice --
+ *	Log an internal NOTICE message.
+ */
+void
+channel_log_internal_notice(ChannelList list, const char *dest,
+    const char *curnick, const char *data)
+{
+	channel_log_internal_privmsg(list, dest, curnick, data);
+}
+
+/*
+ * channel_log_internal_privmsg --
+ *	Log an internal PRIVMSG message.
+ */
+void
+channel_log_internal_privmsg(ChannelList list, const char *dest,
+    const char *curnick, const char *data)
+{
+	Channel chan;
+
+	/* Skip private messages. */
+	if (strcmp(curnick, dest) == 0)
+		return;
+
+	/* Look up the channel. */
+	chan = channel_lookup(list, dest);
+	if (chan == NULL || chan->logfp == NULL)
+		return;
+
+	snprintf(log_buf, sizeof(log_buf), "<%s> %s", curnick, data);
+
+	channel_log_write(chan, log_buf);
 }

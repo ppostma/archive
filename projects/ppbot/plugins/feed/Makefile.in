@@ -32,7 +32,7 @@ LDFLAGS= @sh_ldflags@ `xml2-config --libs`
 
 PLUGIN=	feed.so
 OBJS=	feed_config_parse.o feed_config_scan.o feed_connection.o feed_http.o \
-	feed_parser.o feed_plugin.o feed_updater.o feed_url.o
+	feed_log.o feed_parser.o feed_plugin.o feed_updater.o feed_url.o
 
 all: $(PLUGIN)
 

@@ -76,16 +76,16 @@ mq_attach(Connection conn)
 	rv = timer_schedule(tv, (void *)mq_handler, conn, TIMER_POLL,
 	    "mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("[%s] Unable to schedule message queue timer: %s",
-		    connection_id(conn), strerror(rv));
+		log_conn(LOG_INFO, conn,
+		    "Unable to schedule message queue timer: %s", strerror(rv));
 		return (NULL);
 	}
 
 	/* Suspend the timer immediately. */
 	rv = timer_suspend("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("[%s] Unable to suspend message queue timer: %s",
-		    connection_id(conn), strerror(rv));
+		log_conn(LOG_INFO, conn,
+		    "Unable to suspend message queue timer: %s", strerror(rv));
 		return (NULL);
 	}
 
@@ -116,8 +116,8 @@ mq_detach(Connection conn, MqueueList list)
 	/* Remove the timer. */
 	rv = timer_cancel("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("[%s] Unable to cancel message queue timer: %s",
-		    connection_id(conn), strerror(rv));
+		log_conn(LOG_INFO, conn,
+		    "Unable to cancel message queue timer: %s", strerror(rv));
 	}
 }
 
@@ -164,8 +164,8 @@ mq_suspend_queue(Connection conn)
 
 	rv = timer_suspend("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("[%s] Unable to suspend message queue timer: %s",
-		    connection_id(conn), strerror(rv));
+		log_conn(LOG_INFO, conn,
+		    "Unable to suspend message queue timer: %s", strerror(rv));
 	}
 }
 
@@ -180,8 +180,8 @@ mq_resume_queue(Connection conn)
 
 	rv = timer_resume("mq_handler#%lx", (unsigned long)conn);
 	if (rv != 0) {
-		log_warnx("[%s] Unable to resume message queue timer: %s",
-		    connection_id(conn), strerror(rv));
+		log_conn(LOG_INFO, conn,
+		    "Unable to resume message queue timer: %s", strerror(rv));
 	}
 }
 
@@ -256,8 +256,7 @@ mq_handler(Connection conn)
  *	Send a CTCP message to an IRC server.
  */
 void
-send_ctcp(Connection conn, const char *dest, const char *cmd,
-    const char *fmt, ...)
+send_ctcp(Connection conn, const char *dest, const char *fmt, ...)
 {
 	struct mqueue	*mq;
 	va_list		 ap;
@@ -267,7 +266,11 @@ send_ctcp(Connection conn, const char *dest, const char *cmd,
 	str = xvsprintf(fmt, ap);
 	va_end(ap);
 
-	mq = mq_create("PRIVMSG %s :\001%s %s\001\r\n", dest, cmd, str);
+	/* Log the message. */
+	channel_log_internal_ctcp(connection_channels(conn),
+	    dest, connection_current_nick(conn), str);
+
+	mq = mq_create("PRIVMSG %s :\001%s\001\r\n", dest, str);
 	mq_enqueue(conn, mq);
 
 	xfree(str);
@@ -278,8 +281,7 @@ send_ctcp(Connection conn, const char *dest, const char *cmd,
  *	Send a CTCP reply to an IRC server (skips the queue).
  */
 void
-send_ctcpreply(Connection conn, const char *dest, const char *cmd,
-    const char *fmt, ...)
+send_ctcpreply(Connection conn, const char *dest, const char *fmt, ...)
 {
 	va_list	 ap;
 	char	*str;
@@ -288,8 +290,7 @@ send_ctcpreply(Connection conn, const char *dest, const char *cmd,
 	str = xvsprintf(fmt, ap);
 	va_end(ap);
 
-	connection_writef(conn, "NOTICE %s :\001%s %s\001\r\n",
-	    dest, cmd, str);
+	connection_writef(conn, "NOTICE %s :\001%s\001\r\n", dest, str);
 
 	xfree(str);
 }
@@ -358,8 +359,13 @@ send_notice(Connection conn, const char *dest, const char *fmt, ...)
 	va_end(ap);
 
 	/* Log the message. */
-	channel_log_internal_notice(connection_channels(conn),
-	    dest, str, connection_current_nick(conn));
+	if (*str == '\001') {
+		channel_log_internal_ctcpreply(connection_channels(conn),
+		    dest, connection_current_nick(conn), str);
+	} else {
+		channel_log_internal_notice(connection_channels(conn),
+		    dest, connection_current_nick(conn), str);
+	}
 
 	mq = mq_create("NOTICE %s :%s\r\n", dest, str);
 	mq_enqueue(conn, mq);
@@ -406,8 +412,13 @@ send_privmsg(Connection conn, const char *dest, const char *fmt, ...)
 	va_end(ap);
 
 	/* Log the message. */
-	channel_log_internal_privmsg(connection_channels(conn),
-	    dest, str, connection_current_nick(conn));
+	if (*str == '\001') {
+		channel_log_internal_ctcp(connection_channels(conn),
+		    dest, connection_current_nick(conn), str);
+	} else {
+		channel_log_internal_privmsg(connection_channels(conn),
+		    dest, connection_current_nick(conn), str);
+	}
 
 	mq = mq_create("PRIVMSG %s :%s\r\n", dest, str);
 	mq_enqueue(conn, mq);

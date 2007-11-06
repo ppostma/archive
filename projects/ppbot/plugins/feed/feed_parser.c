@@ -433,7 +433,7 @@ feed_item_next(FeedItem ip)
 
 /*
  * feed_item_title --
- *	Accessor function for the 'title' member.
+ *	Accessor function for the title member in FeedItem.
  */
 const char *
 feed_item_title(FeedItem ip)
@@ -443,7 +443,7 @@ feed_item_title(FeedItem ip)
 
 /*
  * feed_item_link --
- *	Accessor function for the 'link' member.
+ *	Accessor function for the link member in FeedItem.
  */
 const char *
 feed_item_link(FeedItem ip)
