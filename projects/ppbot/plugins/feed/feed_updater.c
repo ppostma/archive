@@ -158,6 +158,11 @@ feed_check_new(FeedUpdater fup)
 	if (fup->new_item == NULL)
 		return;
 
+	/* Both feeds should not be empty. */
+	if (feed_item_first(fup->new) == NULL ||
+	    feed_item_first(fup->old) == NULL)
+		return;
+
 	for (np = feed_item_first(fup->new); np != NULL;
 	     np = feed_item_next(np)) {
 		exists = FALSE;
