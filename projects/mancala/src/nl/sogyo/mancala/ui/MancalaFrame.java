@@ -2,22 +2,16 @@ package nl.sogyo.mancala.ui;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
 
 import nl.sogyo.mancala.domein.Mancala;
 import nl.sogyo.mancala.domein.interfaces.IMancala;
 
-import com.jgoodies.looks.plastic.PlasticLookAndFeel;
-import com.jgoodies.looks.plastic.PlasticXPLookAndFeel;
-import com.jgoodies.looks.plastic.theme.Silver;
-
 /**
  * @author Peter Postma
  */
-public class MancalaFrame extends JFrame
-{
-	public MancalaFrame(IMancala mancala)
-	{
+public class MancalaFrame extends JFrame {
+
+	public MancalaFrame(IMancala mancala) {
 		setTitle("Mancala");
 		setSize(580, 250);
 		setResizable(false);
@@ -27,7 +21,7 @@ public class MancalaFrame extends JFrame
 		mancalaPanel.setLocation(0, 0);
 		mancalaPanel.setVisible(true);
 
-		JPanel contentPane = (JPanel)getContentPane();
+		JPanel contentPane = (JPanel) getContentPane();
 		contentPane.setVisible(true);
 		contentPane.setLayout(null);
 		contentPane.add(mancalaPanel);
@@ -35,14 +29,13 @@ public class MancalaFrame extends JFrame
 		setVisible(true);
 	}
 
-	public static void main(String[] args)
-	{
-		PlasticLookAndFeel.setPlasticTheme(new Silver());
-		try {
-			UIManager.setLookAndFeel(new PlasticXPLookAndFeel());
-		} catch (Exception e) {
-			System.out.println("Unable to set custom LAF: " + e.getMessage());
-		}
+	public static void main(String[] args) {
+		// PlasticLookAndFeel.setPlasticTheme(new Silver());
+		// try {
+		// UIManager.setLookAndFeel(new PlasticXPLookAndFeel());
+		// } catch (Exception e) {
+		// System.out.println("Unable to set custom LAF: " + e.getMessage());
+		// }
 
 		new MancalaFrame(new Mancala("A", "B", 6, 4));
 	}
