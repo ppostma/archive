@@ -1,0 +1,73 @@
+<html xmlns:wicket>
+<body>
+	<wicket:panel>
+		<div id="headers">
+			<span class="label" wicket:id="subjectLabelId">subject label</span>
+			<span wicket:id="subjectId">subject</span>
+			<br />
+
+			<span class="label" wicket:id="fromLabelId">from label</span>
+			<span wicket:id="fromId">from</span>
+			<br />
+			
+			<span class="label" wicket:id="toLabelId">to label</span>
+			<span wicket:id="toId">to</span>
+			<br />
+
+			<span class="label" wicket:id="dateLabelId">date label</span>
+			<span wicket:id="dateId">date</span>
+		</div>
+
+		<div id="attachments">
+			<ul>
+				<li wicket:id="attachmentsId">
+					<a href="#" wicket:id="attachmentLinkId"><span wicket:id="attachmentLabelId">attachment</span></a>
+					<span wicket:id="bytesLabelId">bytes</span>
+				</li>
+			</ul>
+		</div>
+
+		<div id="body" wicket:id="bodyId">body text</div>
+	</wicket:panel>
+
+	<wicket:fragment wicket:id="actionFragmentId">
+		<div class="button">
+			<span wicket:id="folderButtonId">folder button</span>
+		</div>
+
+		<div class="separator"></div>
+
+		<div class="button">
+			<span wicket:id="writeButtonId">write button</span>
+		</div>
+
+		<div class="button">
+			<span wicket:id="replyButtonId">reply button</span>
+		</div>
+
+		<div class="button">
+			<span wicket:id="forwardButtonId">forward button</span>
+		</div>
+
+		<div class="separator"></div>
+
+		<div class="button">
+			<span wicket:id="deleteButtonId">delete button</span>
+		</div>
+
+		<div class="button">
+			<span wicket:id="spamButtonId">spam button</span>
+		</div>
+
+		<div class="separator"></div>
+
+		<div class="button">
+			<span wicket:id="previousButtonId">previous button</span>
+		</div>
+
+		<div class="button">
+			<span wicket:id="nextButtonId">next button</span>
+		</div>
+	</wicket:fragment>
+</body>
+</html>

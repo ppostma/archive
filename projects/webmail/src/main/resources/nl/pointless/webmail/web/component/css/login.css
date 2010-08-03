@@ -1,0 +1,54 @@
+/*
+ * Webmail login page stylesheet.
+ */
+
+html,body {
+	margin: 0px;
+	padding: 0px;
+}
+
+body {
+	font-family: arial, sans-serif, helvetica;
+	font-size: 90%;
+	background-color: #e3e3e3;
+}
+
+div#container {
+	width: 50%;
+	margin: 0px auto;
+}
+
+div#feedback {
+	color: red;
+}
+
+div#header h1 {
+	height: 70px;
+	line-height: 80px;
+	margin: 0px;
+}
+
+div#login {
+	width: 300px;
+}
+
+div#login label {
+	float: left;
+	margin: 0.5em 0;
+	text-align: right;
+	width: 80px;
+}
+
+div#login input[type=text],input[type=password] {
+	float: right;
+	margin: 0.5em 0;
+	text-align: left;
+	width: 180px;
+}
+
+div#login input[type=submit] {
+	float: right;
+	margin: 0.5em 0;
+	text-align: left;
+	width: 100px;
+}

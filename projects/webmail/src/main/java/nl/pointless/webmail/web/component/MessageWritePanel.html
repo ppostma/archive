@@ -1,0 +1,41 @@
+<html xmlns:wicket>
+<body>
+	<wicket:panel>
+		<form wicket:id="formId">
+			<p>
+				<label>To: </label>
+				<input wicket:id="toId" type="text" />
+			</p>
+			<p>
+				<label>Subject: </label>
+				<input wicket:id="subjectId" type="text" />
+			</p>
+			<p>
+				<textarea wicket:id="bodyId"></textarea>
+			</p>
+		</form>
+	</wicket:panel>
+
+	<wicket:fragment wicket:id="actionFragmentId">
+		<div class="button">
+			<span wicket:id="discardButtonId">discard button</span>
+		</div>
+
+		<div class="separator"></div>
+
+		<div class="button">
+			<span wicket:id="sendButtonId">send button</span>
+		</div>
+
+		<div class="separator"></div>
+
+		<div class="button">
+			<span wicket:id="attachButtonId">attach button</span>
+		</div>
+
+		<div class="button">
+			<span wicket:id="saveButtonId">save button</span>
+		</div>
+	</wicket:fragment>
+</body>
+</html>

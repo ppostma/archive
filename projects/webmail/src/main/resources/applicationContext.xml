@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<bean id="javaMailAuthenticator" scope="request"
+		class="nl.pointless.webmail.service.impl.JavaMailAuthenticator">
+		<property name="mailSession" ref="javaMailSession" />
+	</bean>
+
+	<bean id="javaMailService" scope="request"
+		class="nl.pointless.webmail.service.impl.JavaMailService">
+		<property name="mailSession" ref="javaMailSession" />
+	</bean>
+
+	<bean id="javaMailSession" scope="session"
+		class="nl.pointless.webmail.service.impl.JavaMailSession">
+		<property name="session">
+			<bean id="session" factory-method="getInstance" class="javax.mail.Session">
+				<constructor-arg ref="javaMailProperties" />
+			</bean>
+		</property>
+	</bean>
+
+	<util:map id="javaMailProperties" map-class="java.util.Properties">
+		<entry key="mail.transport.protocol" value="smtp" />
+		<entry key="mail.store.protocol" value="imap" />
+		<entry key="mail.host" value="192.168.1.1" />
+		<entry key="mail.port" value="143" />
+		<entry key="mail.debug" value="false" />
+	</util:map>
+
+</beans>

@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title wicket:id="pageTitleId">webmail</title>
+	<link rel="stylesheet" type="text/css" wicket:id="cssId" />
+</head>
+<body>
+	<div id="container">
+		<div id="header">
+			<h1 wicket:id="webmailLabelId">webmail</h1>
+
+			<div id="info">
+				<span wicket:id="loggedInId">logged in at</span>
+			</div>
+
+			<div id="actions">
+				<span wicket:id="actionPanelId" />
+			</div>
+		</div>
+
+		<div id="wrapper">
+			<div id="folders">
+				<span wicket:id="folderPanelId" />
+			</div>
+
+			<div id="content">
+				<span wicket:id="messageListId" />
+				<span wicket:id="messageViewId" />
+				<span wicket:id="messageWriteId" />
+			</div>
+		</div>
+
+		<div id="footer">
+			<span wicket:id="copyrightLabelId">copyright</span>
+		</div>
+	</div>
+</body>
+</html>
