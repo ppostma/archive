@@ -1,4 +1,4 @@
-package nl.pointless.webmail.service.impl;
+package nl.pointless.webmail.parser;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import javax.mail.internet.MimeMultipart;
 
 import nl.pointless.webmail.dto.Attachment;
 import nl.pointless.webmail.dto.Message;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * Parses the body (content) of a {@link javax.mail.Message}. Prefer the
@@ -49,7 +51,7 @@ public class MessageContentParser {
 		this.contentTypes = new HashMap<String, String>();
 		this.attachments = new ArrayList<Attachment>();
 
-		this.parseContent(this.message);
+		parseContent(this.message);
 
 		String content = this.contentTypes.get("text/plain");
 		if (content != null) {
@@ -77,7 +79,7 @@ public class MessageContentParser {
 
 	private void parseContent(javax.mail.Part messagePart) throws IOException,
 			MessagingException {
-		this.parseContent(messagePart, false);
+		parseContent(messagePart, false);
 	}
 
 	private void parseContent(javax.mail.Part messagePart,
@@ -93,10 +95,10 @@ public class MessageContentParser {
 			for (int i = 0; i < multipart.getCount(); i++) {
 				BodyPart bodyPart = multipart.getBodyPart(i);
 
-				this.parseContent(bodyPart, isAlternative);
+				parseContent(bodyPart, isAlternative);
 			}
 		} else {
-			this.parseNonMultipartContent(messagePart, isAlternative);
+			parseNonMultipartContent(messagePart, isAlternative);
 		}
 	}
 
@@ -104,6 +106,7 @@ public class MessageContentParser {
 			boolean alternativeContent) throws IOException, MessagingException {
 		Object content = messagePart.getContent();
 		String contentType = messagePart.getContentType();
+		String filename = messagePart.getFileName();
 
 		// Strip any extra info from the MIME type.
 		int index = contentType.indexOf(";");
@@ -112,7 +115,9 @@ public class MessageContentParser {
 		}
 
 		// Parse the plain text or HTML.
-		if (contentType.equals("text/plain") || contentType.equals("text/html")) {
+		if (filename == null
+				&& (contentType.equals("text/plain") || contentType
+						.equals("text/html"))) {
 			String contentBody = this.contentTypes.get(contentType);
 
 			if (!alternativeContent && contentBody != null) {
@@ -129,21 +134,13 @@ public class MessageContentParser {
 		}
 
 		// Parse attachments.
-		if (!alternativeContent && contentType.startsWith("application/")) {
-			String filename = messagePart.getFileName();
-
-			InputStream is = messagePart.getInputStream();
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-			byte[] buffer = new byte[1024];
-			int read;
-			while ((read = is.read(buffer)) != -1) {
-				baos.write(buffer, 0, read);
-			}
-			is.close();
+		if (filename != null) {
+			InputStream input = messagePart.getInputStream();
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
+			IOUtils.copy(input, output);
 
 			Attachment attachment = new Attachment();
-			attachment.setContent(baos.toByteArray());
+			attachment.setContent(output.toByteArray());
 			attachment.setContentType(contentType);
 			attachment.setFilename(filename);
 			this.attachments.add(attachment);

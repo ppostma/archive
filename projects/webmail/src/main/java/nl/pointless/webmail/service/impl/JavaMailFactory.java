@@ -8,6 +8,7 @@ import javax.mail.Flags.Flag;
 
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
+import nl.pointless.webmail.parser.MessageContentParser;
 
 /**
  * Factory class to construct lightweight transfer objects from javax.mail
