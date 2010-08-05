@@ -24,7 +24,6 @@ public class WebmailSession extends WebSession {
 	 */
 	public WebmailSession(Request request) {
 		super(request);
-		this.panelSwitcher = new PanelSwitcher();
 	}
 
 	/**
@@ -53,5 +52,9 @@ public class WebmailSession extends WebSession {
 
 	public PanelSwitcher getPanelSwitcher() {
 		return panelSwitcher;
+	}
+
+	public void setPanelSwitcher(PanelSwitcher panelSwitcher) {
+		this.panelSwitcher = panelSwitcher;
 	}
 }

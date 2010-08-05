@@ -54,13 +54,8 @@ public class WebmailPage extends WebPage {
 		ActionPanel actionPanel = new ActionPanel("actionPanelId");
 		add(actionPanel);
 
-		// Add the message list/view panels to the content panel switcher.
-		PanelSwitcher panelSwitcher = WebmailSession.get().getPanelSwitcher();
-		panelSwitcher.add(messageListPanel);
-		panelSwitcher.add(messageViewPanel);
-		panelSwitcher.add(messageWritePanel);
-		panelSwitcher.setPanelSwitchListener(actionPanel);
-		panelSwitcher.setActivePanel(MessageListPanel.PANEL_ID);
+		initializePanelSwitcher(messageListPanel, messageViewPanel,
+				messageWritePanel, actionPanel);
 
 		Label pageTitleLabel = new Label("pageTitleId", new ResourceModel(
 				"title.main"));
@@ -82,5 +77,26 @@ public class WebmailPage extends WebPage {
 
 		add(new StyleSheetReference("cssId", WebmailPage.class,
 				"css/webmail.css"));
+	}
+
+	/**
+	 * Initialize the {@link PanelSwitcher}.
+	 * 
+	 * @param messageListPanel The {@link MessageListPanel}.
+	 * @param messageViewPanel The {@link MessageViewPanel}.
+	 * @param messageWritePanel The {@link MessageWritePanel}.
+	 * @param actionPanel The {@link ActionPanel}.
+	 */
+	private void initializePanelSwitcher(MessageListPanel messageListPanel,
+			MessageViewPanel messageViewPanel,
+			MessageWritePanel messageWritePanel, ActionPanel actionPanel) {
+		PanelSwitcher panelSwitcher = new PanelSwitcher();
+		panelSwitcher.add(messageListPanel);
+		panelSwitcher.add(messageViewPanel);
+		panelSwitcher.add(messageWritePanel);
+		panelSwitcher.setPanelSwitchListener(actionPanel);
+		panelSwitcher.setActivePanel(MessageListPanel.PANEL_ID);
+
+		WebmailSession.get().setPanelSwitcher(panelSwitcher);
 	}
 }
