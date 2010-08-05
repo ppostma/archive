@@ -1,19 +1,19 @@
 package nl.pointless.webmail.web.component;
 
 import nl.pointless.webmail.web.ISwitchablePanel;
-import nl.pointless.webmail.web.PanelSwitcher;
 
 import org.apache.wicket.markup.html.panel.Fragment;
+import org.apache.wicket.markup.html.panel.Panel;
 
 /**
- * Base class for all switchable webmail panels. This class implements
+ * Base class for all switchable panels. This class implements
  * {@link ISwitchablePanel} and provides basic functionality needed to make show
  * and hide working.
  * 
  * @author Peter Postma
  */
-public abstract class AbstractWebmailSwitchablePanel extends
-		AbstractWebmailPanel implements ISwitchablePanel {
+public abstract class AbstractSwitchablePanel extends Panel implements
+		ISwitchablePanel {
 
 	private static final long serialVersionUID = 4211593923111597919L;
 
@@ -27,9 +27,8 @@ public abstract class AbstractWebmailSwitchablePanel extends
 	 * 
 	 * @param id Wicket panel id.
 	 */
-	protected AbstractWebmailSwitchablePanel(String id,
-			PanelSwitcher panelSwitcher) {
-		super(id, panelSwitcher);
+	protected AbstractSwitchablePanel(String id) {
+		super(id);
 
 		// Initially set invisible.
 		this.setVisible(false);

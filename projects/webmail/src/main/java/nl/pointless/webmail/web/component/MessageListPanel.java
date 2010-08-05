@@ -12,7 +12,7 @@ import nl.pointless.commons.web.component.DatePropertyColumn;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.PanelSwitcher;
+import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
@@ -31,16 +31,26 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class MessageListPanel extends AbstractWebmailSwitchablePanel {
+public class MessageListPanel extends AbstractSwitchablePanel {
 
 	private static final long serialVersionUID = -7598543531453247995L;
+
+	public static final String PANEL_ID = "messageListId";
+
+	private FolderPanel folderPanel;
+
+	private IModel<Folder> folderModel;
+	private Message selectedMessage;
+
+	@SpringBean
+	private IMailService mailService;
 
 	/**
 	 * SortableDataProvider for {@link Message} lists.
 	 * 
 	 * @author Peter Postma
 	 */
-	private class MessageListDataProvider extends SortableDataProvider<Message> {
+	class MessageListDataProvider extends SortableDataProvider<Message> {
 
 		private static final long serialVersionUID = 1L;
 
@@ -117,25 +127,16 @@ public class MessageListPanel extends AbstractWebmailSwitchablePanel {
 		}
 	}
 
-	private FolderPanel folderPanel;
-
-	private IModel<Folder> folderModel;
-	private Message selectedMessage;
-
-	@SpringBean
-	private IMailService mailService;
-
 	/**
 	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
-	 * @param panelSwitcher a {@link PanelSwitcher}.
 	 * @param folderPanel The folder panel.
 	 * @param folderModel Model for the selected folder.
 	 */
-	public MessageListPanel(String id, PanelSwitcher panelSwitcher,
-			FolderPanel folderPanel, IModel<Folder> folderModel) {
-		super(id, panelSwitcher);
+	public MessageListPanel(String id, FolderPanel folderPanel,
+			IModel<Folder> folderModel) {
+		super(id);
 		this.folderPanel = folderPanel;
 		this.folderModel = folderModel;
 
@@ -152,7 +153,8 @@ public class MessageListPanel extends AbstractWebmailSwitchablePanel {
 
 				MessageListPanel.this.selectMessage(message);
 
-				activateMessageViewPanel();
+				WebmailSession.get().getPanelSwitcher()
+						.setActivePanel(MessageViewPanel.PANEL_ID);
 			}
 		});
 
@@ -191,8 +193,8 @@ public class MessageListPanel extends AbstractWebmailSwitchablePanel {
 	 */
 	protected void selectMessage(Message message) {
 		// Mark the message as read on the mail provider.
-		boolean result = this.mailService.setMessageRead(message
-				.getFolderName(), message.getId());
+		boolean result = this.mailService.setMessageRead(
+				message.getFolderName(), message.getId());
 
 		// On success, mark the message as read on the model objects.
 		if (result) {
@@ -203,8 +205,8 @@ public class MessageListPanel extends AbstractWebmailSwitchablePanel {
 		}
 
 		// Get the fully initialized selected message.
-		this.selectedMessage = this.mailService.getMessageById(message
-				.getFolderName(), message.getId());
+		this.selectedMessage = this.mailService.getMessageById(
+				message.getFolderName(), message.getId());
 	}
 
 	/**
@@ -245,7 +247,8 @@ public class MessageListPanel extends AbstractWebmailSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				activateMessageWritePanel();
+				WebmailSession.get().getPanelSwitcher()
+						.setActivePanel(MessageWritePanel.PANEL_ID);
 			}
 		});
 

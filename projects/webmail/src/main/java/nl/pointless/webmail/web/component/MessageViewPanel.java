@@ -11,7 +11,7 @@ import nl.pointless.webmail.dto.Attachment;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.PanelSwitcher;
+import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.wicket.RequestCycle;
@@ -37,9 +37,11 @@ import org.apache.wicket.util.time.Time;
  * 
  * @author Peter Postma
  */
-public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
+public class MessageViewPanel extends AbstractSwitchablePanel {
 
 	private static final long serialVersionUID = -589351398859124613L;
+
+	public static final String PANEL_ID = "messageViewId";
 
 	/**
 	 * Implementation of {@link IResourceStream} for message attachments.
@@ -85,8 +87,8 @@ public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
 		public InputStream getInputStream()
 				throws ResourceStreamNotFoundException {
 			if (this.inputStream == null) {
-				this.inputStream = new ByteArrayInputStream(this.attachment
-						.getContent());
+				this.inputStream = new ByteArrayInputStream(
+						this.attachment.getContent());
 			}
 			return this.inputStream;
 		}
@@ -130,13 +132,12 @@ public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
 	 * Construct a {@link MessageViewPanel} with a message.
 	 * 
 	 * @param id Wicket panel id.
-	 * @param panelSwitcher {@link PanelSwitcher}.
 	 * @param folderModel Model with the current folder.
 	 * @param messageModel Model with the message to show.
 	 */
-	public MessageViewPanel(String id, PanelSwitcher panelSwitcher,
-			IModel<Folder> folderModel, IModel<Message> messageModel) {
-		super(id, panelSwitcher);
+	public MessageViewPanel(String id, IModel<Folder> folderModel,
+			IModel<Message> messageModel) {
+		super(id);
 		this.folderModel = folderModel;
 		this.messageModel = messageModel;
 
@@ -224,7 +225,8 @@ public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				activatePreviousPanel();
+				WebmailSession.get().getPanelSwitcher()
+						.setActivePanelToPreviousPanel();
 			}
 		});
 
@@ -235,7 +237,8 @@ public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				activateMessageWritePanel();
+				WebmailSession.get().getPanelSwitcher()
+						.setActivePanel(MessageWritePanel.PANEL_ID);
 			}
 		});
 
@@ -279,7 +282,8 @@ public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
 					if (deleted) {
 						getFolderModel().getObject().removeMessage(message);
 
-						activatePreviousPanel();
+						WebmailSession.get().getPanelSwitcher()
+								.setActivePanelToPreviousPanel();
 					}
 				}
 			}
@@ -303,7 +307,8 @@ public class MessageViewPanel extends AbstractWebmailSwitchablePanel {
 					if (success) {
 						getFolderModel().getObject().removeMessage(message);
 
-						activatePreviousPanel();
+						WebmailSession.get().getPanelSwitcher()
+								.setActivePanelToPreviousPanel();
 					}
 				}
 			}

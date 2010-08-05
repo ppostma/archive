@@ -3,7 +3,6 @@ package nl.pointless.webmail.web.component;
 import nl.pointless.webmail.service.IAuthenticator;
 import nl.pointless.webmail.web.IPanelSwitchListener;
 import nl.pointless.webmail.web.ISwitchablePanel;
-import nl.pointless.webmail.web.PanelSwitcher;
 import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.ResourceReference;
@@ -12,6 +11,7 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.ImageButton;
 import org.apache.wicket.markup.html.panel.EmptyPanel;
 import org.apache.wicket.markup.html.panel.Fragment;
+import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 
@@ -20,8 +20,7 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class ActionPanel extends AbstractWebmailPanel implements
-		IPanelSwitchListener {
+public class ActionPanel extends Panel implements IPanelSwitchListener {
 
 	private static final long serialVersionUID = -8970081410920802851L;
 
@@ -34,10 +33,9 @@ public class ActionPanel extends AbstractWebmailPanel implements
 	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
-	 * @param panelSwitcher A {@link PanelSwitcher}.
 	 */
-	public ActionPanel(String id, PanelSwitcher panelSwitcher) {
-		super(id, panelSwitcher);
+	public ActionPanel(String id) {
+		super(id);
 
 		this.form = new Form<Object>("formId");
 		this.form.add(new EmptyPanel("fragmentId"));

@@ -1,6 +1,6 @@
 package nl.pointless.webmail.web.component;
 
-import nl.pointless.webmail.web.PanelSwitcher;
+import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
@@ -13,18 +13,19 @@ import org.apache.wicket.model.ResourceModel;
  * 
  * @author Peter Postma
  */
-public class MessageWritePanel extends AbstractWebmailSwitchablePanel {
+public class MessageWritePanel extends AbstractSwitchablePanel {
 
 	private static final long serialVersionUID = 8205602425658031156L;
+
+	public static final String PANEL_ID = "messageWriteId";
 
 	/**
 	 * Construct a {@link MessageWritePanel}.
 	 * 
 	 * @param id Wicket panel id.
-	 * @param panelSwitcher a {@link PanelSwitcher}.
 	 */
-	public MessageWritePanel(String id, PanelSwitcher panelSwitcher) {
-		super(id, panelSwitcher);
+	public MessageWritePanel(String id) {
+		super(id);
 
 		Form<Object> form = new Form<Object>("formId");
 		add(form);
@@ -47,7 +48,8 @@ public class MessageWritePanel extends AbstractWebmailSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				activatePreviousPanel();
+				WebmailSession.get().getPanelSwitcher()
+						.setActivePanelToPreviousPanel();
 			}
 		});
 

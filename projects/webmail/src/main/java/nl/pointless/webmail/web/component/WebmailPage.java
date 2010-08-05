@@ -4,6 +4,7 @@ import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
 import nl.pointless.webmail.web.PanelSwitcher;
+import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
@@ -29,40 +30,37 @@ public class WebmailPage extends WebPage {
 	 * Constructor.
 	 */
 	public WebmailPage() {
-		PanelSwitcher panelSwitcher = new PanelSwitcher();
-
-		FolderPanel folderPanel = new FolderPanel("folderPanelId",
-				panelSwitcher);
+		FolderPanel folderPanel = new FolderPanel("folderPanelId");
 		add(folderPanel);
 
 		IModel<Folder> folderModel = new PropertyModel<Folder>(folderPanel,
 				"currentFolder");
 
 		MessageListPanel messageListPanel = new MessageListPanel(
-				"messageListId", panelSwitcher, folderPanel, folderModel);
+				MessageListPanel.PANEL_ID, folderPanel, folderModel);
 		add(messageListPanel);
 
 		IModel<Message> messageModel = new PropertyModel<Message>(
 				messageListPanel, "selectedMessage");
 
 		MessageViewPanel messageViewPanel = new MessageViewPanel(
-				"messageViewId", panelSwitcher, folderModel, messageModel);
+				MessageViewPanel.PANEL_ID, folderModel, messageModel);
 		add(messageViewPanel);
 
 		MessageWritePanel messageWritePanel = new MessageWritePanel(
-				"messageWriteId", panelSwitcher);
+				MessageWritePanel.PANEL_ID);
 		add(messageWritePanel);
 
-		ActionPanel actionPanel = new ActionPanel("actionPanelId",
-				panelSwitcher);
+		ActionPanel actionPanel = new ActionPanel("actionPanelId");
 		add(actionPanel);
 
 		// Add the message list/view panels to the content panel switcher.
+		PanelSwitcher panelSwitcher = WebmailSession.get().getPanelSwitcher();
 		panelSwitcher.add(messageListPanel);
 		panelSwitcher.add(messageViewPanel);
 		panelSwitcher.add(messageWritePanel);
 		panelSwitcher.setPanelSwitchListener(actionPanel);
-		panelSwitcher.setActivePanel("messageListId");
+		panelSwitcher.setActivePanel(MessageListPanel.PANEL_ID);
 
 		Label pageTitleLabel = new Label("pageTitleId", new ResourceModel(
 				"title.main"));
@@ -73,12 +71,12 @@ public class WebmailPage extends WebPage {
 		add(webmailLabel);
 
 		Label loggedIn = new Label("loggedInId", new StringResourceModel(
-				"label.logged_in", this, null, new Object[] { this.mailService
-						.getServiceName() }));
+				"label.logged_in", this, null,
+				new Object[] { this.mailService.getServiceName() }));
 		add(loggedIn);
 
-		Label copyrightLabel = new Label("copyrightLabelId",
-				"E-mail front-end | Copyright &copy; 2008-2010 Peter Postma");
+		Label copyrightLabel = new Label("copyrightLabelId", new ResourceModel(
+				"label.copyright"));
 		copyrightLabel.setEscapeModelStrings(false);
 		add(copyrightLabel);
 

@@ -15,6 +15,8 @@ public class WebmailSession extends WebSession {
 
 	private String username;
 
+	private PanelSwitcher panelSwitcher;
+
 	/**
 	 * Constructor.
 	 * 
@@ -22,6 +24,7 @@ public class WebmailSession extends WebSession {
 	 */
 	public WebmailSession(Request request) {
 		super(request);
+		this.panelSwitcher = new PanelSwitcher();
 	}
 
 	/**
@@ -46,5 +49,9 @@ public class WebmailSession extends WebSession {
 
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	public PanelSwitcher getPanelSwitcher() {
+		return panelSwitcher;
 	}
 }

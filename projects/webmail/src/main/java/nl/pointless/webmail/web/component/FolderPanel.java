@@ -6,13 +6,14 @@ import java.util.List;
 
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.PanelSwitcher;
+import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 
@@ -21,7 +22,7 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class FolderPanel extends AbstractWebmailPanel {
+public class FolderPanel extends Panel {
 
 	private static final long serialVersionUID = 4628129714174459843L;
 
@@ -35,10 +36,9 @@ public class FolderPanel extends AbstractWebmailPanel {
 	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
-	 * @param panelSwitcher A {@link PanelSwitcher}.
 	 */
-	public FolderPanel(String id, PanelSwitcher panelSwitcher) {
-		super(id, panelSwitcher);
+	public FolderPanel(String id) {
+		super(id);
 
 		ListView<Folder> folders = new ListView<Folder>("foldersId",
 				new PropertyModel<List<Folder>>(this, "folderList")) {
@@ -58,11 +58,12 @@ public class FolderPanel extends AbstractWebmailPanel {
 					public void onClick() {
 						FolderPanel.this.selectFolder(folder);
 
-						activateMessageListPanel();
+						WebmailSession.get().getPanelSwitcher()
+								.setActivePanel(MessageListPanel.PANEL_ID);
 					}
 				};
-				Label folderNameLabel = new Label("folderNameId", folder
-						.getName());
+				Label folderNameLabel = new Label("folderNameId",
+						folder.getName());
 				if (unreadMessages > 0) {
 					folderNameLabel.add(new SimpleAttributeModifier("class",
 							"unread"));
