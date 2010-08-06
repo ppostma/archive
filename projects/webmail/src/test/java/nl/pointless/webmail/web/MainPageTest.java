@@ -32,6 +32,7 @@ public class MainPageTest {
 	}
 
 	@Test
+	@Ignore
 	public void clickFolderTest() {
 		WebmailTester tester = new WebmailTester();
 
@@ -51,8 +52,7 @@ public class MainPageTest {
 
 		tester.startPage(WebmailPage.class);
 
-		tester
-				.clickLink("messageListId:messagesDataTableId:rows:1:cells:1:cell:linkId");
+		tester.clickLink("messageListId:messagesDataTableId:rows:1:cells:1:cell:linkId");
 
 		tester.assertInvisible("messageListId");
 		tester.assertVisible("messageViewId");
