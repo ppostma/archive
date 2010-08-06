@@ -167,7 +167,7 @@ public class MessageListPanel extends AbstractSwitchablePanel {
 
 		MessageListDataTable dataTable = new MessageListDataTable(
 				"messagesDataTableId", this.folderModel, columns,
-				messageDataProvider, 30);
+				messageDataProvider, 25);
 		add(dataTable);
 	}
 

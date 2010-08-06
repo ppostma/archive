@@ -12,11 +12,11 @@ import org.apache.wicket.model.IModel;
  * A {@link PropertyColumn} containing a link.
  * 
  * @author Peter Postma
- * @param <T> type of the property
+ * @param <T> Type of the property.
  */
 public abstract class AbstractLinkPropertyColumn<T> extends PropertyColumn<T> {
 
-	private static final long serialVersionUID = 2468465879868184308L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Creates a non sortable property column.

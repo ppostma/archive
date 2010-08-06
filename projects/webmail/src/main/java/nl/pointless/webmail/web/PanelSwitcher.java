@@ -16,7 +16,7 @@ import org.apache.wicket.Component;
  */
 public class PanelSwitcher implements Serializable {
 
-	private static final long serialVersionUID = -2342628629468342998L;
+	private static final long serialVersionUID = 1L;
 
 	private List<ISwitchablePanel> panels = new ArrayList<ISwitchablePanel>();
 	private Deque<ISwitchablePanel> previousPanels = new LinkedList<ISwitchablePanel>();

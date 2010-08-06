@@ -11,7 +11,7 @@ import org.apache.wicket.protocol.http.WebSession;
  */
 public class WebmailSession extends WebSession {
 
-	private static final long serialVersionUID = 4116300316941237042L;
+	private static final long serialVersionUID = 1L;
 
 	private String username;
 

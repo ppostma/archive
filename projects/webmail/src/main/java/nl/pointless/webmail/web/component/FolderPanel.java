@@ -4,13 +4,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import nl.pointless.commons.web.component.AbstractIndicatingAjaxLink;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.service.IMailService;
 import nl.pointless.webmail.web.WebmailSession;
 
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -50,16 +52,19 @@ public class FolderPanel extends Panel {
 				final Folder folder = item.getModelObject();
 				final int unreadMessages = folder.getUnreadMessages();
 
-				Link<Folder> folderNameLink = new Link<Folder>("folderLinkId") {
+				AjaxLink<Folder> folderNameLink = new AbstractIndicatingAjaxLink<Folder>(
+						"folderLinkId") {
 
 					private static final long serialVersionUID = 1L;
 
 					@Override
-					public void onClick() {
+					public void onClick(AjaxRequestTarget target) {
 						FolderPanel.this.selectFolder(folder);
 
 						WebmailSession.get().getPanelSwitcher()
 								.setActivePanel(MessageListPanel.PANEL_ID);
+
+						setResponsePage(getPage());
 					}
 				};
 				Label folderNameLabel = new Label("folderNameId",

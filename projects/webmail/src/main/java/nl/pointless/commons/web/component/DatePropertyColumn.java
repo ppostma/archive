@@ -11,11 +11,11 @@ import org.apache.wicket.model.IModel;
  * A {@link PropertyColumn} that outputs a formatted date.
  * 
  * @author Peter Postma
- * @param <T> type of the property
+ * @param <T> Type of the property.
  */
 public class DatePropertyColumn<T> extends PropertyColumn<T> {
 
-	private static final long serialVersionUID = 2862417009273404317L;
+	private static final long serialVersionUID = 1L;
 
 	private DateFormat formatter;
 
@@ -36,12 +36,12 @@ public class DatePropertyColumn<T> extends PropertyColumn<T> {
 	protected IModel<?> createLabelModel(IModel<T> embeddedModel) {
 		final IModel<?> property = super.createLabelModel(embeddedModel);
 
-		return new AbstractReadOnlyModel<Object>() {
+		return new AbstractReadOnlyModel<String>() {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public Object getObject() {
+			public String getObject() {
 				Date date = (Date) property.getObject();
 				return getFormatter().format(date);
 			}

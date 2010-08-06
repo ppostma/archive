@@ -101,6 +101,12 @@ div#folders a:hover {
 	text-decoration: underline;
 }
 
+div#folders span.wicket-ajax-indicator {
+	margin: 0px;
+	padding: 0px;
+	padding-left: 5px;
+}
+
 div#wrapper {
 	background-image: url("../images/background_left.png");
 	background-repeat: repeat-y;
