@@ -6,7 +6,7 @@ import org.mortbay.jetty.bio.SocketConnector;
 import org.mortbay.jetty.webapp.WebAppContext;
 
 /**
- * Runner for the webmail application.
+ * Jetty runner for the webmail application.
  * 
  * @author Peter Postma
  */
