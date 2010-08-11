@@ -23,9 +23,7 @@ import org.apache.wicket.model.StringResourceModel;
  */
 public class MessageListDataTable extends DataTable<Message> {
 
-	private static final long serialVersionUID = 6482899046896238350L;
-
-	private IModel<Folder> folderModel;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Constructor.
@@ -41,12 +39,11 @@ public class MessageListDataTable extends DataTable<Message> {
 			ISortableDataProvider<Message> dataProvider, int rowsPerPage) {
 		super(id, columns.toArray(new IColumn[columns.size()]), dataProvider,
 				rowsPerPage);
-		this.folderModel = folderModel;
 
-		addTopToolbar(new MessageListNavigationToolbar(this));
+		addTopToolbar(new MessageListNavigationToolbar(this, folderModel));
 		addTopToolbar(new HeadersToolbar(this, dataProvider));
 		addBottomToolbar(new NoRecordsToolbar(this, new StringResourceModel(
-				"label.no_messages", this, this.folderModel)));
+				"label.no_messages", this, folderModel)));
 	}
 
 	@Override
@@ -69,12 +66,5 @@ public class MessageListDataTable extends DataTable<Message> {
 		};
 
 		return item;
-	}
-
-	/**
-	 * @return folder model
-	 */
-	public IModel<Folder> getFolderModel() {
-		return this.folderModel;
 	}
 }

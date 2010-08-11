@@ -37,7 +37,7 @@ public class LoginPage extends WebPage {
 		/**
 		 * Constructor.
 		 * 
-		 * @param id Wicket id.
+		 * @param id Component id.
 		 * @param login Model for login.
 		 */
 		public LoginForm(String id, IModel<Login> login) {

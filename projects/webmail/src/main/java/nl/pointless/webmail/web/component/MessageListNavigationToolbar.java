@@ -1,6 +1,7 @@
 package nl.pointless.webmail.web.component;
 
 import nl.pointless.webmail.dto.Folder;
+import nl.pointless.webmail.dto.Message;
 
 import org.apache.wicket.IClusterable;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable;
@@ -19,18 +20,23 @@ import org.apache.wicket.model.StringResourceModel;
  */
 public class MessageListNavigationToolbar extends NavigationToolbar {
 
-	private static final long serialVersionUID = -2412487068731501961L;
+	private static final long serialVersionUID = 1L;
 
-	private MessageListDataTable dataTable;
+	private DataTable<Message> dataTable;
+
+	private IModel<Folder> folderModel;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param dataTable The message list datatable.
+	 * @param folderModel Folder model.
 	 */
-	public MessageListNavigationToolbar(MessageListDataTable dataTable) {
+	public MessageListNavigationToolbar(DataTable<Message> dataTable,
+			IModel<Folder> folderModel) {
 		super(dataTable);
 		this.dataTable = dataTable;
+		this.folderModel = folderModel;
 	}
 
 	@Override
@@ -46,10 +52,17 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 	}
 
 	/**
-	 * @return the datatable
+	 * @return the message list datatable.
 	 */
-	protected MessageListDataTable getDataTable() {
+	protected DataTable<Message> getDataTable() {
 		return this.dataTable;
+	}
+
+	/**
+	 * @return the folder model
+	 */
+	protected IModel<Folder> getFolderModel() {
+		return this.folderModel;
 	}
 
 	/**
@@ -63,6 +76,7 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 
 		public MessageListNavigatorLabel(String id) {
 			super(id);
+
 			setDefaultModel(new StringResourceModel("label.navigator", this,
 					new Model<LabelModelObject>(new LabelModelObject())));
 		}
@@ -110,8 +124,7 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 		 * @return the name of the open folder
 		 */
 		public String getFolderName() {
-			IModel<Folder> folderModel = getDataTable().getFolderModel();
-			return folderModel.getObject().getName();
+			return getFolderModel().getObject().getName();
 		}
 	}
 }

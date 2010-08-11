@@ -3,14 +3,14 @@
 	<wicket:panel>
 		<form wicket:id="formId">
 			<div id="mailActions">
-				<span wicket:id="fragmentId">fragment</span>
+				<wicket:container wicket:id="fragmentId">fragment</wicket:container>
 			</div>
 
 			<div id="userActions">
 				<div class="button">
 					<input type="image" wicket:id="logoutButtonId" />
 					<br />
-					<span wicket:id="logoutLabelId">logout</span>
+					<wicket:container wicket:id="logoutLabelId">logout</wicket:container>
 				</div>
 			</div>
 		</form>

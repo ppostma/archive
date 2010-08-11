@@ -1,5 +1,7 @@
 package nl.pointless.webmail.web.component;
 
+import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_WRITE_PANEL_ID;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,9 +41,13 @@ import org.apache.wicket.util.time.Time;
  */
 public class MessageViewPanel extends AbstractSwitchablePanel {
 
-	private static final long serialVersionUID = -589351398859124613L;
+	private static final long serialVersionUID = 1L;
 
-	public static final String PANEL_ID = "messageViewId";
+	@SpringBean
+	private IMailService mailService;
+
+	private IModel<Folder> folderModel;
+	private IModel<Message> messageModel;
 
 	/**
 	 * Implementation of {@link IResourceStream} for message attachments.
@@ -122,14 +128,8 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 		}
 	}
 
-	@SpringBean
-	private IMailService mailService;
-
-	private IModel<Folder> folderModel;
-	private IModel<Message> messageModel;
-
 	/**
-	 * Construct a {@link MessageViewPanel} with a message.
+	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
 	 * @param folderModel Model with the current folder.
@@ -208,13 +208,16 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 				Label bytesLabel = new Label("bytesLabelId", bytesLabelModel);
 				item.add(bytesLabel);
 			}
+
+			@Override
+			public boolean isVisible() {
+				return !getModelObject().isEmpty();
+			}
 		};
 		add(attachments);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
+	@Override
 	protected Fragment createActionButtons(String id) {
 		Fragment fragment = new Fragment(id, "actionFragmentId", this);
 
@@ -238,7 +241,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			@Override
 			protected void onClick() {
 				WebmailSession.get().getPanelSwitcher()
-						.setActivePanel(MessageWritePanel.PANEL_ID);
+						.setActivePanel(MESSAGE_WRITE_PANEL_ID);
 			}
 		});
 
@@ -339,14 +342,23 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 		return fragment;
 	}
 
+	/**
+	 * @return the mail service.
+	 */
 	protected IMailService getMailService() {
 		return this.mailService;
 	}
 
+	/**
+	 * @return the folder model.
+	 */
 	protected IModel<Folder> getFolderModel() {
 		return this.folderModel;
 	}
 
+	/**
+	 * @return the message model.
+	 */
 	protected IModel<Message> getMessageModel() {
 		return this.messageModel;
 	}

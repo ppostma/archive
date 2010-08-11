@@ -18,14 +18,16 @@
 			<span wicket:id="dateId">date</span>
 		</div>
 
-		<div id="attachments">
-			<ul>
-				<li wicket:id="attachmentsId">
-					<a href="#" wicket:id="attachmentLinkId"><span wicket:id="attachmentLabelId">attachment</span></a>
-					<span wicket:id="bytesLabelId">bytes</span>
-				</li>
-			</ul>
-		</div>
+		<wicket:enclosure child="attachmentsId">
+			<div id="attachments">
+				<ul>
+					<li wicket:id="attachmentsId">
+						<a href="#" wicket:id="attachmentLinkId"><span wicket:id="attachmentLabelId">attachment</span></a>
+						<span wicket:id="bytesLabelId">bytes</span>
+					</li>
+				</ul>
+			</div>
+		</wicket:enclosure>
 
 		<div id="body" wicket:id="bodyId">body text</div>
 	</wicket:panel>

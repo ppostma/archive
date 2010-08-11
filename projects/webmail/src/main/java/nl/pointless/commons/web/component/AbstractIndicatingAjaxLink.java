@@ -11,23 +11,24 @@ import org.apache.wicket.model.IModel;
  * An {@link AjaxLink} that adds a busy indicator when the link is being loaded.
  * 
  * @author Peter Postma
- * @param T Type of the link.
+ * @param <T> Type of the link.
  */
 public abstract class AbstractIndicatingAjaxLink<T> extends AjaxLink<T>
 		implements IAjaxIndicatorAware {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final ResourceReference AJAX_LOADER = new ResourceReference(
+	protected static final ResourceReference AJAX_LOADER = new ResourceReference(
 			AbstractIndicatingAjaxLink.class, "images/ajax-loader.gif");
 
+	/**
+	 * An {@link AjaxIndicatorAppender} that links our ajax loader image.
+	 */
 	private final AjaxIndicatorAppender indicatorAppender = new AjaxIndicatorAppender() {
 
 		private static final long serialVersionUID = 1L;
 
-		/**
-		 * {@inheritDoc}
-		 */
+		@Override
 		protected CharSequence getIndicatorUrl() {
 			return RequestCycle.get().urlFor(AJAX_LOADER);
 		}

@@ -15,7 +15,7 @@ import org.apache.wicket.markup.html.panel.Panel;
 public abstract class AbstractSwitchablePanel extends Panel implements
 		ISwitchablePanel {
 
-	private static final long serialVersionUID = 4211593923111597919L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Caching the result of {@link #createActionButtons(String)}.

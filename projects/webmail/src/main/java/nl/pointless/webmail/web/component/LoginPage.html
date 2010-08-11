@@ -1,10 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
-
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/" xml:lang="en" lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title wicket:id="pageTitleId">webmail</title>
-	<link rel="stylesheet" type="text/css" wicket:id="cssId" />
+	<link wicket:id="cssId" rel="stylesheet" type="text/css" />
 </head>
 <body>
 	<div id="container">
@@ -12,20 +11,20 @@
 			<h1 wicket:id="titleId">webmail</h1>
 		</div>
 	
-		<div id="feedback" wicket:id="feedbackId">feedback</div>
+		<div wicket:id="feedbackId" id="feedback">feedback</div>
 	
 		<div id="login">
 			<form wicket:id="formId">
 				<label wicket:id="usernameLabelId" for="usernameId">username</label>
-				<input type="text" wicket:id="usernameId" id="usernameId" />
+				<input wicket:id="usernameId" id="usernameId" type="text" />
 				<br />
 		
 				<label wicket:id="passwordLabelId" for="passwordId">password</label>
-				<input type="password" wicket:id="passwordId" id="passwordId" />
+				<input wicket:id="passwordId" id="passwordId" type="password"  />
 				<br />
 		
 				<label><!-- dummy --></label>
-				<input type="submit" wicket:id="submitId" />
+				<input wicket:id="submitId" type="submit" />
 			</form>
 		</div>
 	</div>

@@ -13,7 +13,7 @@ import org.apache.wicket.model.IModel;
  */
 public abstract class AbstractActionButton extends Panel {
 
-	private static final long serialVersionUID = -6830949644718177877L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Constructs an {@link AbstractActionButton}.
@@ -26,7 +26,7 @@ public abstract class AbstractActionButton extends Panel {
 			IModel<String> labelModel) {
 		super(id);
 
-		ImageButton refreshButton = new ImageButton("buttonId",
+		ImageButton imageButton = new ImageButton("buttonId",
 				new ResourceReference(AbstractActionButton.class, imageName)) {
 
 			private static final long serialVersionUID = 1L;
@@ -36,7 +36,7 @@ public abstract class AbstractActionButton extends Panel {
 				AbstractActionButton.this.onClick();
 			}
 		};
-		add(refreshButton);
+		add(imageButton);
 
 		Label refreshLabel = new Label("labelId", labelModel);
 		add(refreshLabel);

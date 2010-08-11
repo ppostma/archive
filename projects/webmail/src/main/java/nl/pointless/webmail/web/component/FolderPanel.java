@@ -1,5 +1,7 @@
 package nl.pointless.webmail.web.component;
 
+import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_LIST_PANEL_ID;
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -7,6 +9,8 @@ import java.util.List;
 import nl.pointless.commons.web.component.AbstractIndicatingAjaxLink;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.service.IMailService;
+import nl.pointless.webmail.web.IFolderRefreshActionListener;
+import nl.pointless.webmail.web.IFolderSelectListener;
 import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -16,7 +20,8 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
-import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.util.ListModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 
 /**
@@ -24,26 +29,46 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class FolderPanel extends Panel {
+public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 
-	private static final long serialVersionUID = 4628129714174459843L;
+	private static final long serialVersionUID = 1L;
 
 	@SpringBean
 	private IMailService mailService;
 
-	private Folder currentFolder;
-	private List<Folder> folderList;
+	private IModel<Folder> folderModel;
+	private IModel<List<Folder>> folderListModel;
+
+	private IFolderSelectListener folderSelectListener;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
+	 * @param folderModel Folder model.
 	 */
-	public FolderPanel(String id) {
+	public FolderPanel(String id, IModel<Folder> folderModel) {
 		super(id);
+		this.folderModel = folderModel;
+		this.folderListModel = new ListModel<Folder>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public List<Folder> getObject() {
+				// Lazy load the folder list
+				List<Folder> folders = super.getObject();
+				if (folders == null) {
+					refreshFolderList();
+
+					folders = super.getObject();
+				}
+				return folders;
+			};
+		};
 
 		ListView<Folder> folders = new ListView<Folder>("foldersId",
-				new PropertyModel<List<Folder>>(this, "folderList")) {
+				this.folderListModel) {
 
 			private static final long serialVersionUID = 1L;
 
@@ -62,7 +87,7 @@ public class FolderPanel extends Panel {
 						FolderPanel.this.selectFolder(folder);
 
 						WebmailSession.get().getPanelSwitcher()
-								.setActivePanel(MessageListPanel.PANEL_ID);
+								.setActivePanel(MESSAGE_LIST_PANEL_ID);
 
 						setResponsePage(getPage());
 					}
@@ -93,38 +118,45 @@ public class FolderPanel extends Panel {
 	 */
 	protected void selectFolder(Folder folder) {
 		// Get the fully initialized selected folder.
-		this.currentFolder = this.mailService.getFolderByName(folder
+		Folder currentFolder = this.mailService.getFolderByName(folder
 				.getFullName());
+		this.folderModel.setObject(currentFolder);
+
+		List<Folder> folderList = this.folderListModel.getObject();
 
 		// Replace the folder with the fully initialized one.
-		int index = this.folderList.indexOf(folder);
+		int index = folderList.indexOf(folder);
 
-		this.folderList.remove(index);
-		this.folderList.add(index, this.currentFolder);
+		folderList.remove(index);
+		folderList.add(index, currentFolder);
+
+		this.folderSelectListener.onFolderSelect(currentFolder);
 	}
 
 	/**
 	 * Refreshes the list with folders in the users' mailbox and refresh the
 	 * first or current folder.
 	 */
-	public void refreshFolderList() {
-		this.folderList = this.mailService.getFolders();
+	protected void refreshFolderList() {
+		List<Folder> folderList = this.mailService.getFolders();
+		this.folderListModel.setObject(folderList);
 
 		// Select the first folder if none is selected, or else refresh current.
-		if (!this.folderList.isEmpty()) {
+		if (!folderList.isEmpty()) {
 			Folder folderToSelect;
 
-			if (this.currentFolder == null) {
-				folderToSelect = this.folderList.get(0);
+			Folder currentFolder = this.folderModel.getObject();
+			if (currentFolder == null) {
+				folderToSelect = folderList.get(0);
 			} else {
-				folderToSelect = this.currentFolder;
+				folderToSelect = currentFolder;
 			}
 
 			selectFolder(folderToSelect);
 		}
 
 		// Sort the folders, standard mailbox first, then others.
-		Collections.sort(this.folderList, new Comparator<Folder>() {
+		Collections.sort(folderList, new Comparator<Folder>() {
 
 			public int compare(Folder f1, Folder f2) {
 				if (f1.getName().equals("INBOX")) {
@@ -137,20 +169,19 @@ public class FolderPanel extends Panel {
 	}
 
 	/**
-	 * @return the current selected folder
+	 * {@inheritDoc}
 	 */
-	public Folder getCurrentFolder() {
-		return this.currentFolder;
+	public void onActionRefreshFolders() {
+		refreshFolderList();
 	}
 
 	/**
-	 * @return the current list with folders
+	 * Add a listener for folder select events.
+	 * 
+	 * @param folderSelectListener A {@link IFolderSelectListener}.
 	 */
-	public List<Folder> getFolderList() {
-		if (this.folderList == null) {
-			refreshFolderList();
-		}
-
-		return this.folderList;
+	public void addFolderSelectListener(
+			IFolderSelectListener folderSelectListener) {
+		this.folderSelectListener = folderSelectListener;
 	}
 }

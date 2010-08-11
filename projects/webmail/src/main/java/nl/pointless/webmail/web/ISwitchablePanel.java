@@ -10,12 +10,12 @@ import org.apache.wicket.markup.html.panel.Fragment;
 public interface ISwitchablePanel {
 
 	/**
-	 * Make the Panel visible.
+	 * Make the panel visible.
 	 */
 	void showPanel();
 
 	/**
-	 * Make the Panel hidden.
+	 * Make the panel invisible.
 	 */
 	void hidePanel();
 

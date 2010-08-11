@@ -1,10 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
-
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org/" xml:lang="en" lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title wicket:id="pageTitleId">webmail</title>
-	<link rel="stylesheet" type="text/css" wicket:id="cssId" />
+	<link wicket:id="cssId" rel="stylesheet" type="text/css" />
 </head>
 <body>
 	<div id="container">
@@ -16,19 +15,19 @@
 			</div>
 
 			<div id="actions">
-				<span wicket:id="actionPanelId" />
+				<wicket:container wicket:id="actionPanelId" />
 			</div>
 		</div>
 
 		<div id="wrapper">
 			<div id="folders">
-				<span wicket:id="folderPanelId" />
+				<wicket:container wicket:id="folderPanelId" />
 			</div>
 
 			<div id="content">
-				<span wicket:id="messageListId" />
-				<span wicket:id="messageViewId" />
-				<span wicket:id="messageWriteId" />
+				<wicket:container wicket:id="messageListId" />
+				<wicket:container wicket:id="messageViewId" />
+				<wicket:container wicket:id="messageWriteId" />
 			</div>
 		</div>
 

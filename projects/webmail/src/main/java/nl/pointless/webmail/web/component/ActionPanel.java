@@ -5,6 +5,7 @@ import nl.pointless.webmail.web.IPanelSwitchListener;
 import nl.pointless.webmail.web.ISwitchablePanel;
 import nl.pointless.webmail.web.WebmailSession;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ResourceReference;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
@@ -22,12 +23,10 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  */
 public class ActionPanel extends Panel implements IPanelSwitchListener {
 
-	private static final long serialVersionUID = -8970081410920802851L;
+	private static final long serialVersionUID = 1L;
 
 	@SpringBean
 	private IAuthenticator authenticator;
-
-	private Form<Object> form;
 
 	/**
 	 * Constructor.
@@ -37,9 +36,9 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 	public ActionPanel(String id) {
 		super(id);
 
-		this.form = new Form<Object>("formId");
-		this.form.add(new EmptyPanel("fragmentId"));
-		add(this.form);
+		Form<Void> form = new Form<Void>("formId");
+		form.add(new EmptyPanel("fragmentId"));
+		add(form);
 
 		ImageButton logoutButton = new ImageButton("logoutButtonId",
 				new ResourceReference(ActionPanel.class, "images/logout.png")) {
@@ -55,17 +54,18 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 				setResponsePage(WebmailPage.class);
 			}
 		};
-		this.form.add(logoutButton);
+		form.add(logoutButton);
 
 		Label logoutLabel = new Label("logoutLabelId", new ResourceModel(
 				"label.logout"));
-		this.form.add(logoutLabel);
+		form.add(logoutLabel);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public void onHidePanel(ISwitchablePanel panel) {
+		// No implementation
 	}
 
 	/**
@@ -73,7 +73,9 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 	 */
 	public void onShowPanel(ISwitchablePanel panel) {
 		Fragment fragment = panel.getActionButtons("fragmentId");
-		this.form.addOrReplace(fragment);
+
+		Component component = get("formId:fragmentId");
+		component.replaceWith(fragment);
 	}
 
 	/**

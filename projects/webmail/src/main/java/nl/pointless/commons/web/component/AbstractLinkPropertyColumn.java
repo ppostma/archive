@@ -47,6 +47,20 @@ public abstract class AbstractLinkPropertyColumn<T> extends PropertyColumn<T> {
 		item.add(new LinkPanel(item, componentId, model));
 	}
 
+	@Override
+	protected IModel<?> createLabelModel(IModel<T> rowModel) {
+		return super.createLabelModel(rowModel);
+	}
+
+	/**
+	 * Called when the link on this column is clicked.
+	 * 
+	 * @param item the item representing the current table cell being rendered
+	 * @param componentId the id of the component used to render the cell (only
+	 * one component should be added to the cell)
+	 * @param model the model of the row item being rendered. this model usually
+	 * contains the model provided by the data provider.
+	 */
 	protected abstract void onClick(Item<ICellPopulator<T>> item,
 			String componentId, IModel<T> model);
 
@@ -59,11 +73,18 @@ public abstract class AbstractLinkPropertyColumn<T> extends PropertyColumn<T> {
 
 		private static final long serialVersionUID = 1L;
 
+		/**
+		 * Constructor.
+		 * 
+		 * @param item An {@link Item}.
+		 * @param componentId Component id.
+		 * @param model Model.
+		 */
 		public LinkPanel(final Item<ICellPopulator<T>> item,
 				final String componentId, final IModel<T> model) {
 			super(componentId);
 
-			Link<Object> link = new Link<Object>("linkId") {
+			Link<Void> link = new Link<Void>("linkId") {
 
 				private static final long serialVersionUID = 1L;
 

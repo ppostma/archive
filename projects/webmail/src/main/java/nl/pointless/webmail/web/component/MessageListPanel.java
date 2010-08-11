@@ -1,10 +1,10 @@
 package nl.pointless.webmail.web.component;
 
+import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_VIEW_PANEL_ID;
+import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_WRITE_PANEL_ID;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 import nl.pointless.commons.web.component.AbstractLinkPropertyColumn;
@@ -12,17 +12,20 @@ import nl.pointless.commons.web.component.DatePropertyColumn;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
+import nl.pointless.webmail.web.IFolderRefreshActionListener;
+import nl.pointless.webmail.web.IFolderSelectListener;
 import nl.pointless.webmail.web.WebmailSession;
 
+import org.apache.wicket.Page;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
+import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow.MaskType;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
-import org.apache.wicket.extensions.markup.html.repeater.util.SortableDataProvider;
 import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.model.Model;
-import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 
@@ -31,114 +34,34 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class MessageListPanel extends AbstractSwitchablePanel {
+public class MessageListPanel extends AbstractSwitchablePanel implements
+		IFolderSelectListener {
 
-	private static final long serialVersionUID = -7598543531453247995L;
-
-	public static final String PANEL_ID = "messageListId";
-
-	private FolderPanel folderPanel;
-
-	private IModel<Folder> folderModel;
-	private Message selectedMessage;
+	private static final long serialVersionUID = 1L;
 
 	@SpringBean
 	private IMailService mailService;
 
-	/**
-	 * SortableDataProvider for {@link Message} lists.
-	 * 
-	 * @author Peter Postma
-	 */
-	class MessageListDataProvider extends SortableDataProvider<Message> {
+	private MessageListDataProvider messageDataProvider;
 
-		private static final long serialVersionUID = 1L;
+	private IModel<Folder> folderModel;
+	private IModel<Message> messageModel;
 
-		/**
-		 * Cached messages.
-		 */
-		private List<Message> messages;
-
-		/**
-		 * Constructor.
-		 */
-		public MessageListDataProvider() {
-			this.setSort("date", false);
-		}
-
-		/**
-		 * {@inheritDoc}
-		 */
-		public Iterator<Message> iterator(int first, int count) {
-			List<Message> newList = new ArrayList<Message>(getMessagesCached());
-
-			final String property = getSort().getProperty();
-			final boolean ascending = getSort().isAscending();
-
-			Collections.sort(newList, new Comparator<Message>() {
-
-				public int compare(Message m1, Message m2) {
-					PropertyModel<Object> model1 = new PropertyModel<Object>(
-							m1, property);
-					PropertyModel<Object> model2 = new PropertyModel<Object>(
-							m2, property);
-
-					Object modelObject1 = model1.getObject();
-					Object modelObject2 = model2.getObject();
-
-					int compare = ((Comparable) modelObject1)
-							.compareTo(modelObject2);
-
-					if (!ascending) {
-						compare *= -1;
-					}
-
-					return compare;
-				}
-			});
-
-			return newList.subList(first, first + count).iterator();
-		}
-
-		/**
-		 * {@inheritDoc}
-		 */
-		public IModel<Message> model(Message message) {
-			return new Model<Message>(message);
-		}
-
-		/**
-		 * {@inheritDoc}
-		 */
-		public int size() {
-			return getMessagesCached().size();
-		}
-
-		@Override
-		public void detach() {
-			this.messages = null;
-		}
-
-		private List<Message> getMessagesCached() {
-			if (this.messages == null) {
-				this.messages = getMessagesFromModel();
-			}
-			return this.messages;
-		}
-	}
+	private IFolderRefreshActionListener folderRefreshActionListener;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
-	 * @param folderPanel The folder panel.
+	 * @param messageModel Model for the selected message.
 	 * @param folderModel Model for the selected folder.
 	 */
-	public MessageListPanel(String id, FolderPanel folderPanel,
-			IModel<Folder> folderModel) {
+	public MessageListPanel(String id, IModel<Folder> folderModel,
+			IModel<Message> messageModel) {
 		super(id);
-		this.folderPanel = folderPanel;
 		this.folderModel = folderModel;
+		this.messageModel = messageModel;
+		this.messageDataProvider = new MessageListDataProvider();
 
 		List<IColumn<Message>> columns = new ArrayList<IColumn<Message>>();
 		columns.add(new AbstractLinkPropertyColumn<Message>(new ResourceModel(
@@ -154,7 +77,7 @@ public class MessageListPanel extends AbstractSwitchablePanel {
 				MessageListPanel.this.selectMessage(message);
 
 				WebmailSession.get().getPanelSwitcher()
-						.setActivePanel(MessageViewPanel.PANEL_ID);
+						.setActivePanel(MESSAGE_VIEW_PANEL_ID);
 			}
 		});
 
@@ -163,27 +86,49 @@ public class MessageListPanel extends AbstractSwitchablePanel {
 		columns.add(new DatePropertyColumn<Message>(new ResourceModel(
 				"label.date"), "date", new SimpleDateFormat("dd-MM-yyyy")));
 
-		MessageListDataProvider messageDataProvider = new MessageListDataProvider();
-
 		MessageListDataTable dataTable = new MessageListDataTable(
 				"messagesDataTableId", this.folderModel, columns,
-				messageDataProvider, 25);
+				this.messageDataProvider, 25);
+		dataTable.setOutputMarkupId(true);
 		add(dataTable);
+
+		ModalWindow searchWindow = createModalWindow(dataTable);
+		add(searchWindow);
 	}
 
-	/**
-	 * Returns the list with messages from the folder model. Returns an empty
-	 * list if the folder is not found.
-	 * 
-	 * @param folderModel The model for the folder.
-	 * @return list with messages from the folder model.
-	 */
-	protected List<Message> getMessagesFromModel() {
-		Folder folder = this.folderModel.getObject();
-		if (folder == null) {
-			return new ArrayList<Message>();
-		}
-		return folder.getMessages();
+	private ModalWindow createModalWindow(final MessageListDataTable dataTable) {
+		ModalWindow searchWindow = new ModalWindow("searchDialogId");
+		searchWindow.setMinimalHeight(30);
+		searchWindow.setInitialHeight(30);
+		searchWindow.setMinimalWidth(300);
+		searchWindow.setInitialWidth(300);
+		searchWindow.setMaskType(MaskType.TRANSPARENT);
+		searchWindow.setCssClassName(ModalWindow.CSS_CLASS_GRAY);
+		searchWindow.setPageCreator(new ModalWindow.PageCreator() {
+
+			private static final long serialVersionUID = 1L;
+
+			/**
+			 * {@inheritDoc}
+			 */
+			public Page createPage() {
+				return new SearchDialogPage(getSearchWindow(),
+						getMessageDataProvider());
+			}
+		});
+		searchWindow
+				.setWindowClosedCallback(new ModalWindow.WindowClosedCallback() {
+
+					private static final long serialVersionUID = 1L;
+
+					/**
+					 * {@inheritDoc}
+					 */
+					public void onClose(AjaxRequestTarget target) {
+						target.addComponent(dataTable);
+					}
+				});
+		return searchWindow;
 	}
 
 	/**
@@ -205,27 +150,44 @@ public class MessageListPanel extends AbstractSwitchablePanel {
 		}
 
 		// Get the fully initialized selected message.
-		this.selectedMessage = this.mailService.getMessageById(
+		Message selectedMessage = this.mailService.getMessageById(
 				message.getFolderName(), message.getId());
+		this.messageModel.setObject(selectedMessage);
 	}
 
 	/**
-	 * @return the selected message.
+	 * @return the message list data provider.
 	 */
-	public Message getSelectedMessage() {
-		return this.selectedMessage;
+	protected MessageListDataProvider getMessageDataProvider() {
+		return this.messageDataProvider;
 	}
 
 	/**
-	 * @return the folder panel.
+	 * @return the modal window
 	 */
-	protected FolderPanel getFolderPanel() {
-		return this.folderPanel;
+	protected ModalWindow getSearchWindow() {
+		return (ModalWindow) get("searchDialogId");
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * @return the folder refresh action listener
 	 */
+	protected IFolderRefreshActionListener getFolderRefreshActionListener() {
+		return this.folderRefreshActionListener;
+	}
+
+	/**
+	 * Add a listener for folder refresh actions.
+	 * 
+	 * @param folderRefreshActionListener A {@link IFolderRefreshActionListener}
+	 * .
+	 */
+	public void addFolderRefreshActionListener(
+			IFolderRefreshActionListener folderRefreshActionListener) {
+		this.folderRefreshActionListener = folderRefreshActionListener;
+	}
+
+	@Override
 	protected Fragment createActionButtons(String id) {
 		Fragment fragment = new Fragment(id, "actionFragmentId", this);
 
@@ -236,7 +198,7 @@ public class MessageListPanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				getFolderPanel().refreshFolderList();
+				getFolderRefreshActionListener().onActionRefreshFolders();
 			}
 		});
 
@@ -248,21 +210,29 @@ public class MessageListPanel extends AbstractSwitchablePanel {
 			@Override
 			protected void onClick() {
 				WebmailSession.get().getPanelSwitcher()
-						.setActivePanel(MessageWritePanel.PANEL_ID);
+						.setActivePanel(MESSAGE_WRITE_PANEL_ID);
 			}
 		});
 
-		fragment.add(new AbstractActionButton("searchButtonId",
+		fragment.add(new AbstractAjaxActionButton("searchButtonId",
 				"images/search.png", new ResourceModel("label.search")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void onClick() {
-				// TODO Implement me!
+			protected void onClick(AjaxRequestTarget target) {
+				getSearchWindow().show(target);
 			}
 		});
 
 		return fragment;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public void onFolderSelect(Folder folder) {
+		List<Message> messages = folder.getMessages();
+		this.messageDataProvider.setMessages(messages);
 	}
 }

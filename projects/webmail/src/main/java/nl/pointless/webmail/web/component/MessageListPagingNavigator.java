@@ -15,21 +15,18 @@ import org.apache.wicket.markup.html.navigation.paging.PagingNavigator;
  */
 public class MessageListPagingNavigator extends PagingNavigator {
 
-	private static final long serialVersionUID = 4093248412383317837L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param id Wicket Id.
+	 * @param id Component Id.
 	 * @param pageable The pageable component the page links are referring to.
 	 */
 	public MessageListPagingNavigator(String id, IPageable pageable) {
 		super(id, pageable);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected AbstractLink newPagingNavigationLink(String id,
 			IPageable pageable, int pageNumber) {
@@ -49,9 +46,6 @@ public class MessageListPagingNavigator extends PagingNavigator {
 		return newPagingNavigationLink;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected AbstractLink newPagingNavigationIncrementLink(String id,
 			IPageable pageable, int increment) {
@@ -71,9 +65,6 @@ public class MessageListPagingNavigator extends PagingNavigator {
 		return newPagingNavigationIncrementLink;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected PagingNavigation newNavigation(IPageable pageable,
 			IPagingLabelProvider labelProvider) {

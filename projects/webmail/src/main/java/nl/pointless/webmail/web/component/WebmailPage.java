@@ -10,7 +10,7 @@ import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.resources.StyleSheetReference;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.model.PropertyModel;
+import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
@@ -23,6 +23,21 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  */
 public class WebmailPage extends WebPage {
 
+	/**
+	 * Component id for the message list panel.
+	 */
+	public static final String MESSAGE_LIST_PANEL_ID = "messageListId";
+
+	/**
+	 * Component id for the message view panel.
+	 */
+	public static final String MESSAGE_VIEW_PANEL_ID = "messageViewId";
+
+	/**
+	 * Component id for the message write panel.
+	 */
+	public static final String MESSAGE_WRITE_PANEL_ID = "messageWriteId";
+
 	@SpringBean
 	private IMailService mailService;
 
@@ -30,25 +45,25 @@ public class WebmailPage extends WebPage {
 	 * Constructor.
 	 */
 	public WebmailPage() {
-		FolderPanel folderPanel = new FolderPanel("folderPanelId");
+		IModel<Folder> folderModel = new Model<Folder>();
+		IModel<Message> messageModel = new Model<Message>();
+
+		FolderPanel folderPanel = new FolderPanel("folderPanelId", folderModel);
 		add(folderPanel);
 
-		IModel<Folder> folderModel = new PropertyModel<Folder>(folderPanel,
-				"currentFolder");
-
 		MessageListPanel messageListPanel = new MessageListPanel(
-				MessageListPanel.PANEL_ID, folderPanel, folderModel);
+				MESSAGE_LIST_PANEL_ID, folderModel, messageModel);
+		messageListPanel.addFolderRefreshActionListener(folderPanel);
 		add(messageListPanel);
 
-		IModel<Message> messageModel = new PropertyModel<Message>(
-				messageListPanel, "selectedMessage");
+		folderPanel.addFolderSelectListener(messageListPanel);
 
 		MessageViewPanel messageViewPanel = new MessageViewPanel(
-				MessageViewPanel.PANEL_ID, folderModel, messageModel);
+				MESSAGE_VIEW_PANEL_ID, folderModel, messageModel);
 		add(messageViewPanel);
 
 		MessageWritePanel messageWritePanel = new MessageWritePanel(
-				MessageWritePanel.PANEL_ID);
+				MESSAGE_WRITE_PANEL_ID);
 		add(messageWritePanel);
 
 		ActionPanel actionPanel = new ActionPanel("actionPanelId");
@@ -58,11 +73,11 @@ public class WebmailPage extends WebPage {
 				messageWritePanel, actionPanel);
 
 		Label pageTitleLabel = new Label("pageTitleId", new ResourceModel(
-				"title.main"));
+				"title.webmail"));
 		add(pageTitleLabel);
 
 		Label webmailLabel = new Label("webmailLabelId", new ResourceModel(
-				"title.main"));
+				"title.webmail"));
 		add(webmailLabel);
 
 		Label loggedIn = new Label("loggedInId", new StringResourceModel(
@@ -95,7 +110,7 @@ public class WebmailPage extends WebPage {
 		panelSwitcher.add(messageViewPanel);
 		panelSwitcher.add(messageWritePanel);
 		panelSwitcher.setPanelSwitchListener(actionPanel);
-		panelSwitcher.setActivePanel(MessageListPanel.PANEL_ID);
+		panelSwitcher.setActivePanel(MESSAGE_LIST_PANEL_ID);
 
 		WebmailSession.get().setPanelSwitcher(panelSwitcher);
 	}

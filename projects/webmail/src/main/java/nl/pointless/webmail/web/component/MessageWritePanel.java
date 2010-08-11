@@ -15,19 +15,17 @@ import org.apache.wicket.model.ResourceModel;
  */
 public class MessageWritePanel extends AbstractSwitchablePanel {
 
-	private static final long serialVersionUID = 8205602425658031156L;
-
-	public static final String PANEL_ID = "messageWriteId";
+	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Construct a {@link MessageWritePanel}.
+	 * Constructor.
 	 * 
 	 * @param id Wicket panel id.
 	 */
 	public MessageWritePanel(String id) {
 		super(id);
 
-		Form<Object> form = new Form<Object>("formId");
+		Form<Void> form = new Form<Void>("formId");
 		add(form);
 
 		form.add(new TextField<String>("toId"));
@@ -35,9 +33,7 @@ public class MessageWritePanel extends AbstractSwitchablePanel {
 		form.add(new TextArea<String>("bodyId"));
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
+	@Override
 	protected Fragment createActionButtons(String id) {
 		Fragment fragment = new Fragment(id, "actionFragmentId", this);
 

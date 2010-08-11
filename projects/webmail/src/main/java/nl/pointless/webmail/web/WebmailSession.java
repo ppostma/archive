@@ -51,7 +51,7 @@ public class WebmailSession extends WebSession {
 	}
 
 	public PanelSwitcher getPanelSwitcher() {
-		return panelSwitcher;
+		return this.panelSwitcher;
 	}
 
 	public void setPanelSwitcher(PanelSwitcher panelSwitcher) {
