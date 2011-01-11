@@ -22,13 +22,14 @@ public class MainPageTest {
 		tester.startPage(WebmailPage.class);
 		tester.assertRenderedPage(WebmailPage.class);
 
-		tester.assertComponent("actionPanelId", ActionPanel.class);
-		tester.assertComponent("folderPanelId", FolderPanel.class);
-		tester.assertComponent("messageListId", MessageListPanel.class);
+		tester.assertComponent("mainFormId:actionPanelId", ActionPanel.class);
+		tester.assertComponent("mainFormId:folderPanelId", FolderPanel.class);
+		tester.assertComponent("mainFormId:messageListId",
+				MessageListPanel.class);
 
-		tester.assertVisible("messageListId");
-		tester.assertInvisible("messageViewId");
-		tester.assertInvisible("messageWriteId");
+		tester.assertVisible("mainFormId:messageListId");
+		tester.assertInvisible("mainFormId:messageViewId");
+		tester.assertInvisible("mainFormId:messageWriteId");
 	}
 
 	@Test
@@ -38,11 +39,11 @@ public class MainPageTest {
 		tester.startPage(WebmailPage.class);
 		tester.assertRenderedPage(WebmailPage.class);
 
-		tester.clickLink("folderPanelId:foldersId:0:folderLinkId");
+		tester.clickLink("mainFormId:folderPanelId:foldersId:0:folderLinkId");
 
-		tester.assertVisible("messageListId");
-		tester.assertInvisible("messageViewId");
-		tester.assertInvisible("messageWriteId");
+		tester.assertVisible("mainFormId:messageListId");
+		tester.assertInvisible("mainFormId:messageViewId");
+		tester.assertInvisible("mainFormId:messageWriteId");
 	}
 
 	@Test
@@ -52,11 +53,11 @@ public class MainPageTest {
 		tester.startPage(WebmailPage.class);
 		tester.assertRenderedPage(WebmailPage.class);
 
-		tester.clickLink("messageListId:messagesDataTableId:body:rows:1:cells:1:cell:linkId");
+		tester.clickLink("mainFormId:messageListId:messagesDataTableId:body:rows:1:cells:1:cell:linkId");
 
-		tester.assertInvisible("messageListId");
-		tester.assertVisible("messageViewId");
-		tester.assertInvisible("messageWriteId");
+		tester.assertInvisible("mainFormId:messageListId");
+		tester.assertVisible("mainFormId:messageViewId");
+		tester.assertInvisible("mainFormId:messageWriteId");
 	}
 
 	@Test
@@ -66,11 +67,11 @@ public class MainPageTest {
 		tester.startPage(WebmailPage.class);
 		tester.assertRenderedPage(WebmailPage.class);
 
-		FormTester formTester = tester.newFormTester("actionPanelId:formId");
-		formTester.submit("fragmentId:writeButtonId:buttonId");
+		FormTester formTester = tester.newFormTester("mainFormId");
+		formTester.submit("actionPanelId:fragmentId:writeButtonId:buttonId");
 
-		tester.assertInvisible("messageListId");
-		tester.assertInvisible("messageViewId");
-		tester.assertVisible("messageWriteId");
+		tester.assertInvisible("mainFormId:messageListId");
+		tester.assertInvisible("mainFormId:messageViewId");
+		tester.assertVisible("mainFormId:messageWriteId");
 	}
 }
