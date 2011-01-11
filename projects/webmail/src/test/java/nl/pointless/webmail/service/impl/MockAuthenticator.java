@@ -10,6 +10,9 @@ import nl.pointless.webmail.service.IAuthenticator;
  */
 public class MockAuthenticator implements IAuthenticator {
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public boolean authenticate(Login login) {
 		if (login.getUsername().equals("test")
 				&& login.getPassword().equals("test")) {
@@ -18,6 +21,9 @@ public class MockAuthenticator implements IAuthenticator {
 		return false;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void logout() {
 		// No implementation
 	}

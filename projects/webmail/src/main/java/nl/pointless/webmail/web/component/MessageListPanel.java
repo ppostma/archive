@@ -136,10 +136,9 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 	 * 
 	 * @param message selected message.
 	 */
-	protected void selectMessage(Message message) {
+	void selectMessage(Message message) {
 		// Mark the message as read on the mail provider.
-		boolean result = this.mailService.setMessageRead(
-				message.getFolderName(), message.getId());
+		boolean result = this.mailService.markMessageRead(message);
 
 		// On success, mark the message as read on the model objects.
 		if (result) {
@@ -158,21 +157,21 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 	/**
 	 * @return the message list data provider.
 	 */
-	protected MessageListDataProvider getMessageDataProvider() {
+	MessageListDataProvider getMessageDataProvider() {
 		return this.messageDataProvider;
 	}
 
 	/**
 	 * @return the modal window
 	 */
-	protected ModalWindow getSearchWindow() {
+	ModalWindow getSearchWindow() {
 		return (ModalWindow) get("searchDialogId");
 	}
 
 	/**
 	 * @return the folder refresh action listener
 	 */
-	protected IFolderRefreshActionListener getFolderRefreshActionListener() {
+	IFolderRefreshActionListener getFolderRefreshActionListener() {
 		return this.folderRefreshActionListener;
 	}
 
@@ -182,7 +181,7 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 	 * @param folderRefreshActionListener A {@link IFolderRefreshActionListener}
 	 * .
 	 */
-	public void addFolderRefreshActionListener(
+	void addFolderRefreshActionListener(
 			IFolderRefreshActionListener folderRefreshActionListener) {
 		this.folderRefreshActionListener = folderRefreshActionListener;
 	}
@@ -191,7 +190,7 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 	protected Fragment createActionButtons(String id) {
 		Fragment fragment = new Fragment(id, "actionFragmentId", this);
 
-		fragment.add(new AbstractActionButton("refreshButtonId",
+		fragment.add(new BasicActionButton("refreshButtonId",
 				"images/refresh.png", new ResourceModel("label.refresh")) {
 
 			private static final long serialVersionUID = 1L;
@@ -202,7 +201,7 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 			}
 		});
 
-		fragment.add(new AbstractActionButton("writeButtonId",
+		fragment.add(new BasicActionButton("writeButtonId",
 				"images/write.png", new ResourceModel("label.write")) {
 
 			private static final long serialVersionUID = 1L;
@@ -214,7 +213,7 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 			}
 		});
 
-		fragment.add(new AbstractAjaxActionButton("searchButtonId",
+		fragment.add(new AjaxActionButton("searchButtonId",
 				"images/search.png", new ResourceModel("label.search")) {
 
 			private static final long serialVersionUID = 1L;

@@ -9,6 +9,7 @@ import org.apache.wicket.extensions.markup.html.repeater.data.table.NavigationTo
 import org.apache.wicket.markup.html.WebComponent;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.navigation.paging.PagingNavigator;
+import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.StringResourceModel;
@@ -22,8 +23,6 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 
 	private static final long serialVersionUID = 1L;
 
-	private DataTable<Message> dataTable;
-
 	private IModel<Folder> folderModel;
 
 	/**
@@ -35,7 +34,6 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 	public MessageListNavigationToolbar(DataTable<Message> dataTable,
 			IModel<Folder> folderModel) {
 		super(dataTable);
-		this.dataTable = dataTable;
 		this.folderModel = folderModel;
 	}
 
@@ -48,38 +46,44 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 	@Override
 	protected WebComponent newNavigatorLabel(String navigatorId,
 			final DataTable<?> table) {
-		return new MessageListNavigatorLabel(navigatorId);
+		return new Label(navigatorId, new AbstractReadOnlyModel<String>() {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public String getObject() {
+				MessageListDataProvider dataProvider = (MessageListDataProvider) table
+						.getDataProvider();
+				String filter = dataProvider.getFilter();
+
+				IModel<LabelModelObject> model = new Model<LabelModelObject>(
+						new LabelModelObject());
+				IModel<String> theModel;
+
+				if (filter == null) {
+					theModel = new StringResourceModel("label.navigator",
+							MessageListNavigationToolbar.this, model);
+				} else {
+					theModel = new StringResourceModel(
+							"label.navigator_with_filter",
+							MessageListNavigationToolbar.this, model);
+				}
+
+				return theModel.getObject();
+			}
+		});
 	}
 
-	/**
-	 * @return the message list datatable.
-	 */
-	protected DataTable<Message> getDataTable() {
-		return this.dataTable;
+	@Override
+	public boolean isVisible() {
+		return getTable().getDataProvider().size() > 0;
 	}
 
 	/**
 	 * @return the folder model
 	 */
-	protected IModel<Folder> getFolderModel() {
+	IModel<Folder> getFolderModel() {
 		return this.folderModel;
-	}
-
-	/**
-	 * The label for the navigation header.
-	 * 
-	 * @author Peter Postma
-	 */
-	private class MessageListNavigatorLabel extends Label {
-
-		private static final long serialVersionUID = 1L;
-
-		public MessageListNavigatorLabel(String id) {
-			super(id);
-
-			setDefaultModel(new StringResourceModel("label.navigator", this,
-					new Model<LabelModelObject>(new LabelModelObject())));
-		}
 	}
 
 	/**
@@ -95,7 +99,7 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 		 * @return "z" in "Showing x to y of z"
 		 */
 		public int getOf() {
-			return getDataTable().getRowCount();
+			return getTable().getRowCount();
 		}
 
 		/**
@@ -105,8 +109,7 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 			if (getOf() == 0) {
 				return 0;
 			}
-			return (getDataTable().getCurrentPage() * getDataTable()
-					.getRowsPerPage()) + 1;
+			return (getTable().getCurrentPage() * getTable().getRowsPerPage()) + 1;
 		}
 
 		/**
@@ -116,8 +119,8 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 			if (getOf() == 0) {
 				return 0;
 			}
-			return Math.min(getOf(), getFrom()
-					+ getDataTable().getRowsPerPage() - 1);
+			return Math.min(getOf(), getFrom() + getTable().getRowsPerPage()
+					- 1);
 		}
 
 		/**
@@ -125,6 +128,15 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 		 */
 		public String getFolderName() {
 			return getFolderModel().getObject().getName();
+		}
+
+		/**
+		 * @return the search filter
+		 */
+		public String getSearchFilter() {
+			MessageListDataProvider dataProvider = (MessageListDataProvider) getTable()
+					.getDataProvider();
+			return dataProvider.getFilter();
 		}
 	}
 }

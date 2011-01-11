@@ -51,7 +51,7 @@ public class DatePropertyColumn<T> extends PropertyColumn<T> {
 	/**
 	 * @return the date formatter.
 	 */
-	protected final DateFormat getFormatter() {
+	final DateFormat getFormatter() {
 		return this.formatter;
 	}
 }

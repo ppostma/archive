@@ -2,6 +2,8 @@ package nl.pointless.webmail.web;
 
 import javax.servlet.http.HttpServletResponse;
 
+import nl.pointless.webmail.web.component.WebmailPage;
+
 import org.apache.wicket.Page;
 import org.apache.wicket.Request;
 import org.apache.wicket.Response;
@@ -35,7 +37,7 @@ public class WebmailTester extends WicketTester {
 
 		@Override
 		public Class<? extends Page> getHomePage() {
-			return null;
+			return WebmailPage.class;
 		}
 
 		@Override

@@ -8,7 +8,6 @@ import nl.pointless.webmail.web.WebmailSession;
 import org.apache.wicket.Component;
 import org.apache.wicket.ResourceReference;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.ImageButton;
 import org.apache.wicket.markup.html.panel.EmptyPanel;
 import org.apache.wicket.markup.html.panel.Fragment;
@@ -36,9 +35,7 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 	public ActionPanel(String id) {
 		super(id);
 
-		Form<Void> form = new Form<Void>("formId");
-		form.add(new EmptyPanel("fragmentId"));
-		add(form);
+		add(new EmptyPanel("fragmentId"));
 
 		ImageButton logoutButton = new ImageButton("logoutButtonId",
 				new ResourceReference(ActionPanel.class, "images/logout.png")) {
@@ -54,11 +51,11 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 				setResponsePage(WebmailPage.class);
 			}
 		};
-		form.add(logoutButton);
+		add(logoutButton);
 
 		Label logoutLabel = new Label("logoutLabelId", new ResourceModel(
 				"label.logout"));
-		form.add(logoutLabel);
+		add(logoutLabel);
 	}
 
 	/**
@@ -74,14 +71,14 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 	public void onShowPanel(ISwitchablePanel panel) {
 		Fragment fragment = panel.getActionButtons("fragmentId");
 
-		Component component = get("formId:fragmentId");
+		Component component = get("fragmentId");
 		component.replaceWith(fragment);
 	}
 
 	/**
 	 * @return the authenticator
 	 */
-	protected IAuthenticator getAuthenticator() {
+	IAuthenticator getAuthenticator() {
 		return this.authenticator;
 	}
 }

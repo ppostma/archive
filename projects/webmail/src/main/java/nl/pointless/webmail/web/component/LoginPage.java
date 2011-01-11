@@ -115,7 +115,7 @@ public class LoginPage extends WebPage {
 	/**
 	 * @return the authenticator
 	 */
-	protected IAuthenticator getAuthenticator() {
+	IAuthenticator getAuthenticator() {
 		return this.authenticator;
 	}
 }

@@ -116,7 +116,7 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 	 * 
 	 * @param folder new selected folder
 	 */
-	protected void selectFolder(Folder folder) {
+	void selectFolder(Folder folder) {
 		// Get the fully initialized selected folder.
 		Folder currentFolder = this.mailService.getFolderByName(folder
 				.getFullName());
@@ -137,7 +137,7 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 	 * Refreshes the list with folders in the users' mailbox and refresh the
 	 * first or current folder.
 	 */
-	protected void refreshFolderList() {
+	void refreshFolderList() {
 		List<Folder> folderList = this.mailService.getFolders();
 		this.folderListModel.setObject(folderList);
 
@@ -180,8 +180,7 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 	 * 
 	 * @param folderSelectListener A {@link IFolderSelectListener}.
 	 */
-	public void addFolderSelectListener(
-			IFolderSelectListener folderSelectListener) {
+	void addFolderSelectListener(IFolderSelectListener folderSelectListener) {
 		this.folderSelectListener = folderSelectListener;
 	}
 }

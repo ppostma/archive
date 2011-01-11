@@ -6,7 +6,7 @@ import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 
 /**
- * Interface with methods retrieve and manipulate mail.
+ * Interface with methods to retrieve and manipulate mail.
  * 
  * @author Peter Postma
  */
@@ -51,11 +51,19 @@ public interface IMailService {
 	/**
 	 * Marks a message as read.
 	 * 
-	 * @param folderName The (full) folder name to look in.
-	 * @param messageId The message Id.
+	 * @param message The message.
 	 * @return <code>true</code> if marking the message read was successful
 	 */
-	boolean setMessageRead(String folderName, String messageId);
+	boolean markMessageRead(Message message);
+
+	/**
+	 * Marks a message as junk. The message will be removed from the current
+	 * folder and will be placed into the Junk folder.
+	 * 
+	 * @param message The message.
+	 * @return <code>true</code> if marking the message as junk was successful
+	 */
+	boolean markMessageJunk(Message message);
 
 	/**
 	 * Marks a message as deleted. The message will be removed from the current
@@ -63,19 +71,15 @@ public interface IMailService {
 	 * invoked on a message which is already in the Trash folder, then the
 	 * message will be deleted permanently.
 	 * 
-	 * @param folderName The (full) folder name to look in.
-	 * @param messageId The message Id.
+	 * @param message The message.
 	 * @return <code>true</code> if marking the message deleted was successful
 	 */
-	boolean setMessageDeleted(String folderName, String messageId);
+	boolean deleteMessage(Message message);
 
 	/**
-	 * Marks a message as junk. The message will be removed from the current
-	 * folder and will be placed into the Junk folder.
+	 * Send the message.
 	 * 
-	 * @param folderName The (full) folder name to look in.
-	 * @param messageId The message Id.
-	 * @return <code>true</code> if marking the message as junk was successful
+	 * @param message The message.
 	 */
-	boolean setMessageJunk(String folderName, String messageId);
+	void sendMessage(Message message);
 }

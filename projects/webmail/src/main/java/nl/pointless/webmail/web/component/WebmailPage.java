@@ -8,6 +8,7 @@ import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.resources.StyleSheetReference;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
@@ -26,17 +27,17 @@ public class WebmailPage extends WebPage {
 	/**
 	 * Component id for the message list panel.
 	 */
-	public static final String MESSAGE_LIST_PANEL_ID = "messageListId";
+	static final String MESSAGE_LIST_PANEL_ID = "messageListId";
 
 	/**
 	 * Component id for the message view panel.
 	 */
-	public static final String MESSAGE_VIEW_PANEL_ID = "messageViewId";
+	static final String MESSAGE_VIEW_PANEL_ID = "messageViewId";
 
 	/**
 	 * Component id for the message write panel.
 	 */
-	public static final String MESSAGE_WRITE_PANEL_ID = "messageWriteId";
+	static final String MESSAGE_WRITE_PANEL_ID = "messageWriteId";
 
 	@SpringBean
 	private IMailService mailService;
@@ -48,47 +49,50 @@ public class WebmailPage extends WebPage {
 		IModel<Folder> folderModel = new Model<Folder>();
 		IModel<Message> messageModel = new Model<Message>();
 
+		Form<Void> mainForm = new Form<Void>("mainFormId");
+		add(mainForm);
+
 		FolderPanel folderPanel = new FolderPanel("folderPanelId", folderModel);
-		add(folderPanel);
+		mainForm.add(folderPanel);
 
 		MessageListPanel messageListPanel = new MessageListPanel(
 				MESSAGE_LIST_PANEL_ID, folderModel, messageModel);
 		messageListPanel.addFolderRefreshActionListener(folderPanel);
-		add(messageListPanel);
+		mainForm.add(messageListPanel);
 
 		folderPanel.addFolderSelectListener(messageListPanel);
 
 		MessageViewPanel messageViewPanel = new MessageViewPanel(
 				MESSAGE_VIEW_PANEL_ID, folderModel, messageModel);
-		add(messageViewPanel);
+		mainForm.add(messageViewPanel);
 
 		MessageWritePanel messageWritePanel = new MessageWritePanel(
 				MESSAGE_WRITE_PANEL_ID);
-		add(messageWritePanel);
+		mainForm.add(messageWritePanel);
 
 		ActionPanel actionPanel = new ActionPanel("actionPanelId");
-		add(actionPanel);
+		mainForm.add(actionPanel);
 
 		initializePanelSwitcher(messageListPanel, messageViewPanel,
 				messageWritePanel, actionPanel);
 
-		Label pageTitleLabel = new Label("pageTitleId", new ResourceModel(
-				"title.webmail"));
-		add(pageTitleLabel);
-
 		Label webmailLabel = new Label("webmailLabelId", new ResourceModel(
 				"title.webmail"));
-		add(webmailLabel);
+		mainForm.add(webmailLabel);
 
 		Label loggedIn = new Label("loggedInId", new StringResourceModel(
 				"label.logged_in", this, null,
 				new Object[] { this.mailService.getServiceName() }));
-		add(loggedIn);
+		mainForm.add(loggedIn);
 
 		Label copyrightLabel = new Label("copyrightLabelId", new ResourceModel(
 				"label.copyright"));
 		copyrightLabel.setEscapeModelStrings(false);
-		add(copyrightLabel);
+		mainForm.add(copyrightLabel);
+
+		Label pageTitleLabel = new Label("pageTitleId", new ResourceModel(
+				"title.webmail"));
+		add(pageTitleLabel);
 
 		add(new StyleSheetReference("cssId", WebmailPage.class,
 				"css/webmail.css"));

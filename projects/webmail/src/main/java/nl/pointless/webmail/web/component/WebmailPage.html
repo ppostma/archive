@@ -7,33 +7,35 @@
 </head>
 <body>
 	<div id="container">
-		<div id="header">
-			<h1 wicket:id="webmailLabelId">webmail</h1>
+		<form wicket:id="mainFormId">
+			<div id="header">
+				<h1 wicket:id="webmailLabelId">webmail</h1>
 
-			<div id="info">
-				<span wicket:id="loggedInId">logged in at</span>
+				<div id="info">
+					<span wicket:id="loggedInId">logged in at</span>
+				</div>
+
+				<div id="actions">
+					<wicket:container wicket:id="actionPanelId" />
+				</div>
 			</div>
 
-			<div id="actions">
-				<wicket:container wicket:id="actionPanelId" />
-			</div>
-		</div>
+			<div id="wrapper">
+				<div id="folders">
+					<wicket:container wicket:id="folderPanelId" />
+				</div>
 
-		<div id="wrapper">
-			<div id="folders">
-				<wicket:container wicket:id="folderPanelId" />
+				<div id="content">
+					<wicket:container wicket:id="messageListId" />
+					<wicket:container wicket:id="messageViewId" />
+					<wicket:container wicket:id="messageWriteId" />
+				</div>
 			</div>
 
-			<div id="content">
-				<wicket:container wicket:id="messageListId" />
-				<wicket:container wicket:id="messageViewId" />
-				<wicket:container wicket:id="messageWriteId" />
+			<div id="footer">
+				<span wicket:id="copyrightLabelId">copyright</span>
 			</div>
-		</div>
-
-		<div id="footer">
-			<span wicket:id="copyrightLabelId">copyright</span>
-		</div>
+		</form>
 	</div>
 </body>
 </html>

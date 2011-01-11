@@ -23,8 +23,6 @@ public class FocusBehavior extends AbstractBehavior {
 
 	@Override
 	public void renderHead(IHeaderResponse headerResponse) {
-		super.renderHead(headerResponse);
-
 		headerResponse.renderOnLoadJavascript("document.getElementById('"
 				+ this.component.getMarkupId() + "').focus();");
 	}

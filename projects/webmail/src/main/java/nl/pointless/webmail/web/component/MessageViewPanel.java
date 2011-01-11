@@ -15,6 +15,7 @@ import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
 import nl.pointless.webmail.web.WebmailSession;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.wicket.RequestCycle;
 import org.apache.wicket.datetime.markup.html.basic.DateLabel;
@@ -211,7 +212,8 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 
 			@Override
 			public boolean isVisible() {
-				return !getModelObject().isEmpty();
+				List<Attachment> attachments = getModelObject();
+				return CollectionUtils.isNotEmpty(attachments);
 			}
 		};
 		add(attachments);
@@ -221,7 +223,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 	protected Fragment createActionButtons(String id) {
 		Fragment fragment = new Fragment(id, "actionFragmentId", this);
 
-		fragment.add(new AbstractActionButton("folderButtonId",
+		fragment.add(new BasicActionButton("folderButtonId",
 				"images/folderlist.png", new ResourceModel("label.folder")) {
 
 			private static final long serialVersionUID = 1L;
@@ -233,7 +235,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("writeButtonId",
+		fragment.add(new BasicActionButton("writeButtonId",
 				"images/write.png", new ResourceModel("label.write")) {
 
 			private static final long serialVersionUID = 1L;
@@ -245,7 +247,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("replyButtonId",
+		fragment.add(new BasicActionButton("replyButtonId",
 				"images/reply.png", new ResourceModel("label.reply")) {
 
 			private static final long serialVersionUID = 1L;
@@ -256,7 +258,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("forwardButtonId",
+		fragment.add(new BasicActionButton("forwardButtonId",
 				"images/forward.png", new ResourceModel("label.forward")) {
 
 			private static final long serialVersionUID = 1L;
@@ -267,7 +269,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("deleteButtonId",
+		fragment.add(new BasicActionButton("deleteButtonId",
 				"images/delete.png", new ResourceModel("label.delete")) {
 
 			private static final long serialVersionUID = 1L;
@@ -278,8 +280,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 
 				if (message != null) {
 					// Mark message as deleted on the mail provider.
-					boolean deleted = getMailService().setMessageDeleted(
-							message.getFolderName(), message.getId());
+					boolean deleted = getMailService().deleteMessage(message);
 
 					// On success, remove the message from the folder model.
 					if (deleted) {
@@ -292,7 +293,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("spamButtonId",
+		fragment.add(new BasicActionButton("spamButtonId",
 				"images/junk.png", new ResourceModel("label.spam")) {
 
 			private static final long serialVersionUID = 1L;
@@ -303,8 +304,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 
 				if (message != null) {
 					// Mark the message as junk on the mail provider.
-					boolean success = getMailService().setMessageJunk(
-							message.getFolderName(), message.getId());
+					boolean success = getMailService().markMessageJunk(message);
 
 					// On success, remove the message from the folder model.
 					if (success) {
@@ -317,7 +317,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("previousButtonId",
+		fragment.add(new BasicActionButton("previousButtonId",
 				"images/previous.png", new ResourceModel("label.previous")) {
 
 			private static final long serialVersionUID = 1L;
@@ -328,7 +328,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 		});
 
-		fragment.add(new AbstractActionButton("nextButtonId",
+		fragment.add(new BasicActionButton("nextButtonId",
 				"images/next.png", new ResourceModel("label.next")) {
 
 			private static final long serialVersionUID = 1L;
@@ -345,21 +345,21 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 	/**
 	 * @return the mail service.
 	 */
-	protected IMailService getMailService() {
+	IMailService getMailService() {
 		return this.mailService;
 	}
 
 	/**
 	 * @return the folder model.
 	 */
-	protected IModel<Folder> getFolderModel() {
+	IModel<Folder> getFolderModel() {
 		return this.folderModel;
 	}
 
 	/**
 	 * @return the message model.
 	 */
-	protected IModel<Message> getMessageModel() {
+	IModel<Message> getMessageModel() {
 		return this.messageModel;
 	}
 }

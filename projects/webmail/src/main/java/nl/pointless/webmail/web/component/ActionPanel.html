@@ -1,19 +1,17 @@
 <html xmlns:wicket>
 <body>
 	<wicket:panel>
-		<form wicket:id="formId">
-			<div id="mailActions">
-				<wicket:container wicket:id="fragmentId">fragment</wicket:container>
-			</div>
+		<div id="mailActions">
+			<wicket:container wicket:id="fragmentId">fragment</wicket:container>
+		</div>
 
-			<div id="userActions">
-				<div class="button">
-					<input type="image" wicket:id="logoutButtonId" />
-					<br />
-					<wicket:container wicket:id="logoutLabelId">logout</wicket:container>
-				</div>
+		<div id="userActions">
+			<div class="button">
+				<input type="image" wicket:id="logoutButtonId" />
+				<br />
+				<wicket:container wicket:id="logoutLabelId">logout</wicket:container>
 			</div>
-		</form>
+		</div>
 	</wicket:panel>
 </body>
 </html>

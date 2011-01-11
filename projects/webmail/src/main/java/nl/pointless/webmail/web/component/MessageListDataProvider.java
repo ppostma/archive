@@ -89,6 +89,7 @@ public class MessageListDataProvider extends SortableDataProvider<Message> {
 	public void setMessages(List<Message> messages) {
 		this.messages = messages;
 		this.unfilteredMessages = messages;
+		this.filter = null;
 	}
 
 	public String getFilter() {

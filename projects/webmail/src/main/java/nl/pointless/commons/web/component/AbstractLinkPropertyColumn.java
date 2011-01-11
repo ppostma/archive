@@ -47,11 +47,6 @@ public abstract class AbstractLinkPropertyColumn<T> extends PropertyColumn<T> {
 		item.add(new LinkPanel(item, componentId, model));
 	}
 
-	@Override
-	protected IModel<?> createLabelModel(IModel<T> rowModel) {
-		return super.createLabelModel(rowModel);
-	}
-
 	/**
 	 * Called when the link on this column is clicked.
 	 * 

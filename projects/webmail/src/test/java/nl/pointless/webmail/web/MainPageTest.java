@@ -5,7 +5,7 @@ import nl.pointless.webmail.web.component.FolderPanel;
 import nl.pointless.webmail.web.component.MessageListPanel;
 import nl.pointless.webmail.web.component.WebmailPage;
 
-import org.junit.Ignore;
+import org.apache.wicket.util.tester.FormTester;
 import org.junit.Test;
 
 /**
@@ -32,11 +32,11 @@ public class MainPageTest {
 	}
 
 	@Test
-	@Ignore
 	public void clickFolderTest() {
 		WebmailTester tester = new WebmailTester();
 
 		tester.startPage(WebmailPage.class);
+		tester.assertRenderedPage(WebmailPage.class);
 
 		tester.clickLink("folderPanelId:foldersId:0:folderLinkId");
 
@@ -46,16 +46,31 @@ public class MainPageTest {
 	}
 
 	@Test
-	@Ignore
 	public void clickMessageTest() {
 		WebmailTester tester = new WebmailTester();
 
 		tester.startPage(WebmailPage.class);
+		tester.assertRenderedPage(WebmailPage.class);
 
-		tester.clickLink("messageListId:messagesDataTableId:rows:1:cells:1:cell:linkId");
+		tester.clickLink("messageListId:messagesDataTableId:body:rows:1:cells:1:cell:linkId");
 
 		tester.assertInvisible("messageListId");
 		tester.assertVisible("messageViewId");
 		tester.assertInvisible("messageWriteId");
+	}
+
+	@Test
+	public void clickWriteTest() {
+		WebmailTester tester = new WebmailTester();
+
+		tester.startPage(WebmailPage.class);
+		tester.assertRenderedPage(WebmailPage.class);
+
+		FormTester formTester = tester.newFormTester("actionPanelId:formId");
+		formTester.submit("fragmentId:writeButtonId:buttonId");
+
+		tester.assertInvisible("messageListId");
+		tester.assertInvisible("messageViewId");
+		tester.assertVisible("messageWriteId");
 	}
 }

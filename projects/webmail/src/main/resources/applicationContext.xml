@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
@@ -24,12 +23,6 @@
 		</property>
 	</bean>
 
-	<util:map id="javaMailProperties" map-class="java.util.Properties">
-		<entry key="mail.transport.protocol" value="smtp" />
-		<entry key="mail.store.protocol" value="imap" />
-		<entry key="mail.host" value="192.168.1.1" />
-		<entry key="mail.port" value="143" />
-		<entry key="mail.debug" value="false" />
-	</util:map>
+	<util:properties id="javaMailProperties" location="classpath:javamail.properties" />
 
 </beans>

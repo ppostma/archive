@@ -15,10 +15,16 @@ import nl.pointless.webmail.service.IMailService;
  */
 public class MockMailService implements IMailService {
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public String getServiceName() {
 		return "Mock";
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Folder getFolderByName(String folderName) {
 		Folder folder = new Folder(folderName);
 		folder.setFullName(folderName);
@@ -26,12 +32,18 @@ public class MockMailService implements IMailService {
 		return folder;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public List<Folder> getFolders() {
 		List<Folder> folders = new ArrayList<Folder>();
 		folders.add(getFolderByName("Mock"));
 		return folders;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Message getMessageById(String folderName, String messageId) {
 		Message message = new Message();
 		message.setFolderName(folderName);
@@ -40,15 +52,31 @@ public class MockMailService implements IMailService {
 		return message;
 	}
 
-	public boolean setMessageRead(String folderName, String messageId) {
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean markMessageRead(Message message) {
 		return false;
 	}
 
-	public boolean setMessageDeleted(String folderName, String messageId) {
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean markMessageJunk(Message message) {
 		return false;
 	}
 
-	public boolean setMessageJunk(String folderName, String messageId) {
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean deleteMessage(Message message) {
 		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public void sendMessage(Message message) {
+		// No implementation
 	}
 }

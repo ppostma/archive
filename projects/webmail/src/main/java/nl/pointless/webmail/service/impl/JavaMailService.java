@@ -160,21 +160,21 @@ public class JavaMailService implements IMailService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean setMessageRead(String folderName, String messageId) {
+	public boolean markMessageRead(Message message) {
 		boolean changed = false;
 		javax.mail.Folder folder = null;
 
 		try {
 			javax.mail.Store store = this.mailSession.getStore();
 
-			folder = store.getFolder(folderName);
+			folder = store.getFolder(message.getFolderName());
 			folder.open(javax.mail.Folder.READ_WRITE);
 
-			int msgnum = Integer.parseInt(messageId);
-			javax.mail.Message message = folder.getMessage(msgnum);
+			int msgnum = Integer.parseInt(message.getId());
+			javax.mail.Message foundMessage = folder.getMessage(msgnum);
 
-			if (!message.isSet(Flags.Flag.SEEN)) {
-				message.setFlag(Flags.Flag.SEEN, true);
+			if (!foundMessage.isSet(Flags.Flag.SEEN)) {
+				foundMessage.setFlag(Flags.Flag.SEEN, true);
 				changed = true;
 			}
 
@@ -196,7 +196,58 @@ public class JavaMailService implements IMailService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean setMessageDeleted(String folderName, String messageId) {
+	public boolean markMessageJunk(Message message) {
+		boolean changed = false;
+
+		javax.mail.Folder folder = null;
+		javax.mail.Folder junkFolder = null;
+
+		try {
+			javax.mail.Store store = this.mailSession.getStore();
+
+			folder = store.getFolder(message.getFolderName());
+			folder.open(javax.mail.Folder.READ_WRITE);
+
+			// Move the message to the junk folder if the open folder isn't the
+			// junk folder itself.
+			if (!folder.getFullName().equals(JavaMailService.JUNK_FOLDER)) {
+				int msgnum = Integer.parseInt(message.getId());
+				javax.mail.Message foundMessage = folder.getMessage(msgnum);
+
+				junkFolder = store.getFolder(JavaMailService.JUNK_FOLDER);
+				junkFolder.open(javax.mail.Folder.READ_WRITE);
+
+				folder.copyMessages(new javax.mail.Message[] { foundMessage },
+						junkFolder);
+
+				if (!foundMessage.isSet(Flags.Flag.DELETED)) {
+					foundMessage.setFlag(Flags.Flag.DELETED, true);
+					changed = true;
+				}
+			}
+
+		} catch (MessagingException e) {
+			log.error(e.getMessage(), e);
+		} finally {
+			try {
+				if (junkFolder != null) {
+					junkFolder.close(false);
+				}
+				if (folder != null) {
+					folder.close(false);
+				}
+			} catch (MessagingException e) {
+				log.warn(e.getMessage(), e);
+			}
+		}
+
+		return changed;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public boolean deleteMessage(Message message) {
 		boolean changed = false;
 
 		javax.mail.Folder folder = null;
@@ -205,11 +256,11 @@ public class JavaMailService implements IMailService {
 		try {
 			javax.mail.Store store = this.mailSession.getStore();
 
-			folder = store.getFolder(folderName);
+			folder = store.getFolder(message.getFolderName());
 			folder.open(javax.mail.Folder.READ_WRITE);
 
-			int msgnum = Integer.parseInt(messageId);
-			javax.mail.Message message = folder.getMessage(msgnum);
+			int msgnum = Integer.parseInt(message.getId());
+			javax.mail.Message foundMessage = folder.getMessage(msgnum);
 
 			// Copy the message to the trash folder if the open folder isn't the
 			// trash folder itself.
@@ -217,12 +268,12 @@ public class JavaMailService implements IMailService {
 				trashFolder = store.getFolder(JavaMailService.TRASH_FOLDER);
 				trashFolder.open(javax.mail.Folder.READ_WRITE);
 
-				folder.copyMessages(new javax.mail.Message[] { message },
+				folder.copyMessages(new javax.mail.Message[] { foundMessage },
 						trashFolder);
 			}
 
-			if (!message.isSet(Flags.Flag.DELETED)) {
-				message.setFlag(Flags.Flag.DELETED, true);
+			if (!foundMessage.isSet(Flags.Flag.DELETED)) {
+				foundMessage.setFlag(Flags.Flag.DELETED, true);
 				changed = true;
 			}
 
@@ -247,52 +298,9 @@ public class JavaMailService implements IMailService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean setMessageJunk(String folderName, String messageId) {
-		boolean changed = false;
+	public void sendMessage(Message message) {
+		// TODO Auto-generated method stub
 
-		javax.mail.Folder folder = null;
-		javax.mail.Folder junkFolder = null;
-
-		try {
-			javax.mail.Store store = this.mailSession.getStore();
-
-			folder = store.getFolder(folderName);
-			folder.open(javax.mail.Folder.READ_WRITE);
-
-			// Move the message to the junk folder if the open folder isn't the
-			// junk folder itself.
-			if (!folder.getFullName().equals(JavaMailService.JUNK_FOLDER)) {
-				int msgnum = Integer.parseInt(messageId);
-				javax.mail.Message message = folder.getMessage(msgnum);
-
-				junkFolder = store.getFolder(JavaMailService.JUNK_FOLDER);
-				junkFolder.open(javax.mail.Folder.READ_WRITE);
-
-				folder.copyMessages(new javax.mail.Message[] { message },
-						junkFolder);
-
-				if (!message.isSet(Flags.Flag.DELETED)) {
-					message.setFlag(Flags.Flag.DELETED, true);
-					changed = true;
-				}
-			}
-
-		} catch (MessagingException e) {
-			log.error(e.getMessage(), e);
-		} finally {
-			try {
-				if (junkFolder != null) {
-					junkFolder.close(false);
-				}
-				if (folder != null) {
-					folder.close(false);
-				}
-			} catch (MessagingException e) {
-				log.warn(e.getMessage(), e);
-			}
-		}
-
-		return changed;
 	}
 
 	public void setMailSession(JavaMailSession mailSession) {
