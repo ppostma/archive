@@ -5,6 +5,7 @@
 html,body {
 	margin: 0px;
 	padding: 0px;
+	height: 100%;
 }
 
 body {
@@ -14,8 +15,13 @@ body {
 }
 
 div#container {
-	width: 50%;
+	position: relative;
 	margin: 0px auto;
+	width: 370px;
+	text-align: center;
+	border: 2px dotted black;
+	height: 200px;
+	top: 50px;
 }
 
 div#feedback {
@@ -29,7 +35,16 @@ div#header h1 {
 }
 
 div#login {
+	margin: 0px auto;
 	width: 300px;
+}
+
+div#login div {
+	width: 100%;	
+}
+
+div#login div:last-child {
+ 	float: right;             
 }
 
 div#login label {

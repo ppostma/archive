@@ -15,16 +15,19 @@
 	
 		<div id="login">
 			<form wicket:id="formId">
-				<label wicket:id="usernameLabelId" for="usernameId">username</label>
-				<input wicket:id="usernameId" id="usernameId" type="text" />
-				<br />
-		
-				<label wicket:id="passwordLabelId" for="passwordId">password</label>
-				<input wicket:id="passwordId" id="passwordId" type="password"  />
-				<br />
-		
-				<label><!-- dummy --></label>
-				<input wicket:id="submitId" type="submit" />
+				<div>
+					<label wicket:id="usernameLabelId" for="usernameId">username</label>
+					<input wicket:id="usernameId" id="usernameId" type="text" />
+				</div>
+
+				<div>
+					<label wicket:id="passwordLabelId" for="passwordId">password</label>
+					<input wicket:id="passwordId" id="passwordId" type="password"  />
+				</div>
+
+				<div>
+					<input wicket:id="submitId" type="submit" />
+				</div>
 			</form>
 		</div>
 	</div>
