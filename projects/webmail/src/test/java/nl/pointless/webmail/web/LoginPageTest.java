@@ -10,6 +10,7 @@ import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.util.tester.FormTester;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -19,54 +20,54 @@ import org.junit.Test;
  */
 public class LoginPageTest {
 
+	private WebmailTester tester;
+
+	@Before
+	public void init() {
+		this.tester = new WebmailTester();
+	}
+
 	@Test
 	public void renderTest() {
-		WebmailTester tester = new WebmailTester();
+		this.tester.startPage(LoginPage.class);
+		this.tester.assertRenderedPage(LoginPage.class);
 
-		tester.startPage(LoginPage.class);
-		tester.assertRenderedPage(LoginPage.class);
+		this.tester.assertComponent("formId", Form.class);
+		this.tester.assertComponent("formId:usernameLabelId", Label.class);
+		this.tester.assertComponent("formId:passwordLabelId", Label.class);
+		this.tester.assertComponent("formId:usernameId", RequiredTextField.class);
+		this.tester.assertComponent("formId:passwordId", PasswordTextField.class);
+		this.tester.assertComponent("formId:submitId", Button.class);
 
-		tester.assertComponent("formId", Form.class);
-		tester.assertComponent("formId:usernameLabelId", Label.class);
-		tester.assertComponent("formId:passwordLabelId", Label.class);
-		tester.assertComponent("formId:usernameId", RequiredTextField.class);
-		tester.assertComponent("formId:passwordId", PasswordTextField.class);
-		tester.assertComponent("formId:submitId", Button.class);
-
-		tester.assertComponent("feedbackId", FeedbackPanel.class);
+		this.tester.assertComponent("feedbackId", FeedbackPanel.class);
 	}
 
 	@Test
 	public void loginTest() {
-		WebmailTester tester = new WebmailTester();
+		this.tester.startPage(LoginPage.class);
+		this.tester.assertRenderedPage(LoginPage.class);
 
-		tester.startPage(LoginPage.class);
-		tester.assertRenderedPage(LoginPage.class);
-
-		FormTester formTester = tester.newFormTester("formId");
+		FormTester formTester = this.tester.newFormTester("formId");
 		formTester.setValue("usernameId", "test");
 		formTester.setValue("passwordId", "test");
 		formTester.submit();
 
-		tester.assertRenderedPage(WebmailPage.class);
+		this.tester.assertRenderedPage(WebmailPage.class);
 	}
 
 	@Test
 	public void loginFailTest() {
-		WebmailTester tester = new WebmailTester();
+		this.tester.startPage(LoginPage.class);
+		this.tester.assertRenderedPage(LoginPage.class);
 
-		tester.startPage(LoginPage.class);
-		tester.assertRenderedPage(LoginPage.class);
+		this.tester.assertNoErrorMessage();
 
-		tester.assertNoErrorMessage();
-
-		FormTester formTester = tester.newFormTester("formId");
+		FormTester formTester = this.tester.newFormTester("formId");
 		formTester.setValue("usernameId", "test");
 		formTester.setValue("passwordId", "invalid");
 		formTester.submit();
 
-		tester.assertRenderedPage(LoginPage.class);
-		tester
-				.assertErrorMessages(new String[] { "Couldn't authenticate, invalid username/password combination." });
+		this.tester.assertRenderedPage(LoginPage.class);
+		this.tester.assertErrorMessages(new String[] { "Couldn't authenticate, invalid username/password combination." });
 	}
 }
