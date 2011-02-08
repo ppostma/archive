@@ -12,56 +12,55 @@ body {
 	font-family: arial, sans-serif, helvetica;
 	font-size: 90%;
 	background-color: #ececec;
-}
-
-div#container {
-	position: relative;
 	margin: 0px auto;
 	width: 370px;
 	text-align: center;
-	border: 2px dotted black;
 	height: 200px;
-	top: 50px;
 }
 
-div#feedback {
+section#feedback {
 	color: red;
 }
 
-div#header h1 {
+header {
+	display: block;
+}
+
+header h1 {
 	height: 70px;
 	line-height: 80px;
 	margin: 0px;
 }
 
-div#login {
+section#login {
+	display: block;
 	margin: 0px auto;
 	width: 300px;
 }
 
-div#login div {
+section#login div {
 	width: 100%;	
 }
 
-div#login div:last-child {
+section#login div:last-child {
  	float: right;             
 }
 
-div#login label {
+section#login label {
 	float: left;
 	margin: 0.5em 0;
 	text-align: right;
 	width: 80px;
 }
 
-div#login input[type=text],input[type=password] {
+section#login input[type=text],input[type=password] {
 	float: right;
 	margin: 0.5em 0;
 	text-align: left;
 	width: 180px;
 }
 
-div#login input[type=submit] {
+section#login input[type=submit] {
 	float: right;
 	margin: 0.5em 0;
 	text-align: left;

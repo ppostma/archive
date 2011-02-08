@@ -11,10 +11,6 @@ html,body {
 body {
 	font-family: arial, sans-serif, helvetica;
 	font-size: 80%;
-}
-
-div#container {
-	position: relative;
 	height: auto;
 	min-height: 100%;
 	background-image: url("../images/background_left.png");
@@ -22,7 +18,13 @@ div#container {
 	background-color: #ececec;
 }
 
-div#header h1 {
+header {
+	display: block;
+	float: left;
+	width: 100%;
+}
+
+header h1 {
 	float: left;
 	height: 50px;
 	line-height: 60px;
@@ -30,12 +32,8 @@ div#header h1 {
 	padding-left: 25px;
 }
 
-div#header {
-	float: left;
-	width: 100%;
-}
-
-div#info {
+section#info {
+	display: block;
 	position: absolute;
 	margin-top: 50px;
 	margin-left: 30px;
@@ -43,12 +41,13 @@ div#info {
 	font-size: 90%;
 }
 
-div#actions {
+section#actions {
+	display: block;
 	margin-left: 240px;
 	margin-top: 10px;
 }
 
-div#actions div.button {
+section#actions div.button {
 	float: left;
 	text-align: center;
 	font-weight: bold;
@@ -56,7 +55,7 @@ div#actions div.button {
 	width: 60px;
 }
 
-div#actions div.separator {
+section#actions div.separator {
 	float: left;
 	background-image: url("../images/separator.png");
 	width: 16px;
@@ -65,20 +64,21 @@ div#actions div.separator {
 	margin-top: 5px;
 }
 
-div#actions div#mailActions {
+section#actions div#mailActions {
 	float: left;
 }
 
-div#actions div#navigationActions {
+section#actions div#navigationActions {
 	float: left;
 	padding-left: 30px;
 }
 
-div#actions div#userActions {
+section#actions div#userActions {
 	float: right;
 }
 
 div#wrapper {
+	display: block;
 	float: left;
 	width: 100%;
 	background-image: url("../images/background_left.png");
@@ -87,119 +87,121 @@ div#wrapper {
 	padding-bottom: 10px;
 }
 
-div#folders {
+aside {
+	display: block;
 	float: left;
 	width: 220px;
 	padding-top: 5px;
 }
 
-div#folders span.unread {
+aside span.unread {
 	font-weight: bold;
 }
 
-div#folders ul {
+aside ul {
 	list-style-type: disc;
 	list-style-image: url(../images/folder.png);
 	font-size: 120%;
 }
 
-div#folders li {
+aside li {
 	margin-left: 20px;
 }
 
-div#folders a {
+aside a {
 	color: #000000;
 	text-decoration: none;
 }
 
-div#folders a:hover {
+aside a:hover {
 	text-decoration: underline;
 }
 
-div#folders span.wicket-ajax-indicator {
+aside span.wicket-ajax-indicator {
 	margin: 0px;
 	padding: 0px;
 	padding-left: 5px;
 }
 
-div#content {
+section#content {
+	display: block;
 	margin-left: 220px;
 	padding: 10px;
 }
 
-div#content table {
+section#content table {
 	width: 100%;
 	border-spacing: 2px;
 }
 
-div#content th {
+section#content th {
 	font-weight: bold;
 	background-color: #c9c9c9;
 }
 
-div#content a {
+section#content a {
 	color: #000000;
 	text-decoration: none;
 }
 
-div#content a:hover {
+section#content a:hover {
 	text-decoration: underline;
 }
 
-div#content tr.odd {
+section#content tr.odd {
 	background-color: #dddddd;
 }
 
-div#content tr.even {
+section#content tr.even {
 	
 }
 
-div#content td {
+section#content td {
 	padding: 5px;
 }
 
-div#content tr.unread {
+section#content tr.unread {
 	font-weight: bold;
 }
 
-div#content .navigatorLabel {
+section#content .navigatorLabel {
 	float: left;
 	font-size: 120%;
 	font-style: italic;
 }
 
-div#content .navigator {
+section#content .navigator {
 	text-align: right;
 	font-size: 130%;
 }
 
-div#content .navigator img {
+section#content .navigator img {
 	border: 0px;
 }
 
-div#content .navigator em {
+section#content .navigator em {
 	font-style: normal;
 	font-weight: bold;
 }
-
-div#content .norecords-td {
+section#content .norecords-td {
 	font-size: 120%;
 }
 
-div#content #headers {
+section#content #headers {
 	margin-top: 10px;
 }
 
-div#content #headers .label {
+section#content #headers .label {
 	font-weight: bold;
 }
 
-div#content #attachments ul {
+section#content #attachments ul {
 	list-style-type: disc;
 	list-style-image: url(../images/attachment.png);
 }
 
-div#footer {
+footer {
+	display: block;
 	position: fixed;
 	bottom: 0px;
 	width: 100%;
