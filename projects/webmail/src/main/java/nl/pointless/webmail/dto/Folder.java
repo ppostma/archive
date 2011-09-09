@@ -13,7 +13,7 @@ import org.apache.commons.lang.StringUtils;
  */
 public class Folder implements Serializable {
 
-	private static final long serialVersionUID = -7275785115989503913L;
+	private static final long serialVersionUID = 1L;
 
 	private String name;
 	private String fullName;

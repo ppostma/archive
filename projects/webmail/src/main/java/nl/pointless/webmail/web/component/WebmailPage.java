@@ -4,12 +4,15 @@ import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
 import nl.pointless.webmail.web.PanelSwitcher;
-import nl.pointless.webmail.web.WebmailSession;
+import nl.pointless.webmail.web.event.FolderSelectedEvent;
+import nl.pointless.webmail.web.event.MessageComposeEvent;
+import nl.pointless.webmail.web.event.MessageSelectedEvent;
 
+import org.apache.wicket.event.IEvent;
+import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
-import org.apache.wicket.markup.html.resources.StyleSheetReference;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.ResourceModel;
@@ -24,46 +27,51 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  */
 public class WebmailPage extends WebPage {
 
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Component id for the message list panel.
 	 */
-	static final String MESSAGE_LIST_PANEL_ID = "messageListId";
+	private static final String MESSAGE_LIST_PANEL_ID = "messageListId";
 
 	/**
 	 * Component id for the message view panel.
 	 */
-	static final String MESSAGE_VIEW_PANEL_ID = "messageViewId";
+	private static final String MESSAGE_VIEW_PANEL_ID = "messageViewId";
 
 	/**
 	 * Component id for the message write panel.
 	 */
-	static final String MESSAGE_WRITE_PANEL_ID = "messageWriteId";
+	private static final String MESSAGE_WRITE_PANEL_ID = "messageWriteId";
+
+	private PanelSwitcher panelSwitcher;
 
 	@SpringBean
 	private IMailService mailService;
+
+	private IModel<Folder> folderModel;
+	private IModel<Message> messageModel;
 
 	/**
 	 * Constructor.
 	 */
 	public WebmailPage() {
-		IModel<Folder> folderModel = new Model<Folder>();
-		IModel<Message> messageModel = new Model<Message>();
+		this.folderModel = new Model<Folder>();
+		this.messageModel = new Model<Message>();
 
-		Form<Void> mainForm = new Form<Void>("mainFormId");
+		Form<Object> mainForm = new Form<Object>("mainFormId");
 		add(mainForm);
 
-		FolderPanel folderPanel = new FolderPanel("folderPanelId", folderModel);
+		FolderPanel folderPanel = new FolderPanel("folderPanelId",
+				this.folderModel);
 		mainForm.add(folderPanel);
 
 		MessageListPanel messageListPanel = new MessageListPanel(
-				MESSAGE_LIST_PANEL_ID, folderModel, messageModel);
-		messageListPanel.addFolderRefreshActionListener(folderPanel);
+				MESSAGE_LIST_PANEL_ID, this.folderModel, this.messageModel);
 		mainForm.add(messageListPanel);
 
-		folderPanel.addFolderSelectListener(messageListPanel);
-
 		MessageViewPanel messageViewPanel = new MessageViewPanel(
-				MESSAGE_VIEW_PANEL_ID, folderModel, messageModel);
+				MESSAGE_VIEW_PANEL_ID, this.folderModel, this.messageModel);
 		mainForm.add(messageViewPanel);
 
 		MessageWritePanel messageWritePanel = new MessageWritePanel(
@@ -93,9 +101,15 @@ public class WebmailPage extends WebPage {
 		Label pageTitleLabel = new Label("pageTitleId", new ResourceModel(
 				"title.webmail"));
 		add(pageTitleLabel);
+	}
 
-		add(new StyleSheetReference("cssId", WebmailPage.class,
-				"css/webmail.css"));
+	@Override
+	public void renderHead(IHeaderResponse response) {
+		response.renderCSSReference("css/webmail.css");
+		response.renderCSSReference("css/jquery-ui-1.8.16.custom.css");
+
+		response.renderJavaScriptReference("js/jquery-1.6.2.min.js");
+		response.renderJavaScriptReference("js/jquery-ui-1.8.16.custom.min.js");
 	}
 
 	/**
@@ -109,13 +123,25 @@ public class WebmailPage extends WebPage {
 	private void initializePanelSwitcher(MessageListPanel messageListPanel,
 			MessageViewPanel messageViewPanel,
 			MessageWritePanel messageWritePanel, ActionPanel actionPanel) {
-		PanelSwitcher panelSwitcher = new PanelSwitcher();
-		panelSwitcher.add(messageListPanel);
-		panelSwitcher.add(messageViewPanel);
-		panelSwitcher.add(messageWritePanel);
-		panelSwitcher.setPanelSwitchListener(actionPanel);
-		panelSwitcher.setActivePanel(MESSAGE_LIST_PANEL_ID);
+		this.panelSwitcher = new PanelSwitcher(this);
+		this.panelSwitcher.add(messageListPanel);
+		this.panelSwitcher.add(messageViewPanel);
+		this.panelSwitcher.add(messageWritePanel);
+		this.panelSwitcher.setActivePanel(MESSAGE_LIST_PANEL_ID);
+	}
 
-		WebmailSession.get().setPanelSwitcher(panelSwitcher);
+	@Override
+	public void onEvent(IEvent<?> event) {
+		Object payload = event.getPayload();
+
+		if (payload instanceof FolderSelectedEvent) {
+			this.panelSwitcher.setActivePanel(MESSAGE_LIST_PANEL_ID);
+
+		} else if (payload instanceof MessageSelectedEvent) {
+			this.panelSwitcher.setActivePanel(MESSAGE_VIEW_PANEL_ID);
+
+		} else if (payload instanceof MessageComposeEvent) {
+			this.panelSwitcher.setActivePanel(MESSAGE_WRITE_PANEL_ID);
+		}
 	}
 }

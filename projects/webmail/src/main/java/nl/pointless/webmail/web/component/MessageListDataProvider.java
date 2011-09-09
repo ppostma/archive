@@ -9,6 +9,7 @@ import java.util.List;
 import nl.pointless.webmail.dto.Message;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.util.SortableDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
@@ -35,7 +36,7 @@ public class MessageListDataProvider extends SortableDataProvider<Message> {
 	public MessageListDataProvider() {
 		this.messages = new ArrayList<Message>();
 
-		setSort("date", false);
+		setSort("date", SortOrder.DESCENDING);
 	}
 
 	/**
@@ -58,7 +59,8 @@ public class MessageListDataProvider extends SortableDataProvider<Message> {
 				Object modelObject1 = model1.getObject();
 				Object modelObject2 = model2.getObject();
 
-				int compare = ((Comparable) modelObject1)
+				@SuppressWarnings("unchecked")
+				int compare = ((Comparable<Object>) modelObject1)
 						.compareTo(modelObject2);
 
 				if (!ascending) {

@@ -2,11 +2,12 @@ package nl.pointless.webmail.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 
+import nl.pointless.webmail.web.event.PanelShowEvent;
+
 import org.apache.wicket.Component;
+import org.apache.wicket.event.Broadcast;
 
 /**
  * A panel switcher can have a collection of panels but has only one panel
@@ -19,10 +20,18 @@ public class PanelSwitcher implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private List<ISwitchablePanel> panels = new ArrayList<ISwitchablePanel>();
-	private Deque<ISwitchablePanel> previousPanels = new LinkedList<ISwitchablePanel>();
 	private ISwitchablePanel activePanel;
 
-	private IPanelSwitchListener listener;
+	private final Component parent;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param parent Parent component.
+	 */
+	public PanelSwitcher(Component parent) {
+		this.parent = parent;
+	}
 
 	/**
 	 * Add a panel to the panel switcher.
@@ -46,39 +55,20 @@ public class PanelSwitcher implements Serializable {
 					+ panelId + ". Panel not found.");
 		}
 
-		if (this.activePanel != null) {
-			this.previousPanels.push(this.activePanel);
-		}
-
 		setActivePanel(panel);
-	}
-
-	/**
-	 * Change the active panel to the previous panel, if there was any previous
-	 * panel recorded.
-	 */
-	public void setActivePanelToPreviousPanel() {
-		if (this.previousPanels.size() > 0) {
-			ISwitchablePanel previousPanel = this.previousPanels.pop();
-
-			setActivePanel(previousPanel);
-		}
 	}
 
 	private void setActivePanel(ISwitchablePanel panelToActivate) {
 		if (this.activePanel != null) {
 			this.activePanel.hidePanel();
-
-			if (this.listener != null) {
-				this.listener.onHidePanel(this.activePanel);
-			}
 		}
 
 		this.activePanel = panelToActivate;
 		this.activePanel.showPanel();
 
-		if (this.listener != null) {
-			this.listener.onShowPanel(this.activePanel);
+		if (this.parent != null) {
+			this.parent.send(this.parent, Broadcast.DEPTH, new PanelShowEvent(
+					this.activePanel));
 		}
 	}
 
@@ -103,9 +93,5 @@ public class PanelSwitcher implements Serializable {
 
 		Component component = (Component) panel;
 		return component.getId().equals(panelId);
-	}
-
-	public void setPanelSwitchListener(IPanelSwitchListener aListener) {
-		this.listener = aListener;
 	}
 }

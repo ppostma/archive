@@ -4,6 +4,7 @@ import nl.pointless.webmail.dto.Login;
 import nl.pointless.webmail.service.IAuthenticator;
 import nl.pointless.webmail.web.WebmailSession;
 
+import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Button;
@@ -11,7 +12,6 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
-import org.apache.wicket.markup.html.resources.StyleSheetReference;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
@@ -24,6 +24,8 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * @author Peter Postma
  */
 public class LoginPage extends WebPage {
+
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * The form on the login page.
@@ -42,8 +44,6 @@ public class LoginPage extends WebPage {
 		 */
 		public LoginForm(String id, IModel<Login> login) {
 			super(id);
-
-			removePersistentFormComponentValues(true);
 
 			Label usernameLabel = new Label("usernameLabelId",
 					new ResourceModel("label.username"));
@@ -108,8 +108,11 @@ public class LoginPage extends WebPage {
 
 		FeedbackPanel feedbackPanel = new FeedbackPanel("feedbackId");
 		add(feedbackPanel);
+	}
 
-		add(new StyleSheetReference("cssId", LoginPage.class, "css/login.css"));
+	@Override
+	public void renderHead(IHeaderResponse response) {
+		response.renderCSSReference("css/login.css");
 	}
 
 	/**

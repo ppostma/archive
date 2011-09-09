@@ -1,8 +1,8 @@
 package nl.pointless.webmail.web;
 
-import org.apache.wicket.Request;
 import org.apache.wicket.Session;
 import org.apache.wicket.protocol.http.WebSession;
+import org.apache.wicket.request.Request;
 
 /**
  * Session for the webmail application.
@@ -14,8 +14,6 @@ public class WebmailSession extends WebSession {
 	private static final long serialVersionUID = 1L;
 
 	private String username;
-
-	private PanelSwitcher panelSwitcher;
 
 	/**
 	 * Constructor.
@@ -48,13 +46,5 @@ public class WebmailSession extends WebSession {
 
 	public void setUsername(String username) {
 		this.username = username;
-	}
-
-	public PanelSwitcher getPanelSwitcher() {
-		return this.panelSwitcher;
-	}
-
-	public void setPanelSwitcher(PanelSwitcher panelSwitcher) {
-		this.panelSwitcher = panelSwitcher;
 	}
 }

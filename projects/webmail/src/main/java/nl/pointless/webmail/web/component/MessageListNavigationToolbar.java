@@ -3,6 +3,7 @@ package nl.pointless.webmail.web.component;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.wicket.IClusterable;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.DataTable;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.NavigationToolbar;
@@ -57,26 +58,35 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 				String filter = dataProvider.getFilter();
 
 				IModel<LabelModelObject> model = new Model<LabelModelObject>(
-						new LabelModelObject());
-				IModel<String> theModel;
+						new LabelModelObject(table));
+				StringBuilder sb = new StringBuilder();
 
-				if (filter == null) {
-					theModel = new StringResourceModel("label.navigator",
+				if (dataProvider.size() > 0) {
+					IModel<String> navigatorModel = new StringResourceModel(
+							"label.navigator",
 							MessageListNavigationToolbar.this, model);
-				} else {
-					theModel = new StringResourceModel(
-							"label.navigator_with_filter",
-							MessageListNavigationToolbar.this, model);
+					sb.append(navigatorModel.getObject());
 				}
 
-				return theModel.getObject();
+				sb.append(" ");
+
+				if (StringUtils.isNotEmpty(filter)) {
+					IModel<String> filterModel = new StringResourceModel(
+							"label.filter", MessageListNavigationToolbar.this,
+							model);
+					sb.append(filterModel.getObject());
+				}
+
+				return sb.toString();
 			}
 		});
 	}
 
 	@Override
-	public boolean isVisible() {
-		return getTable().getDataProvider().size() > 0;
+	protected void onConfigure() {
+		super.onConfigure();
+
+		setVisible(true);
 	}
 
 	/**
@@ -95,11 +105,22 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 
 		private static final long serialVersionUID = 1L;
 
+		private final DataTable<?> dataTable;
+
+		/**
+		 * Construct.
+		 * 
+		 * @param dataTable The data table.
+		 */
+		public LabelModelObject(DataTable<?> dataTable) {
+			this.dataTable = dataTable;
+		}
+
 		/**
 		 * @return "z" in "Showing x to y of z"
 		 */
 		public int getOf() {
-			return getTable().getRowCount();
+			return this.dataTable.getItemCount();
 		}
 
 		/**
@@ -109,7 +130,8 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 			if (getOf() == 0) {
 				return 0;
 			}
-			return (getTable().getCurrentPage() * getTable().getRowsPerPage()) + 1;
+			return this.dataTable.getCurrentPage()
+					* this.dataTable.getItemsPerPage() + 1;
 		}
 
 		/**
@@ -119,8 +141,8 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 			if (getOf() == 0) {
 				return 0;
 			}
-			return Math.min(getOf(), getFrom() + getTable().getRowsPerPage()
-					- 1);
+			return Math.min(getOf(),
+					getFrom() + this.dataTable.getItemsPerPage() - 1);
 		}
 
 		/**
@@ -134,7 +156,7 @@ public class MessageListNavigationToolbar extends NavigationToolbar {
 		 * @return the search filter
 		 */
 		public String getSearchFilter() {
-			MessageListDataProvider dataProvider = (MessageListDataProvider) getTable()
+			MessageListDataProvider dataProvider = (MessageListDataProvider) this.dataTable
 					.getDataProvider();
 			return dataProvider.getFilter();
 		}

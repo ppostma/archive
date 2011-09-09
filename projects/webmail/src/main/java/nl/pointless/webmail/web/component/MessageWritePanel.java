@@ -2,7 +2,6 @@ package nl.pointless.webmail.web.component;
 
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.WebmailSession;
 
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
@@ -47,7 +46,7 @@ public class MessageWritePanel extends AbstractSwitchablePanel {
 		super(id);
 		this.messageModel = messageModel;
 
-		Form<Void> form = new Form<Void>("formId");
+		Form<Object> form = new Form<Object>("formId");
 		add(form);
 
 		form.add(new TextField<String>("toId", new PropertyModel<String>(
@@ -69,8 +68,7 @@ public class MessageWritePanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				WebmailSession.get().getPanelSwitcher()
-						.setActivePanelToPreviousPanel();
+				// TODO setActivePanelToPreviousPanel (discard)
 			}
 		});
 
@@ -93,7 +91,7 @@ public class MessageWritePanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				// TODO Implement me
+				// TODO Implement me (attachButtonId)
 			}
 		});
 
@@ -104,7 +102,7 @@ public class MessageWritePanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				// TODO Implement me
+				// TODO Implement me (saveButtonId)
 			}
 		});
 

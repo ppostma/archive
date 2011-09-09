@@ -2,15 +2,15 @@
  * Webmail main page stylesheet.
  */
  
-html,body {
+html, body {
 	margin: 0px;
 	padding: 0px;
 	height: 100%;
 }
 
 body {
-	font-family: arial, sans-serif, helvetica;
-	font-size: 80%;
+	font-family: Verdana,Arial,sans-serif;
+	font-size: 75%;
 	height: auto;
 	min-height: 100%;
 	background-image: url("../images/background_left.png");
@@ -25,6 +25,7 @@ header {
 }
 
 header h1 {
+	font-size: 2em;
 	float: left;
 	height: 50px;
 	line-height: 60px;
@@ -38,7 +39,7 @@ section#info {
 	margin-top: 50px;
 	margin-left: 30px;
 	width: 160px;
-	font-size: 90%;
+	font-size: 0.9em;
 }
 
 section#actions {
@@ -52,7 +53,7 @@ section#actions div.button {
 	text-align: center;
 	font-weight: bold;
 	margin-right: 8px;
-	width: 60px;
+	width: 65px;
 }
 
 section#actions div.separator {
@@ -101,7 +102,7 @@ aside span.unread {
 aside ul {
 	list-style-type: disc;
 	list-style-image: url(../images/folder.png);
-	font-size: 120%;
+	font-size: 1.2em;
 }
 
 aside li {
@@ -166,13 +167,13 @@ section#content tr.unread {
 
 section#content .navigatorLabel {
 	float: left;
-	font-size: 120%;
+	font-size: 1.1em;
 	font-style: italic;
 }
 
 section#content .navigator {
 	text-align: right;
-	font-size: 130%;
+	font-size: 1.2em;
 }
 
 section#content .navigator img {
@@ -184,7 +185,7 @@ section#content .navigator em {
 	font-weight: bold;
 }
 section#content .norecords-td {
-	font-size: 120%;
+	font-size: 1.1em;
 }
 
 section#content #headers {
@@ -200,6 +201,10 @@ section#content #attachments ul {
 	list-style-image: url(../images/attachment.png);
 }
 
+#searchDialog input[type=search] {
+	width: 230px;
+}
+
 footer {
 	display: block;
 	position: fixed;
@@ -207,6 +212,6 @@ footer {
 	width: 100%;
 	background-color: #bbb;
 	font-weight: bold;
-	font-size: 90%;
+	font-size: 0.8em;
 	padding: 5px;
 }

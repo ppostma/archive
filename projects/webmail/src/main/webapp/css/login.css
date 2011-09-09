@@ -9,8 +9,8 @@ html,body {
 }
 
 body {
-	font-family: arial, sans-serif, helvetica;
-	font-size: 90%;
+	font-family: Verdana,Arial,sans-serif;
+	font-size: 75%;
 	background-color: #ececec;
 	margin: 0px auto;
 	width: 370px;
@@ -27,19 +27,22 @@ header {
 }
 
 header h1 {
+	font-size: 2em;
 	height: 70px;
 	line-height: 80px;
 	margin: 0px;
 }
 
 section#login {
+	font-size: 1.1em;
 	display: block;
 	margin: 0px auto;
 	width: 300px;
 }
 
-section#login div {
-	width: 100%;	
+section#login div.row {
+	width: 100%;
+	padding: 10px 0;
 }
 
 section#login div:last-child {
@@ -48,21 +51,23 @@ section#login div:last-child {
 
 section#login label {
 	float: left;
-	margin: 0.5em 0;
+	margin-top: 2px;
 	text-align: right;
 	width: 80px;
 }
 
 section#login input[type=text],input[type=password] {
 	float: right;
-	margin: 0.5em 0;
 	text-align: left;
 	width: 180px;
 }
 
 section#login input[type=submit] {
 	float: right;
-	margin: 0.5em 0;
 	text-align: left;
 	width: 100px;
+}
+
+section#login div.wrapper {
+	clear: both;
 }

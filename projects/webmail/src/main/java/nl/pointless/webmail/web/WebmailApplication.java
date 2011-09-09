@@ -3,11 +3,11 @@ package nl.pointless.webmail.web;
 import nl.pointless.webmail.web.component.LoginPage;
 import nl.pointless.webmail.web.component.WebmailPage;
 
-import org.apache.wicket.Request;
-import org.apache.wicket.Response;
 import org.apache.wicket.Session;
 import org.apache.wicket.authorization.strategies.page.SimplePageAuthorizationStrategy;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.request.Request;
+import org.apache.wicket.request.Response;
 import org.apache.wicket.spring.injection.annot.SpringComponentInjector;
 
 /**
@@ -34,9 +34,10 @@ public class WebmailApplication extends WebApplication {
 		};
 		getSecuritySettings().setAuthorizationStrategy(authorizationStrategy);
 
-		addComponentInstantiationListener(new SpringComponentInjector(this));
+		getComponentInstantiationListeners().add(
+				new SpringComponentInjector(this));
 
-		mountBookmarkablePage("/login", LoginPage.class);
+		mountPage("/login", LoginPage.class);
 	}
 
 	@Override

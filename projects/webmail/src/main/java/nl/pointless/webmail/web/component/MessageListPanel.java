@@ -1,31 +1,37 @@
 package nl.pointless.webmail.web.component;
 
-import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_VIEW_PANEL_ID;
-import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_WRITE_PANEL_ID;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.pointless.commons.web.behavior.FocusBehavior;
 import nl.pointless.commons.web.component.AbstractLinkPropertyColumn;
 import nl.pointless.commons.web.component.DatePropertyColumn;
+import nl.pointless.commons.web.component.SearchTextField;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.IFolderRefreshActionListener;
-import nl.pointless.webmail.web.IFolderSelectListener;
-import nl.pointless.webmail.web.WebmailSession;
+import nl.pointless.webmail.web.event.FolderRefreshActionEvent;
+import nl.pointless.webmail.web.event.FolderSelectedEvent;
+import nl.pointless.webmail.web.event.MessageComposeEvent;
+import nl.pointless.webmail.web.event.MessageSelectedEvent;
 
-import org.apache.wicket.Page;
+import org.apache.commons.lang.StringUtils;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
-import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow.MaskType;
+import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.event.Broadcast;
+import org.apache.wicket.event.IEvent;
 import org.apache.wicket.extensions.markup.html.repeater.data.grid.ICellPopulator;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.IColumn;
 import org.apache.wicket.extensions.markup.html.repeater.data.table.PropertyColumn;
+import org.apache.wicket.markup.ComponentTag;
+import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.spring.injection.annot.SpringBean;
 
@@ -34,8 +40,7 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class MessageListPanel extends AbstractSwitchablePanel implements
-		IFolderSelectListener {
+public class MessageListPanel extends AbstractSwitchablePanel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -46,8 +51,6 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 
 	private IModel<Folder> folderModel;
 	private IModel<Message> messageModel;
-
-	private IFolderRefreshActionListener folderRefreshActionListener;
 
 	/**
 	 * Constructor.
@@ -75,9 +78,6 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 				Message message = model.getObject();
 
 				MessageListPanel.this.selectMessage(message);
-
-				WebmailSession.get().getPanelSwitcher()
-						.setActivePanel(MESSAGE_VIEW_PANEL_ID);
 			}
 		});
 
@@ -88,47 +88,62 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 
 		MessageListDataTable dataTable = new MessageListDataTable(
 				"messagesDataTableId", this.folderModel, columns,
-				this.messageDataProvider, 25);
+				this.messageDataProvider, 20);
 		dataTable.setOutputMarkupId(true);
 		add(dataTable);
 
-		ModalWindow searchWindow = createModalWindow(dataTable);
-		add(searchWindow);
+		WebMarkupContainer searchDialog = createSearchDialog(dataTable);
+		add(searchDialog);
 	}
 
-	private ModalWindow createModalWindow(final MessageListDataTable dataTable) {
-		ModalWindow searchWindow = new ModalWindow("searchDialogId");
-		searchWindow.setMinimalHeight(30);
-		searchWindow.setInitialHeight(30);
-		searchWindow.setMinimalWidth(300);
-		searchWindow.setInitialWidth(300);
-		searchWindow.setMaskType(MaskType.TRANSPARENT);
-		searchWindow.setCssClassName(ModalWindow.CSS_CLASS_GRAY);
-		searchWindow.setPageCreator(new ModalWindow.PageCreator() {
+	private WebMarkupContainer createSearchDialog(
+			final MessageListDataTable dataTable) {
+		Form<MessageListDataProvider> form = new Form<MessageListDataProvider>(
+				"searchFormId");
+
+		Label searchLabel = new Label("searchLabelId", new ResourceModel(
+				"label.search"));
+		form.add(searchLabel);
+
+		SearchTextField searchTextField = new SearchTextField(
+				"searchTextFieldId", new PropertyModel<String>(
+						this.messageDataProvider, "filter"));
+		searchTextField.add(new FocusBehavior());
+		form.add(searchTextField);
+
+		final AjaxButton searchSubmitButton = new AjaxButton("searchSubmitId",
+				new ResourceModel("button.search")) {
 
 			private static final long serialVersionUID = 1L;
 
-			/**
-			 * {@inheritDoc}
-			 */
-			public Page createPage() {
-				return new SearchDialogPage(getSearchWindow(),
-						getMessageDataProvider());
+			@Override
+			protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+				target.add(dataTable);
 			}
-		});
-		searchWindow
-				.setWindowClosedCallback(new ModalWindow.WindowClosedCallback() {
 
-					private static final long serialVersionUID = 1L;
+			@Override
+			protected void onError(AjaxRequestTarget target, Form<?> form) {
+				// Ignored
+			}
+		};
+		form.add(searchSubmitButton);
 
-					/**
-					 * {@inheritDoc}
-					 */
-					public void onClose(AjaxRequestTarget target) {
-						target.addComponent(dataTable);
-					}
-				});
-		return searchWindow;
+		WebMarkupContainer searchDialog = new WebMarkupContainer(
+				"searchDialogId") {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected void onComponentTag(ComponentTag tag) {
+				super.onComponentTag(tag);
+
+				Folder currentFolder = getCurrentFolder();
+				tag.put("title", "Search in " + currentFolder.getName());
+			}
+		};
+		searchDialog.add(form);
+
+		return searchDialog;
 	}
 
 	/**
@@ -152,38 +167,23 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 		Message selectedMessage = this.mailService.getMessageById(
 				message.getFolderName(), message.getId());
 		this.messageModel.setObject(selectedMessage);
+
+		send(getPage(), Broadcast.EXACT, new MessageSelectedEvent(
+				selectedMessage));
 	}
 
 	/**
-	 * @return the message list data provider.
+	 * @return the current selected folder
 	 */
-	MessageListDataProvider getMessageDataProvider() {
-		return this.messageDataProvider;
+	Folder getCurrentFolder() {
+		return this.folderModel.getObject();
 	}
 
 	/**
-	 * @return the modal window
+	 * @return the current selected message
 	 */
-	ModalWindow getSearchWindow() {
-		return (ModalWindow) get("searchDialogId");
-	}
-
-	/**
-	 * @return the folder refresh action listener
-	 */
-	IFolderRefreshActionListener getFolderRefreshActionListener() {
-		return this.folderRefreshActionListener;
-	}
-
-	/**
-	 * Add a listener for folder refresh actions.
-	 * 
-	 * @param folderRefreshActionListener A {@link IFolderRefreshActionListener}
-	 * .
-	 */
-	void addFolderRefreshActionListener(
-			IFolderRefreshActionListener folderRefreshActionListener) {
-		this.folderRefreshActionListener = folderRefreshActionListener;
+	Message getSelectedMessage() {
+		return this.messageModel.getObject();
 	}
 
 	@Override
@@ -197,41 +197,54 @@ public class MessageListPanel extends AbstractSwitchablePanel implements
 
 			@Override
 			protected void onClick() {
-				getFolderRefreshActionListener().onActionRefreshFolders();
+				send(getPage(), Broadcast.DEPTH, new FolderRefreshActionEvent(
+						getCurrentFolder()));
 			}
 		});
 
-		fragment.add(new BasicActionButton("writeButtonId",
-				"images/write.png", new ResourceModel("label.write")) {
+		fragment.add(new BasicActionButton("writeButtonId", "images/write.png",
+				new ResourceModel("label.write")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			protected void onClick() {
-				WebmailSession.get().getPanelSwitcher()
-						.setActivePanel(MESSAGE_WRITE_PANEL_ID);
+				send(getPage(), Broadcast.EXACT, new MessageComposeEvent(
+						new Message()));
 			}
 		});
 
-		fragment.add(new AjaxActionButton("searchButtonId",
+		fragment.add(new BasicActionButton("searchButtonId",
 				"images/search.png", new ResourceModel("label.search")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected void onClick(AjaxRequestTarget target) {
-				getSearchWindow().show(target);
+			protected void onClick() {
+				// Handled by JavaScript, never called.
 			}
 		});
 
 		return fragment;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void onFolderSelect(Folder folder) {
-		List<Message> messages = folder.getMessages();
-		this.messageDataProvider.setMessages(messages);
+	@Override
+	public void onEvent(IEvent<?> event) {
+		if (event.getPayload() instanceof FolderSelectedEvent) {
+			FolderSelectedEvent folderSelectedEvent = (FolderSelectedEvent) event
+					.getPayload();
+
+			Folder folder = folderSelectedEvent.getFolder();
+
+			String filter = this.messageDataProvider.getFilter();
+
+			List<Message> messages = folder.getMessages();
+			this.messageDataProvider.setMessages(messages);
+
+			if (folderSelectedEvent.isKeepFilter()
+					&& StringUtils.isNotEmpty(filter)) {
+				this.messageDataProvider.setFilter(filter);
+			}
+		}
 	}
 }

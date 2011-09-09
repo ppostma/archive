@@ -1,7 +1,7 @@
 package nl.pointless.webmail.web.component;
 
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.ImageButton;
+import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 
@@ -18,14 +18,14 @@ public abstract class AbstractActionButton extends Panel {
 	 * Constructs an {@link AbstractActionButton}.
 	 * 
 	 * @param id Panel id.
-	 * @param imageName Name of the image.
+	 * @param imageUrl Url of the image.
 	 * @param labelModel Label model.
 	 */
-	public AbstractActionButton(String id, String imageName,
+	public AbstractActionButton(String id, String imageUrl,
 			IModel<String> labelModel) {
 		super(id);
 
-		ImageButton imageButton = createImageButton("buttonId", imageName);
+		Button imageButton = createButton("buttonId", imageUrl);
 		add(imageButton);
 
 		Label refreshLabel = new Label("labelId", labelModel);
@@ -35,11 +35,11 @@ public abstract class AbstractActionButton extends Panel {
 	}
 
 	/**
-	 * Create the ImageButton.
+	 * Creates the Button.
 	 * 
 	 * @param id Wicket id.
-	 * @param imageName Name of the image.
-	 * @return an {@link ImageButton}
+	 * @param imageUrl Url of the image.
+	 * @return a {@link Button}
 	 */
-	protected abstract ImageButton createImageButton(String id, String imageName);
+	protected abstract Button createButton(String id, String imageUrl);
 }

@@ -299,7 +299,7 @@ public class JavaMailService implements IMailService {
 	 * {@inheritDoc}
 	 */
 	public void sendMessage(Message message) {
-		// TODO Auto-generated method stub
+		// TODO Implement me (sendMessage)
 
 	}
 

@@ -1,7 +1,5 @@
 package nl.pointless.webmail.web.component;
 
-import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_WRITE_PANEL_ID;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,12 +11,13 @@ import nl.pointless.webmail.dto.Attachment;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.dto.Message;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.WebmailSession;
+import nl.pointless.webmail.web.event.FolderSelectedEvent;
+import nl.pointless.webmail.web.event.MessageComposeEvent;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.wicket.RequestCycle;
 import org.apache.wicket.datetime.markup.html.basic.DateLabel;
+import org.apache.wicket.event.Broadcast;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.basic.MultiLineLabel;
 import org.apache.wicket.markup.html.link.Link;
@@ -29,8 +28,11 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.ResourceModel;
-import org.apache.wicket.request.target.resource.ResourceStreamRequestTarget;
+import org.apache.wicket.request.cycle.RequestCycle;
+import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
 import org.apache.wicket.spring.injection.annot.SpringBean;
+import org.apache.wicket.util.lang.Bytes;
+import org.apache.wicket.util.resource.AbstractResourceStream;
 import org.apache.wicket.util.resource.IResourceStream;
 import org.apache.wicket.util.resource.ResourceStreamNotFoundException;
 import org.apache.wicket.util.time.Time;
@@ -55,7 +57,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 	 * 
 	 * @author Peter Postma
 	 */
-	private class AttachmentResourceStream implements IResourceStream {
+	private class AttachmentResourceStream extends AbstractResourceStream {
 
 		private static final long serialVersionUID = 1L;
 
@@ -84,6 +86,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
 		public String getContentType() {
 			return this.attachment.getContentType();
 		}
@@ -103,6 +106,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
 		public Locale getLocale() {
 			return this.locale;
 		}
@@ -110,13 +114,15 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 		/**
 		 * {@inheritDoc}
 		 */
-		public long length() {
-			return this.attachment.getContent().length;
+		@Override
+		public Bytes length() {
+			return Bytes.bytes(this.attachment.getContent().length);
 		}
 
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
 		public void setLocale(Locale locale) {
 			this.locale = locale;
 		}
@@ -124,6 +130,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
 		public Time lastModifiedTime() {
 			return Time.now();
 		}
@@ -180,10 +187,10 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 					public void onClick() {
 						AttachmentResourceStream resourceStream = new AttachmentResourceStream(
 								attachment);
-						ResourceStreamRequestTarget target = new ResourceStreamRequestTarget(
-								resourceStream, attachment.getContentType());
-						target.setFileName(attachment.getFilename());
-						RequestCycle.get().setRequestTarget(target);
+						ResourceStreamRequestHandler handler = new ResourceStreamRequestHandler(
+								resourceStream, attachment.getFilename());
+						RequestCycle.get().scheduleRequestHandlerAfterCurrent(
+								handler);
 					}
 				};
 				Label attachmentLabel = new Label("attachmentLabelId",
@@ -211,9 +218,11 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 			}
 
 			@Override
-			public boolean isVisible() {
+			protected void onConfigure() {
+				super.onConfigure();
+
 				List<Attachment> attachments = getModelObject();
-				return CollectionUtils.isNotEmpty(attachments);
+				setVisible(CollectionUtils.isNotEmpty(attachments));
 			}
 		};
 		add(attachments);
@@ -230,31 +239,33 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				WebmailSession.get().getPanelSwitcher()
-						.setActivePanelToPreviousPanel();
+				Folder folder = getFolderModel().getObject();
+
+				send(getPage(), Broadcast.DEPTH, new FolderSelectedEvent(
+						folder, true));
 			}
 		});
 
-		fragment.add(new BasicActionButton("writeButtonId",
-				"images/write.png", new ResourceModel("label.write")) {
+		fragment.add(new BasicActionButton("writeButtonId", "images/write.png",
+				new ResourceModel("label.write")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			protected void onClick() {
-				WebmailSession.get().getPanelSwitcher()
-						.setActivePanel(MESSAGE_WRITE_PANEL_ID);
+				send(getPage(), Broadcast.EXACT, new MessageComposeEvent(
+						new Message()));
 			}
 		});
 
-		fragment.add(new BasicActionButton("replyButtonId",
-				"images/reply.png", new ResourceModel("label.reply")) {
+		fragment.add(new BasicActionButton("replyButtonId", "images/reply.png",
+				new ResourceModel("label.reply")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			protected void onClick() {
-				// TODO Implement me
+				// TODO Implement me (replyButtonId)
 			}
 		});
 
@@ -265,7 +276,7 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				// TODO Implement me
+				// TODO Implement me (forwardButtonId)
 			}
 		});
 
@@ -282,19 +293,19 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 					// Mark message as deleted on the mail provider.
 					boolean deleted = getMailService().deleteMessage(message);
 
-					// On success, remove the message from the folder model.
 					if (deleted) {
-						getFolderModel().getObject().removeMessage(message);
+						Folder currentFolder = getFolderModel().getObject();
+						currentFolder.removeMessage(message);
 
-						WebmailSession.get().getPanelSwitcher()
-								.setActivePanelToPreviousPanel();
+						send(getPage(), Broadcast.DEPTH,
+								new FolderSelectedEvent(currentFolder, true));
 					}
 				}
 			}
 		});
 
-		fragment.add(new BasicActionButton("spamButtonId",
-				"images/junk.png", new ResourceModel("label.spam")) {
+		fragment.add(new BasicActionButton("spamButtonId", "images/junk.png",
+				new ResourceModel("label.spam")) {
 
 			private static final long serialVersionUID = 1L;
 
@@ -306,12 +317,12 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 					// Mark the message as junk on the mail provider.
 					boolean success = getMailService().markMessageJunk(message);
 
-					// On success, remove the message from the folder model.
 					if (success) {
-						getFolderModel().getObject().removeMessage(message);
+						Folder currentFolder = getFolderModel().getObject();
+						currentFolder.removeMessage(message);
 
-						WebmailSession.get().getPanelSwitcher()
-								.setActivePanelToPreviousPanel();
+						send(getPage(), Broadcast.DEPTH,
+								new FolderSelectedEvent(currentFolder, true));
 					}
 				}
 			}
@@ -324,18 +335,18 @@ public class MessageViewPanel extends AbstractSwitchablePanel {
 
 			@Override
 			protected void onClick() {
-				// TODO Implement me
+				// TODO Implement me (previousButtonId)
 			}
 		});
 
-		fragment.add(new BasicActionButton("nextButtonId",
-				"images/next.png", new ResourceModel("label.next")) {
+		fragment.add(new BasicActionButton("nextButtonId", "images/next.png",
+				new ResourceModel("label.next")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			protected void onClick() {
-				// TODO Implement me
+				// TODO Implement me (nextButtonId)
 			}
 		});
 

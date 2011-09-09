@@ -37,8 +37,7 @@ public class MessageListDataTable extends DataTable<Message> {
 	public MessageListDataTable(String id, IModel<Folder> folderModel,
 			List<IColumn<Message>> columns,
 			ISortableDataProvider<Message> dataProvider, int rowsPerPage) {
-		super(id, columns.toArray(new IColumn[columns.size()]), dataProvider,
-				rowsPerPage);
+		super(id, columns, dataProvider, rowsPerPage);
 
 		addTopToolbar(new MessageListNavigationToolbar(this, folderModel));
 		addTopToolbar(new HeadersToolbar(this, dataProvider));
@@ -59,7 +58,7 @@ public class MessageListDataTable extends DataTable<Message> {
 
 				// Add unread CSS class if the message is not read.
 				if (!getModelObject().isRead()) {
-					String classValue = (String) tag.getString("class");
+					String classValue = tag.getAttribute("class");
 					tag.put("class", classValue + " unread");
 				}
 			}

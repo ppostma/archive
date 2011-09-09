@@ -1,7 +1,5 @@
 package nl.pointless.commons.web.component;
 
-import org.apache.wicket.RequestCycle;
-import org.apache.wicket.ResourceReference;
 import org.apache.wicket.ajax.IAjaxIndicatorAware;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.extensions.ajax.markup.html.AjaxIndicatorAppender;
@@ -18,8 +16,7 @@ public abstract class AbstractIndicatingAjaxLink<T> extends AjaxLink<T>
 
 	private static final long serialVersionUID = 1L;
 
-	protected static final ResourceReference AJAX_LOADER = new ResourceReference(
-			AbstractIndicatingAjaxLink.class, "images/ajax-loader.gif");
+	static final CharSequence AJAX_LOADER = "images/ajax-loader.gif";
 
 	/**
 	 * An {@link AjaxIndicatorAppender} that links our ajax loader image.
@@ -30,7 +27,7 @@ public abstract class AbstractIndicatingAjaxLink<T> extends AjaxLink<T>
 
 		@Override
 		protected CharSequence getIndicatorUrl() {
-			return RequestCycle.get().urlFor(AJAX_LOADER);
+			return AJAX_LOADER;
 		}
 	};
 

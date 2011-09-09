@@ -3,7 +3,6 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title wicket:id="pageTitleId">webmail</title>
-	<link wicket:id="cssId" rel="stylesheet" type="text/css" />
 </head>
 <body>
 	<header>
@@ -14,17 +13,19 @@
 
 	<section id="login">
 		<form wicket:id="formId">
-			<div>
+			<div class="row">
 				<label wicket:id="usernameLabelId" for="usernameId">username</label>
 				<input wicket:id="usernameId" id="usernameId" type="text" />
 			</div>
+			<div class="wrapper"></div>
 
-			<div>
+			<div class="row">
 				<label wicket:id="passwordLabelId" for="passwordId">password</label>
 				<input wicket:id="passwordId" id="passwordId" type="password" />
 			</div>
+			<div class="wrapper"></div>
 
-			<div>
+			<div class="row">
 				<input wicket:id="submitId" type="submit" />
 			</div>
 		</form>

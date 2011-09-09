@@ -1,26 +1,52 @@
 <html xmlns:wicket>
 <body>
 	<wicket:panel>
+		<script type="text/javascript">
+			$(document).ready(function() {
+				$('#searchButton input').click(function(e) {
+					$('#searchDialog').dialog({ modal: true, resizable: false, height: 140, width: 330, buttons: { "Search": function() { $('#searchDialog input[type=submit]').click(); }, "Clear": function() { $('#searchDialog input[type=search]').val(''); $('#searchDialog input[type=submit]').click(); } } });
+
+					e.preventDefault();
+				});
+
+				$('#searchDialog input[type=submit]').click(function(e) {
+					$('#searchDialog').dialog('close');
+				});
+
+				$('#searchDialog input[type=search]').keydown(function(e){
+			        if (e.keyCode == 13) {
+			        	$('#searchDialog input[type=submit]').click();
+			        }
+				});
+			});
+		</script>
+
 		<table wicket:id="messagesDataTableId" class="dataTable">table</table>
 
-		<div wicket:id="searchDialogId"></div>
+		<div wicket:id="searchDialogId" id="searchDialog" style="display: none;">
+			<form wicket:id="searchFormId">
+				<label wicket:id="searchLabelId" for="searchTextField">search</label>
+				<input wicket:id="searchTextFieldId" id="searchTextField" type="search" />
+				<input wicket:id="searchSubmitId" type="submit" style="display: none;" />
+			</form>
+		</div>
 	</wicket:panel>
 
 	<wicket:fragment wicket:id="actionFragmentId">
 		<div class="button">
-			<span wicket:id="refreshButtonId">refresh button</span>
+			<wicket:container wicket:id="refreshButtonId">refresh button</wicket:container>
 		</div>
 
 		<div class="separator"></div>
 
 		<div class="button">
-			<span wicket:id="writeButtonId">write button</span>
+			<wicket:container wicket:id="writeButtonId">write button</wicket:container>
 		</div>
 
 		<div class="separator"></div>
 
-		<div class="button">
-			<span wicket:id="searchButtonId">search button</span>
+		<div class="button" id="searchButton">
+			<wicket:container wicket:id="searchButtonId">search button</wicket:container>
 		</div>
 	</wicket:fragment>
 </body>

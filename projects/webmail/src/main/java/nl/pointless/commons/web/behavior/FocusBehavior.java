@@ -1,7 +1,7 @@
 package nl.pointless.commons.web.behavior;
 
 import org.apache.wicket.Component;
-import org.apache.wicket.behavior.AbstractBehavior;
+import org.apache.wicket.behavior.Behavior;
 import org.apache.wicket.markup.html.IHeaderResponse;
 
 /**
@@ -9,7 +9,7 @@ import org.apache.wicket.markup.html.IHeaderResponse;
  * 
  * @author Peter Postma
  */
-public class FocusBehavior extends AbstractBehavior {
+public class FocusBehavior extends Behavior {
 
 	private static final long serialVersionUID = 1L;
 
@@ -22,8 +22,8 @@ public class FocusBehavior extends AbstractBehavior {
 	}
 
 	@Override
-	public void renderHead(IHeaderResponse headerResponse) {
-		headerResponse.renderOnLoadJavascript("document.getElementById('"
+	public void renderHead(Component component, IHeaderResponse headerResponse) {
+		headerResponse.renderOnLoadJavaScript("document.getElementById('"
 				+ this.component.getMarkupId() + "').focus();");
 	}
 }

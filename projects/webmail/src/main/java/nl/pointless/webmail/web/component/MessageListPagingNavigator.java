@@ -1,7 +1,6 @@
 package nl.pointless.webmail.web.component;
 
-import org.apache.wicket.ResourceReference;
-import org.apache.wicket.markup.html.image.Image;
+import org.apache.wicket.markup.html.image.ContextImage;
 import org.apache.wicket.markup.html.link.AbstractLink;
 import org.apache.wicket.markup.html.navigation.paging.IPageable;
 import org.apache.wicket.markup.html.navigation.paging.IPagingLabelProvider;
@@ -34,12 +33,12 @@ public class MessageListPagingNavigator extends PagingNavigator {
 				id, pageable, pageNumber);
 
 		if (id.equals("first")) {
-			Image image = new Image("imageFirst", new ResourceReference(
-					MessageListPagingNavigator.class, "images/arrow_first.png"));
+			ContextImage image = new ContextImage("imageFirst",
+					"images/arrow_first.png");
 			newPagingNavigationLink.add(image);
 		} else {
-			Image image = new Image("imageLast", new ResourceReference(
-					MessageListPagingNavigator.class, "images/arrow_last.png"));
+			ContextImage image = new ContextImage("imageLast",
+					"images/arrow_last.png");
 			newPagingNavigationLink.add(image);
 		}
 
@@ -53,12 +52,12 @@ public class MessageListPagingNavigator extends PagingNavigator {
 				.newPagingNavigationIncrementLink(id, pageable, increment);
 
 		if (id.equals("prev")) {
-			Image image = new Image("imagePrev", new ResourceReference(
-					MessageListPagingNavigator.class, "images/arrow_left.png"));
+			ContextImage image = new ContextImage("imagePrev",
+					"images/arrow_left.png");
 			newPagingNavigationIncrementLink.add(image);
 		} else {
-			Image image = new Image("imageNext", new ResourceReference(
-					MessageListPagingNavigator.class, "images/arrow_right.png"));
+			ContextImage image = new ContextImage("imageNext",
+					"images/arrow_right.png");
 			newPagingNavigationIncrementLink.add(image);
 		}
 
@@ -66,11 +65,18 @@ public class MessageListPagingNavigator extends PagingNavigator {
 	}
 
 	@Override
-	protected PagingNavigation newNavigation(IPageable pageable,
-			IPagingLabelProvider labelProvider) {
-		PagingNavigation pagingNavigation = new PagingNavigation("navigation",
-				pageable, labelProvider);
+	protected PagingNavigation newNavigation(final String id,
+			final IPageable pageable, final IPagingLabelProvider labelProvider) {
+		PagingNavigation pagingNavigation = new PagingNavigation(
+				id /* "navigation" */, pageable, labelProvider);
 		pagingNavigation.setSeparator("&thinsp;");
 		return pagingNavigation;
+	}
+
+	@Override
+	protected void onConfigure() {
+		super.onConfigure();
+
+		setVisible(getPageable().getPageCount() > 1);
 	}
 }

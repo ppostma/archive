@@ -1,14 +1,12 @@
 package nl.pointless.webmail.web.component;
 
 import nl.pointless.webmail.service.IAuthenticator;
-import nl.pointless.webmail.web.IPanelSwitchListener;
 import nl.pointless.webmail.web.ISwitchablePanel;
 import nl.pointless.webmail.web.WebmailSession;
+import nl.pointless.webmail.web.event.PanelShowEvent;
 
 import org.apache.wicket.Component;
-import org.apache.wicket.ResourceReference;
-import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.ImageButton;
+import org.apache.wicket.event.IEvent;
 import org.apache.wicket.markup.html.panel.EmptyPanel;
 import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.markup.html.panel.Panel;
@@ -20,7 +18,7 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class ActionPanel extends Panel implements IPanelSwitchListener {
+public class ActionPanel extends Panel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -37,42 +35,33 @@ public class ActionPanel extends Panel implements IPanelSwitchListener {
 
 		add(new EmptyPanel("fragmentId"));
 
-		ImageButton logoutButton = new ImageButton("logoutButtonId",
-				new ResourceReference(ActionPanel.class, "images/logout.png")) {
+		add(new BasicActionButton("logoutButtonId", "images/logout.png",
+				new ResourceModel("label.logout")) {
 
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			public void onSubmit() {
+			protected void onClick() {
 				getAuthenticator().logout();
 
 				WebmailSession.get().invalidateNow();
 
-				setResponsePage(WebmailPage.class);
+				setResponsePage(LoginPage.class);
 			}
-		};
-		add(logoutButton);
-
-		Label logoutLabel = new Label("logoutLabelId", new ResourceModel(
-				"label.logout"));
-		add(logoutLabel);
+		});
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void onHidePanel(ISwitchablePanel panel) {
-		// No implementation
-	}
+	@Override
+	public void onEvent(IEvent<?> event) {
+		if (event.getPayload() instanceof PanelShowEvent) {
+			ISwitchablePanel panel = ((PanelShowEvent) event.getPayload())
+					.getPanel();
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void onShowPanel(ISwitchablePanel panel) {
-		Fragment fragment = panel.getActionButtons("fragmentId");
+			Fragment fragment = panel.getActionButtons("fragmentId");
 
-		Component component = get("fragmentId");
-		component.replaceWith(fragment);
+			Component component = get("fragmentId");
+			component.replaceWith(fragment);
+		}
 	}
 
 	/**

@@ -1,7 +1,5 @@
 package nl.pointless.webmail.web.component;
 
-import static nl.pointless.webmail.web.component.WebmailPage.MESSAGE_LIST_PANEL_ID;
-
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -9,13 +7,14 @@ import java.util.List;
 import nl.pointless.commons.web.component.AbstractIndicatingAjaxLink;
 import nl.pointless.webmail.dto.Folder;
 import nl.pointless.webmail.service.IMailService;
-import nl.pointless.webmail.web.IFolderRefreshActionListener;
-import nl.pointless.webmail.web.IFolderSelectListener;
-import nl.pointless.webmail.web.WebmailSession;
+import nl.pointless.webmail.web.event.FolderRefreshActionEvent;
+import nl.pointless.webmail.web.event.FolderSelectedEvent;
 
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
-import org.apache.wicket.behavior.SimpleAttributeModifier;
+import org.apache.wicket.event.Broadcast;
+import org.apache.wicket.event.IEvent;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
@@ -29,7 +28,7 @@ import org.apache.wicket.spring.injection.annot.SpringBean;
  * 
  * @author Peter Postma
  */
-public class FolderPanel extends Panel implements IFolderRefreshActionListener {
+public class FolderPanel extends Panel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -38,8 +37,6 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 
 	private IModel<Folder> folderModel;
 	private IModel<List<Folder>> folderListModel;
-
-	private IFolderSelectListener folderSelectListener;
 
 	/**
 	 * Constructor.
@@ -86,16 +83,13 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 					public void onClick(AjaxRequestTarget target) {
 						FolderPanel.this.selectFolder(folder);
 
-						WebmailSession.get().getPanelSwitcher()
-								.setActivePanel(MESSAGE_LIST_PANEL_ID);
-
 						setResponsePage(getPage());
 					}
 				};
 				Label folderNameLabel = new Label("folderNameId",
 						folder.getName());
 				if (unreadMessages > 0) {
-					folderNameLabel.add(new SimpleAttributeModifier("class",
+					folderNameLabel.add(AttributeModifier.replace("class",
 							"unread"));
 				}
 				folderNameLink.add(folderNameLabel);
@@ -130,7 +124,7 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 		folderList.remove(index);
 		folderList.add(index, currentFolder);
 
-		this.folderSelectListener.onFolderSelect(currentFolder);
+		send(getPage(), Broadcast.DEPTH, new FolderSelectedEvent(currentFolder));
 	}
 
 	/**
@@ -169,18 +163,16 @@ public class FolderPanel extends Panel implements IFolderRefreshActionListener {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * @return the current selected folder
 	 */
-	public void onActionRefreshFolders() {
-		refreshFolderList();
+	Folder getCurrentFolder() {
+		return this.folderModel.getObject();
 	}
 
-	/**
-	 * Add a listener for folder select events.
-	 * 
-	 * @param folderSelectListener A {@link IFolderSelectListener}.
-	 */
-	void addFolderSelectListener(IFolderSelectListener folderSelectListener) {
-		this.folderSelectListener = folderSelectListener;
+	@Override
+	public void onEvent(IEvent<?> event) {
+		if (event.getPayload() instanceof FolderRefreshActionEvent) {
+			refreshFolderList();
+		}
 	}
 }

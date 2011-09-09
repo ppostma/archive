@@ -79,7 +79,7 @@ public abstract class AbstractLinkPropertyColumn<T> extends PropertyColumn<T> {
 				final String componentId, final IModel<T> model) {
 			super(componentId);
 
-			Link<Void> link = new Link<Void>("linkId") {
+			Link<Object> link = new Link<Object>("linkId") {
 
 				private static final long serialVersionUID = 1L;
 
@@ -90,8 +90,10 @@ public abstract class AbstractLinkPropertyColumn<T> extends PropertyColumn<T> {
 				}
 			};
 
-			link.add(new Label("labelId", createLabelModel(model))
-					.setRenderBodyOnly(true));
+			@SuppressWarnings("synthetic-access")
+			IModel<?> labelModel = createLabelModel(model);
+
+			link.add(new Label("labelId", labelModel).setRenderBodyOnly(true));
 			add(link);
 		}
 	}

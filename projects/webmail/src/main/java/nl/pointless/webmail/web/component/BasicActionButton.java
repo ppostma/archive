@@ -1,7 +1,7 @@
 package nl.pointless.webmail.web.component;
 
-import org.apache.wicket.ResourceReference;
-import org.apache.wicket.markup.html.form.ImageButton;
+import org.apache.wicket.markup.ComponentTag;
+import org.apache.wicket.markup.html.form.Button;
 import org.apache.wicket.model.IModel;
 
 /**
@@ -17,18 +17,17 @@ public abstract class BasicActionButton extends AbstractActionButton {
 	 * Constructs an {@link BasicActionButton}.
 	 * 
 	 * @param id Panel id.
-	 * @param imageName Name of the image.
+	 * @param imageUrl Url of the image.
 	 * @param labelModel Label model.
 	 */
-	public BasicActionButton(String id, String imageName,
+	public BasicActionButton(String id, String imageUrl,
 			IModel<String> labelModel) {
-		super(id, imageName, labelModel);
+		super(id, imageUrl, labelModel);
 	}
 
 	@Override
-	protected ImageButton createImageButton(String id, String imageName) {
-		ImageButton imageButton = new ImageButton(id, new ResourceReference(
-				BasicActionButton.class, imageName)) {
+	protected Button createButton(final String id, final String imageUrl) {
+		Button imageButton = new Button(id) {
 
 			private static final long serialVersionUID = 1L;
 
@@ -36,7 +35,18 @@ public abstract class BasicActionButton extends AbstractActionButton {
 			public void onSubmit() {
 				BasicActionButton.this.onClick();
 			}
+
+			@Override
+			protected void onComponentTag(ComponentTag tag) {
+				super.onComponentTag(tag);
+
+				checkComponentTag(tag, "input");
+				checkComponentTagAttribute(tag, "type", "image");
+
+				tag.put("src", imageUrl);
+			}
 		};
+
 		return imageButton;
 	}
 
